@@ -39,6 +39,16 @@ export const ENDINGS: Ending[] = [
       { label: '三甲副主任医师年薪', value: '¥25万-50万', source: '丁香园薪酬调查2024' },
     ],
   },
+  {
+    id: 'chief_at_45', title: '主任医师的日常', subtitle: '正高在手，后面跟着一串年轻医生',
+    tone: 'hopeful', bgColor: 0x14282a,
+    desc: '主任医师，省会城市三甲医院，编制内。查房时你走在最前面；年轻医生看你的眼神，像极了当年你看老主任。',
+    stats: { finalAge: 45, finalMoney: 500000, totalYears: 27, title: '主任医师', hospital: '省会三甲（编制）', verdict: '金字塔靠上的那一层' },
+    realDataCard: [
+      { label: '主任医师平均晋升年龄', value: '约45岁以上', source: '中国医师协会2023年报' },
+      { label: '三甲主任医师年薪', value: '¥40万-80万（含绩效）', source: '丁香园薪酬调查2024' },
+    ],
+  },
   // —— 以下为扩展结局（M4）——
   {
     id: 'top_surgeon', title: '无影灯下的王', subtitle: '外科主任，手术台上的神话',
@@ -219,6 +229,9 @@ export function determineEnding(state: GameState): Ending {
   if (money < -30000) return ENDINGS_BY_ID['exhausted_attending'];
 
   // 8. 稳定晋升路（成家者门槛略低，体现家庭支撑这一真实变量）
+  // 正高已评上：直接进主任医师结局—— exhausted_attending 的"主治编外"叙事与正高矛盾。
+  // 位置在 lucky_fraud(0.5) 之后：造假者即便评上正高，仍先被"侥幸"截住。
+  if (flags.has('passed_zhenggao')) return ENDINGS_BY_ID['chief_at_45'];
   if (flags.has('passed_fugao') || flags.has('passed_zhuzhi')) {
     const repThreshold = married ? 35 : 50;
     return stats.reputation > repThreshold ? ENDINGS_BY_ID['stable_at_45'] : ENDINGS_BY_ID['exhausted_attending'];

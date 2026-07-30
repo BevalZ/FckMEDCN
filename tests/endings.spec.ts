@@ -58,6 +58,16 @@ test('新结局分支：身败名裂 / 侥幸 / 临床专家 / 科研明星', as
         expect: 'left_undergrad',
       },
       {
+        name: '正高已评上 → 主任医师结局',
+        state: make({ flags: ['passed_zhuzhi', 'passed_fugao', 'passed_zhenggao'], stats: { reputation: 55, age: 45, clinical: 30, papers: 2 } }),
+        expect: 'chief_at_45',
+      },
+      {
+        name: '造假者评上正高仍被"侥幸"截住',
+        state: make({ flags: ['has_faked', 'passed_fugao', 'passed_zhenggao'], stats: { papers: 6, reputation: 60, age: 45 } }),
+        expect: 'lucky_fraud',
+      },
+      {
         name: '诚实默认路径',
         state: make({ flags: [], stats: { clinical: 20, research: 20, papers: 1, reputation: 30, age: 38 } }),
         expect: 'exhausted_attending',

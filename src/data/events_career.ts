@@ -53,7 +53,7 @@ export const CAREER_EVENTS: GameEvent[] = [
     category: 'career',
     weight: 65,
     choices: [
-      { text: '耐心带，像当年被带的那样', delta: { reputation: 4, relations: 4, stamina: -6 }, consequence: '他第一次独立穿刺成功，冲你笑。' },
+      { text: '耐心带，像当年被带的那样', delta: { reputation: 4, relations: 4, stamina: -6 }, flagSet: 'mentored', consequence: '他第一次独立穿刺成功，冲你笑。' },
       { text: '嫌麻烦，丢给他跑腿', delta: { stamina: -2, reputation: -2 }, consequence: '你想起自己也曾被这样对待。' },
     ],
   },
@@ -420,7 +420,7 @@ export const CAREER_EVENTS: GameEvent[] = [
     body: '今年你分到一个专硕。他眼里那股劲，像极了当年的你。带人，比被人带难。',
     category: 'career', weight: 50, once: true, requireFlag: 'passed_zhuzhi', minTurn: 6,
     choices: [
-      { text: '像当年恩师那样带', delta: { reputation: 4, relations: 4, stamina: -6, knowledge: 2 }, consequence: '他第一篇一作接收，请你吃了碗面。' },
+      { text: '像当年恩师那样带', delta: { reputation: 4, relations: 4, stamina: -6, knowledge: 2 }, flagSet: 'mentored', consequence: '他第一篇一作接收，请你吃了碗面。' },
       { text: '放养，让他自己闯', delta: { relations: -2, sanity: 3, stamina: 2 }, consequence: '你想起自己也曾被放养。' },
     ],
   },
@@ -488,6 +488,108 @@ export const CAREER_EVENTS: GameEvent[] = [
     choices: [
       { text: '把口碑接住，更较真', delta: { reputation: 5, knowledge: 3, stamina: -4 }, consequence: '你成了圈里那块"金字招牌"。' },
       { text: '压力有点大', delta: { sanity: -3, reputation: 2 }, consequence: '你怕哪天接不住。' },
+    ],
+  },
+
+  // —— 职业后期（第 8 回合起，叙事年龄约 40+）：正高、行政、学会、传承与身体 ——
+  // 注：游戏叙事终点约 45 岁（见 endings.ts），"退休"主题经由恩师视角呈现。
+  {
+    id: 'promote_zhenggao',
+    stage: 'career',
+    title: '冲刺主任医师',
+    body: '正高评审开始了。这一次，材料、年限、口碑都齐了，差的只是最后再熬一熬。',
+    category: 'career', weight: 70, once: true, requireFlag: 'passed_fugao', minTurn: 9,
+    choices: [
+      { text: '全力冲刺正高', delta: { reputation: 8, knowledge: 5, papers: 1, stamina: -16, sanity: -5 }, flagSet: 'passed_zhenggao', consequence: '公示名单里有你。你第一个电话打给了家里。' },
+      { text: '副高也挺好，不折腾了', delta: { sanity: 5, stamina: 2 }, consequence: '你把机会让给了更年轻的人。' },
+    ],
+  },
+  {
+    id: 'career_late_director_offer',
+    stage: 'career',
+    title: '院领导找你谈话',
+    body: '"科里需要你这样的同志挑担子。"言下之意：行政岗，副主任主持工作。接了，离临床就远了一步。',
+    category: 'career', weight: 55, once: true, requireFlag: 'passed_zhenggao', minTurn: 10,
+    choices: [
+      { text: '接下这副担子', delta: { reputation: 6, relations: 2, sanity: -5, stamina: -6 }, flagSet: 'took_admin', consequence: '你的日程表从此被会议切成碎片。' },
+      { text: '只想当医生，婉拒', delta: { knowledge: 3, sanity: 4 }, consequence: '你说："我的位置在诊室里。"' },
+    ],
+  },
+  {
+    id: 'career_late_admin_burden',
+    stage: 'career',
+    title: '行政的代价',
+    body: '三甲复审、医保检查、绩效分配……文件堆得比病历高。你已经两周没完整看过一个门诊了。',
+    category: 'career', weight: 45, once: true, requireFlag: 'took_admin', minTurn: 10,
+    choices: [
+      { text: '在会议里找临床的意义', delta: { sanity: 3, relations: 3, reputation: 2 }, consequence: '你把流程改顺了一点，全科都松了口气。' },
+      { text: '怀念纯临床的日子', delta: { sanity: -3, stamina: -2 }, consequence: '路过门诊楼，你会放慢脚步。' },
+    ],
+  },
+  {
+    id: 'career_late_society',
+    stage: 'career',
+    title: '学会递来的聘书',
+    body: '省医学会专科分会换届，你的名字出现在委员候选名单里。这意味着开会、评审、还有更广阔的话语权。',
+    category: 'career', weight: 50, once: true, requireFlag: 'passed_fugao', minTurn: 8,
+    choices: [
+      { text: '接下，为学科发点声', delta: { reputation: 5, relations: 4, stamina: -6, money: -1000 }, consequence: '你在指南讨论会上，替基层医生说了句话。' },
+      { text: '婉拒，时间留给病人', delta: { sanity: 3, knowledge: 2 }, consequence: '你把那封聘书压在了听诊器下面。' },
+    ],
+  },
+  {
+    id: 'career_late_mentor_retires',
+    stage: 'career',
+    title: '恩师退休了',
+    body: '当年手把手教你的老主任办了退休手续。收拾办公室时，他把用了三十年的听诊器递给你："留着，比放我这儿有用。"',
+    category: 'social', weight: 50, once: true, minTurn: 8,
+    choices: [
+      { text: '接下他的老病人们', delta: { reputation: 4, relations: 4, stamina: -4, sanity: 2 }, consequence: '老人们进门还是那句："我找 X 主任——哦，现在是你了。"' },
+      { text: '给他办个体面的欢送会', delta: { relations: 5, sanity: 5, money: -800 }, consequence: '他红着眼眶说："科里交给你们，我放心。"' },
+    ],
+  },
+  {
+    id: 'career_late_student_return',
+    stage: 'career',
+    title: '学生回来看你',
+    body: '你带过的学生如今也能独当一面了。他拎着水果站在诊室门口，开口还是那声"老师"。',
+    category: 'social', weight: 50, once: true, requireFlag: 'mentored', minTurn: 9,
+    choices: [
+      { text: '叮嘱他别熬坏身体', delta: { relations: 5, sanity: 6 }, consequence: '你说的话，正是当年恩师对你说的。' },
+      { text: '把他引荐到更好的平台', delta: { relations: 3, reputation: 3 }, consequence: '你替他铺的路，比你自己走过的平一点。' },
+    ],
+  },
+  {
+    id: 'career_late_body_protests',
+    stage: 'career',
+    title: '身体开始讨债',
+    body: '一站六小时的手术，你开始要在台边放张高脚凳；病历上的小字，也得拿远了才看得清。',
+    category: 'mental', weight: 50, once: true, minTurn: 9,
+    choices: [
+      { text: '接受节奏，把活干得更细', delta: { sanity: 4, knowledge: 2, stamina: 2 }, consequence: '慢下来的你，反而漏得更少。' },
+      { text: '不服老，继续硬顶', delta: { stamina: -8, sanity: -4, reputation: 2 }, consequence: '年轻医生私下说："老师还是那么拼。"' },
+    ],
+  },
+  {
+    id: 'career_late_tough_case',
+    stage: 'career',
+    title: '全科的目光落在你身上',
+    body: '外院转来一个疑难病人，讨论了一圈，年轻医生们的目光最后都落在你身上——像当年你看着老主任那样。',
+    category: 'clinical', weight: 50, once: true, requireFlag: 'track_clinical', minTurn: 8,
+    choices: [
+      { text: '亲自带队拿下来', delta: { knowledge: 5, reputation: 5, stamina: -10, sanity: -2 }, consequence: '病理回报那天，全科都服了。' },
+      { text: '带着年轻人一起做', delta: { relations: 5, reputation: 3, stamina: -6, knowledge: 2 }, consequence: '你把高光让给了他们，把责任留给了自己。' },
+    ],
+  },
+  {
+    id: 'career_late_keynote',
+    stage: 'career',
+    title: '年会主旨报告',
+    body: '全国年会邀请你做主旨报告。台下坐着的，有当年毙过你稿子的审稿人。',
+    category: 'career', weight: 50, once: true, requireFlag: 'track_research', minTurn: 8,
+    choices: [
+      { text: '把这十年的工作讲透', delta: { reputation: 6, papers: 1, stamina: -6, sanity: 3 }, consequence: '提问环节，那位审稿人第一个举手——是来道贺的。' },
+      { text: '紧张，但稳稳讲完', delta: { reputation: 3, sanity: 2 }, consequence: '掌声响起来时，你想起实验室的无数个深夜。' },
     ],
   },
 ];
