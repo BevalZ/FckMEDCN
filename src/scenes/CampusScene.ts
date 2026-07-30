@@ -374,7 +374,10 @@ export class CampusScene extends Phaser.Scene {
   private minigame: ActiveMinigame | null = null;
 
   // —— 领取一个 storylet ——
-  private openEvent(ev: GameEvent) {
+  // chained=true 表示本卡由上一张卡的选项链式续接而来：上游选项已提交（效果已生效），
+  // 此时再允许 ESC 取消会留下"白拿上游效果、行动点与 storylet 额度还被退还"的漏洞（B3），
+  // 且链上 once 标记与已提交的上游选项会不一致。故链式卡不提供 ESC，必须选完。
+  private openEvent(ev: GameEvent, chained = false) {
     if (ev.once) this.firedEvents.add(ev.id);
     this.currentEvent = ev;
     this.setBusy(true);
@@ -386,7 +389,8 @@ export class CampusScene extends Phaser.Scene {
       return;
     }
     // 传入取消回调：允许 ESC 不做选择直接退出对话（不消耗行动点，可重来）。
-    this.eventCard.show(ev, () => this.cancelEvent(ev));
+    // 链式续接卡除外（见上）。
+    this.eventCard.show(ev, chained ? undefined : () => this.cancelEvent(ev));
   }
 
   // ESC 取消对话：干净回滚，使这次交互像从未发生，玩家可重新选择。
@@ -465,7 +469,7 @@ export class CampusScene extends Phaser.Scene {
 
     this.consequence.show(choice.consequence ?? '你做出了选择。', choice.delta as StatDelta, () => {
       if (this.checkCrisis()) return;
-      if (next) { this.openEvent(next); return; }
+      if (next) { this.openEvent(next, true); return; }
 
       // NPC 对话只花行动点，不占用"每季一次 storylet"的额度
       if (!isTalk) this.storyletUsed = true;

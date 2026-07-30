@@ -84,12 +84,17 @@
   剩余人工项：试玩确认实习场景里林主治站在手术室/病房门口、刘护士长站在护士站/食堂门口，
   走近按 E 能对话（自动测试只断言落格合法，不覆盖按键交互）。
 
-### B3. 链式事件 nextEventId 在可行走场景的行动点语义 ｜ 低 ｜ 待查
-- **现象/疑点**：`handleChoice` 里链式事件 `next` 会 `openEvent(next)` 续接且不额外扣行动点，
-  但续接的事件若也带 `once`，其 `firedEvents` 标记在**取消**时不会被回滚（cancelEvent 只回滚
-  当前 ev，不知道链上游）。
-- **待查**：领一个带 nextEventId 的事件 → 选项进入链 → 在链中途 ESC 取消，确认没有 once 事件
-  被永久屏蔽。可能需要在进入链时记录"本次交互涉及的所有 once id"统一回滚。
+### B3. 链式事件中途 ESC：once 回滚正确，但存在"免费效果"漏洞 ｜ 中 ｜ 已修已验
+- **排查结论**（2026-07-30，代码走查 + 回归测试）：原担心的"链上 once 被永久屏蔽"**不成立**——
+  `cancelEvent` 回滚的正是当前链卡的 once 标记；上游卡标记保留也对（选项已提交、效果已生效）。
+- **但发现真漏洞**：链卡上按 ESC 会"退还"行动点且不置 storyletUsed，
+  而上游选项的 delta/flagSet 已提交——玩家可白拿上游效果零成本，再领本季另一个 storylet。
+- **修复**：`CampusScene.openEvent(ev, chained)` 加 chained 参数，链式续接卡不再传 onCancel——
+  ESC 提示不渲染、按键无效，必须选完。根卡未做选择前 ESC 语义不变（A3 保护的就是这种）。
+  语义边界：取消只发生在"尚未做出任何承诺"之前；一旦提交选项进链，就要走到底。
+- **已验**：`tests/esc-cancel.spec.ts` 第三例——国奖链（apply → result）：
+  链卡 ESC 不关闭、整链只扣 1 行动点、storyletUsed=true、两个 once 标记与 flag 均正确。
+  全量 29 用例绿。
 
 ### B4. 存档跨场景兼容 ｜ 中 ｜ 待查
 - **现象/疑点**：新增了 CampusScene/HospitalScene/GuipeiWalkScene 三个可行走场景，
@@ -120,6 +125,20 @@
 - **已验**：单测连跑 3 次全过；全量 exit=0（26 passed + balance-sim 1 flaky，重试即过）。
 - **遗留观察**：balance-sim 同样未播种，本次全量出现过 1 flaky（重试即过），
   若日后成为瓶颈可按同法播种。
+
+### B7. 实习/规培可行走场景不续接链式事件 ｜ 中 ｜ 待查
+- **现象**（2026-07-30 B3 排查时发现）：`HospitalScene` / `GuipeiWalkScene` 的
+  `handleChoice` 没有 `resolveChained`/`nextEventId` 处理（CampusScene 有）——
+  选项带 nextEventId 时链条被静默丢弃。
+- **影响**：规培链 `m2_gp_tonggang→reply`、`m2_gp_quit_think→confirm→left/stay`、
+  `m2_gp_26h→after_26h` 在可行走规培场景里不会即时续接。链目标都是 once+requireFlag，
+  flag 由根选项设置，故后续季度仍可能被自然抽到——内容不死，但失去即时的戏剧连贯性
+  （"今晚交申请，当晚出结果"变成"几季后莫名其妙抽到后续"）。
+  实习阶段目前无 nextEventId 事件，暂不受损。
+- **修法方向**：把 CampusScene 的 `resolveChained` + `openEvent(ev, chained)` 模式
+  移植到这两个场景（注意保持 B3 的"链上不可 ESC"语义），并补回归。
+- **待查**：先确认这是疏漏还是有意简化（可行走场景想淡化链条？倾向疏漏：
+  三场景的 handleChoice 是同一模板的复制，Campus 后加链条时没同步）。
 
 ---
 

@@ -161,3 +161,73 @@ test('ESC 取消 once 事件：firedEvents 标记须回滚', async ({ page }) =>
 
   expect(errors, `运行时报错：\n${errors.join('\n')}`).toEqual([]);
 });
+
+test('B3 链式事件：进链后 ESC 不可取消，整链只扣 1 行动点', async ({ page }) => {
+  const errors: string[] = [];
+  const isEnvNoise = (s: string) => /AudioContext|audio device|WebAudio/i.test(s);
+  page.on('pageerror', e => { if (!isEnvNoise(String(e))) errors.push('PAGEERROR: ' + String(e)); });
+  page.on('console', m => {
+    if (m.type() === 'error' && !isEnvNoise(m.text())) errors.push('CONSOLE: ' + m.text());
+  });
+
+  await enterCampus(page);
+  const before = await campusScene(page);
+
+  // 直接打开 ug_guojiang_apply（本科 once，选项 1「诚实答辩」链到 ug_guojiang_result，也是 once）
+  const opened = await page.evaluate(() => {
+    const s: any = (window as any).game.scene.getScene('CampusScene');
+    const ev = (window as any).__mod.ev.ALL_EVENTS.find((e: any) => e.id === 'ug_guojiang_apply');
+    if (!ev) return null;
+    s.openEvent(ev);
+    return { busy: s.busy };
+  });
+  expect(opened, '应存在 ug_guojiang_apply').toBeTruthy();
+
+  // 选第 1 项进链 → 关后果弹窗 → 链卡 ug_guojiang_result 应打开
+  await page.keyboard.press('1');
+  await page.waitForTimeout(600);
+  await page.keyboard.press('Space');
+  await page.waitForFunction(
+    () => {
+      const s: any = (window as any).game.scene.getScene('CampusScene');
+      return s.busy === true && s.currentEvent?.id === 'ug_guojiang_result';
+    },
+    null, { timeout: 8000 },
+  );
+
+  // 链上按 ESC：不应关闭（上游选项已提交，允许取消会白拿效果并退还费用）
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(400);
+  const afterEsc = await page.evaluate(() => {
+    const s: any = (window as any).game.scene.getScene('CampusScene');
+    return { busy: s.busy, currentId: s.currentEvent?.id ?? null };
+  });
+  expect(afterEsc.busy, '链式卡 ESC 不该关闭').toBe(true);
+  expect(afterEsc.currentId, 'ESC 后应仍停留在链卡').toBe('ug_guojiang_result');
+
+  // 选第 1 项完成链 → 关后果弹窗 → 场景恢复
+  await page.keyboard.press('1');
+  await page.waitForTimeout(600);
+  await page.keyboard.press('Space');
+  await page.waitForFunction(
+    () => (window as any).game.scene.getScene('CampusScene').busy === false,
+    null, { timeout: 8000 },
+  );
+
+  const after = await campusScene(page);
+  expect(after.actionsLeft, '整条链只应扣 1 行动点').toBe(before.actionsLeft - 1);
+  expect(after.storyletUsed, '完成链应占用本季 storylet 额度').toBe(true);
+  const marks = await page.evaluate(() => {
+    const s: any = (window as any).game.scene.getScene('CampusScene');
+    return {
+      root: s.firedEvents.has('ug_guojiang_apply'),
+      linked: s.firedEvents.has('ug_guojiang_result'),
+      flag: (window as any).__state().flags.has('ug_guojiang_honest'),
+    };
+  });
+  expect(marks.root, '根事件 once 标记应保留（已提交）').toBe(true);
+  expect(marks.linked, '链事件 once 标记应保留（已提交）').toBe(true);
+  expect(marks.flag, '根选项的 flagSet 应已生效').toBe(true);
+
+  expect(errors, `运行时报错：\n${errors.join('\n')}`).toEqual([]);
+});
