@@ -1,34 +1,30 @@
-# 阶段性总结 - B2/B6 已验证闭环、git 仓库已重建
+# 阶段性总结 - A3 回归已补、测试基建稳定
 
 ## 当前状态
 
-known-issues.md 的 **B2（NPC 站位）与 B6（lifecycle-sim 偶发失败）均已修已验**，
-全量回归绿（exit=0，27 用例；balance-sim 偶发 flaky 但重试即过，暂未处理）。
-**git 仓库已重建**：此前 `.git/` 是空目录（无 HEAD/objects），工作成果长期无版本控制；
-2026-07-30 已 `git init` + 首次提交（`4c2b184`，master，工作区干净）。
-`.codebuddy/` 已加入 .gitignore。
+- **B2（NPC 站位）、B6（lifecycle-sim 偶发）、A3（ESC 取消）均已修已验**，
+  全量 28 用例绿（exit=0）。
+- **测试基建**：所有场景等待统一放宽到 120s（Windows 首启 Chromium + Phaser 环境成本，
+  见 known-issues D4）；lifecycle-sim 已播种（mulberry32），结果确定可复现。
+- **git 仓库已重建**（2026-07-30），三个提交：initial → B6 → A3。
+- ⚠️ `reuseExistingServer` 会复用 5173 残留 dev server；行为异常先查端口（已杀过 3 天前的残留进程）。
 
 ## 下一轮候选（按优先级）
 
-1. **A3（ESC 取消对话）补自动化回归** — 目前零测试覆盖，只验过人工。
-   可复用 `tests/campus.spec.ts` 的行走/交互套路：
-   走到 NPC 旁按 E 开卡 → ESC → 断言行动点不减、感叹号恢复、可再次交互；
-   再补一例"地点事件 ESC 后 once 标记回滚"。
-   注意 `cancelEvent` 在三个可行走场景各自接线，都要验（或至少 campus+hospital）。
-2. **B3（链式事件 ESC 回滚）** — 与 A3 测试天然连着：
-   领带 nextEventId 的事件 → 进链 → 中途 ESC → 断言链上 once 事件未被永久屏蔽。
-   若复现 bug，修法方向：进链时记录涉及的所有 once id 统一回滚。
-3. **④ 新闻时序与 NEWS_TICKER 系统性对齐** — 路线图剩余的唯一大块。
-   `src/data/news.ts` vs 游戏内年份推进（year/quarter），逐条核对 ticker 内容
-   与所处阶段是否违和（如 2030 年新闻出现在本科 2024）。
-4. **A1/A2/B4** — A1 已有 campus.spec 覆盖可视为已验；A2（文字裁剪）纯目视，只能人工；
-   B4（旧存档 sceneKey 兼容）需构造旧格式存档读档，适合写测试。
+1. **B3（链式事件 ESC 回滚）** — 与 esc-cancel 测试同文件续写最顺手：
+   领带 nextEventId 的事件 → 选项进链 → 中途 ESC → 断言链上 once 事件未被永久屏蔽。
+   若复现 bug，修法：进链时记录涉及的所有 once id 统一回滚（cancelEvent 目前只回滚当前 ev）。
+2. **④ 新闻时序与 NEWS_TICKER 系统性对齐** — 路线图剩余唯一大块。
+   `src/data/news.ts` vs 游戏内 year/quarter 推进，逐条核对 ticker 与阶段是否违和。
+3. **B4（旧存档 sceneKey 兼容）** — 构造旧格式存档（sceneKey: 'InternshipScene' 等卡片场景）
+   读档，断言不白屏、不串场景；可写成测试。
+4. **A2（文字裁剪）** — 纯目视项，只能人工；A1 已有 campus.spec 覆盖视为已验。
 
 ## 验证基线（每次大改后）
 
 ```bash
 npx tsc --noEmit                          # 零错误（include 仅 src，tests/ 不在覆盖范围）
-npx playwright test --reporter=line       # 全量；balance-sim 偶发 flaky 属已知
+npx playwright test --reporter=line       # 全量；balance-sim 首跑 flaky 是环境成本（D4），重试即过
 ```
 
 ## 已知陷阱（沿用，前几轮踩过）
