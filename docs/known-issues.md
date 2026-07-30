@@ -53,13 +53,15 @@
 
 ## B. 排查中注意到、待查
 
-### B1. HMR 热重载期的 glTexture null 报错 ｜ 低 ｜ 待查（疑似仅开发期）
+### B1. HMR 热重载期的 glTexture null 报错 ｜ 低 ｜ 设计如此（仅开发期）
 - **现象**：dev server 日志出现 `TypeError: Cannot read properties of null (reading 'glTexture')`
   指向 `GaokaoScene.ts:108` 的 `labelText.setColor(...)`，以及类似的 pointerout 回调。
 - **判断**：时间戳都在改代码触发 HMR 的瞬间——旧场景 GameObject 被销毁（WebGL 贴图释放），
   残留的 `pointerover/out` 事件回调仍引用它。**疑似仅热重载产物，正常游玩与生产构建不出现**。
-- **待查**：生产 build 里快速划过高考选项时是否复现。若复现，需在 `pointerout` 回调里判空
-  或在 `shutdown` 时解绑事件。
+- **已验证**（2026-07-30）：`npm run build` 通过；`vite preview` 起生产包，
+  在高考选项区高频来回扫动 12 轮 × 多行（穿插 Enter 推进），
+  采集 pageerror **0 条**。确认仅为 HMR 产物，无需修。
+  （验证用临时测试跑完即删——生产包无 `__mod` 暴露，行为级验证足矣。）
 
 ### B2. NPC 站位挡交互点 / 站进墙里 ｜ 中 ｜ 已修已验
 - **现象**：早期 NPC 距门口 26px，站门口时按 E 永远触发对话、进不去地点（曾导致测试失败）。
