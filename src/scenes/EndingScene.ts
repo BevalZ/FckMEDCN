@@ -4,6 +4,7 @@ import { resetGame, getState } from '../data/gameState';
 import { REAL_EVENTS_AS_CARDS } from '../data/realEvents';
 import { sound } from '../audio/sound';
 import { clearSave } from '../data/save';
+import { recordEnding } from '../data/collection';
 
 export class EndingScene extends Phaser.Scene {
   private endingId!: string;
@@ -17,6 +18,8 @@ export class EndingScene extends Phaser.Scene {
     sound.stopBgm();
     sound.ending(ending.tone);
     clearSave();
+    // 收录进人生图鉴（跨周目累计，不受 clearSave 影响）
+    const rec = recordEnding(ending.id);
     const bg = this.add.graphics();
     bg.fillStyle(ending.bgColor);
     bg.fillRect(0, 0, 960, 540);
@@ -84,6 +87,16 @@ export class EndingScene extends Phaser.Scene {
       fontFamily: '"Courier New", monospace', fontSize: '11px', color: '#bbbbbb',
       wordWrap: { width: 840 }, align: 'center',
     }).setOrigin(0.5, 0);
+
+    // 图鉴收录提示：首次解锁高亮，非首次淡显进度
+    this.add.text(480, 474,
+      rec.isNew
+        ? `★ 新结局已收录进人生图鉴（${rec.unlocked}/${rec.total}）`
+        : `人生图鉴（${rec.unlocked}/${rec.total}）· 第 ${rec.runs} 次通关`,
+      {
+        fontFamily: '"Courier New", monospace', fontSize: '12px',
+        color: rec.isNew ? '#ffc107' : '#666666',
+      }).setOrigin(0.5, 0);
 
     const replayBtn = this.add.text(480, 506, '[ 再来一次 ]', {
       fontFamily: '"Courier New", monospace', fontSize: '14px', color: '#4fc3f7',

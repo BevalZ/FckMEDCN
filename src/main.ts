@@ -13,6 +13,7 @@ import { MasterScene, PhDScene } from './scenes/MasterScene';
 import { JobHuntScene } from './scenes/JobHuntScene';
 import { CareerScene } from './scenes/CareerScene';
 import { EndingScene, MentalCrisisScene } from './scenes/EndingScene';
+import { CollectionScene } from './scenes/CollectionScene';
 import { installTextPatch } from './ui/textPatch';
 
 // 全局文字补丁：修正中文字形顶部被裁（必须在任何场景 add.text 前安装）。
@@ -55,6 +56,7 @@ const config: Phaser.Types.Core.GameConfig = {
     CareerScene,
     EndingScene,
     MentalCrisisScene,
+    CollectionScene,
   ],
 };
 
@@ -80,10 +82,11 @@ if (import.meta.env.DEV) {
     import('./data/guipeiMap'),
     import('./ui/npcPlacement'),
     import('./ui/tilemap'),
-  ]).then(([gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm]) => {
+    import('./data/collection'),
+  ]).then(([gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col]) => {
     w.__state = gs.getState;
     w.__setFlag = gs.setFlag;
     w.__patchState = gs.patchState;
-    w.__mod = { gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm };
+    w.__mod = { gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col };
   });
 }

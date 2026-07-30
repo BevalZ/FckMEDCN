@@ -32,6 +32,7 @@ export class TitleScene extends Phaser.Scene {
     const sub = document.getElementById('title-sub');
     const startBtn = document.getElementById('title-start') as HTMLButtonElement | null;
     const contBtn = document.getElementById('title-continue') as HTMLButtonElement | null;
+    const galleryBtn = document.getElementById('title-gallery') as HTMLButtonElement | null;
 
     const fadeIn = (el: Element | null, delay: number) => {
       if (!el) return;
@@ -74,6 +75,16 @@ export class TitleScene extends Phaser.Scene {
       this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(key));
     };
 
+    const openGallery = () => {
+      if (leaving) return;
+      leaving = true;
+      overlay?.classList.remove('show');
+      sound.ensure();
+      sound.click();
+      this.cameras.main.fadeOut(300, 0, 0, 0);
+      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('CollectionScene'));
+    };
+
     const canContinue = hasSave();
     if (canContinue) {
       contBtn?.classList.add('show');
@@ -87,13 +98,18 @@ export class TitleScene extends Phaser.Scene {
       this.input.keyboard?.once('keydown-SPACE', startGame);
     }
 
+    // 人生图鉴：按钮或 G 键进入（跨周目收集，与单局存档无关）
+    galleryBtn?.addEventListener('click', openGallery);
+    fadeIn(galleryBtn, 1900);
+    this.input.keyboard?.once('keydown-G', openGallery);
+
     this.input.keyboard?.on('keydown-M', () => sound.toggleMute());
 
     // 离开该场景时清理：去掉 overlay、移除按钮监听
     this.events.once('shutdown', () => {
       overlay?.classList.remove('show');
       // cloneNode(true) 拿到一个干净的副本替换原节点，移除所有事件监听
-      [startBtn, contBtn].forEach((b) => b?.replaceWith(b.cloneNode(true)));
+      [startBtn, contBtn, galleryBtn].forEach((b) => b?.replaceWith(b.cloneNode(true)));
     });
   }
 }

@@ -166,6 +166,25 @@ export const ENDINGS: Ending[] = [
 
 export const ENDINGS_BY_ID: Record<string, Ending> = Object.fromEntries(ENDINGS.map(e => [e.id, e]));
 
+// 图鉴中未解锁结局的提示文案（轻微剧透，指引多周目尝试方向）
+export const ENDING_HINTS: Record<string, string> = {
+  quit_guipei: '规培期间撑不下去时，认真考虑"离开"这个选项。',
+  exhausted_attending: '走完职业路，但声望平平、或生活没顾上。',
+  stable_at_45: '评上主治/副高，并把声望维持住。',
+  chief_at_45: '评上副高之后，在职业后期再冲刺正高。',
+  top_surgeon: '论文 8 篇以上，声望拔尖。',
+  community_doctor: '求职或规培时，选择去基层/回家乡。',
+  medical_affairs: '实习或规培时，抓住转行医药产业的机会。',
+  overseas_doctor: '选择出国行医，且学识足够过硬。',
+  burnout_early: '心理长期低迷，却一直没有好好休整。',
+  academic_star: '论文 6 篇以上，科研能力突出。',
+  grassroots_hero: '去基层，并把身边的人处成自己人。',
+  left_undergrad: '本科期间，真的递交退学申请。',
+  disgraced: '学术造假，被重度曝光。',
+  lucky_fraud: '造过假、没被抓，还评上了职称。',
+  master_clinician: '临床能力出众、论文很少、病人认你。',
+};
+
 export function determineEnding(state: GameState): Ending {
   const { stats, flags } = state;
   const age = stats.age;
