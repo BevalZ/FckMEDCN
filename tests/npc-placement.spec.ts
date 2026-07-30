@@ -19,7 +19,7 @@ const TURNS = 24;
 
 async function bootModules(page: Page) {
   await page.goto(BASE, { waitUntil: 'load' });
-  await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 60000 });
+  await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 120000 });
 }
 
 interface Problem {

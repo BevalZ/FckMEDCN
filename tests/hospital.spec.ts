@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
 
 const BASE = 'http://127.0.0.1:5173/';
 
-async function waitForScene(page: Page, key: string, timeout = 60000) {
+async function waitForScene(page: Page, key: string, timeout = 120000) {
   await page.waitForFunction(
     (k) => ((window as any).game?.scene?.getScenes(true) ?? []).some((s: any) => s.sys.settings.key === k),
     key, { timeout },
@@ -23,7 +23,7 @@ test('HospitalScene: 从校园过渡到实习医院', async ({ page }) => {
 
   // 进入游戏
   await page.goto(BASE, { waitUntil: 'load' });
-  await waitForScene(page, 'TitleScene', 60000);
+  await waitForScene(page, 'TitleScene', 120000);
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: 'load' });
   await waitForScene(page, 'TitleScene');
@@ -88,7 +88,7 @@ test('HospitalScene: 地图渲染与交互点', async ({ page }) => {
   page.on('console', m => { if (m.type() === 'error' && !/AudioContext|audio device|WebAudio/i.test(m.text())) errors.push('CONSOLE: ' + m.text()); });
 
   await page.goto(BASE, { waitUntil: 'load' });
-  await waitForScene(page, 'TitleScene', 60000);
+  await waitForScene(page, 'TitleScene', 120000);
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: 'load' });
   await waitForScene(page, 'TitleScene');

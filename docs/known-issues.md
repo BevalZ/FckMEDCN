@@ -38,15 +38,16 @@
 - **潜在副作用**：padding 使 Text 变高。基于实测 `height` 的布局（EventCard/InteractPrompt）
   会自适应，但**定死 y 坐标**的文字可能轻微下移。需目视确认没有错位。
 
-### A3. 进入对话无法退出 ｜ 中 ｜ 已修待验
+### A3. 进入对话无法退出 ｜ 中 ｜ 已修已验
 - **现象**：进对话后只能选一项才能出来，没有取消途径。
 - **修复**：EventCard 加可选 `onCancel`，ESC 触发；三个可行走场景传入 `cancelEvent(ev)`，
   干净回滚（撤销 once 标记、退还 NPC 可聊资格并重新点亮感叹号、不消耗行动点、解冻角色）。
   卡片右上角显示 `ESC 离开`。
 - **设计边界**：卡片式阶段（硕博/求职/职业，BaseStageScene）**不**提供 ESC 取消——
   那里事件即本回合，取消会导致回合无法推进。见 [D1]。
-- **待验**：进对话按 ESC 应退出；退出后行动点不减、感叹号仍在、可重新交互。
-  尤其验 NPC 对话取消后"本季可聊"确实恢复。
+- **已验**（2026-07-30）：新增 `tests/esc-cancel.spec.ts` 两条用例——
+  ① NPC 对话 ESC 后 talkedThisQuarter 退还、行动点不扣、可立刻重聊；
+  ② once 事件 ESC 后 firedEvents 标记回滚。全量 28 passed。
 
 ---
 
@@ -158,6 +159,15 @@
 ### D3. 本科多数打法存款为负
 本科阶段 income(3000) < cost(3800) 是刻意设计（学制长、花费大）。负债是真实后果，
 不是数值配错。
+
+### D4. balance-sim 首跑超时是环境成本，非游戏逻辑
+全量回归常报 `balance-sim 1 flaky`（重试即过）。已逐层排除：
+ vite 服务器秒回（curl 实测 <0.1s）、该用例无断言、杀了 7-27 残留的 vite 进程也无改善。
+真因是 Windows 上每轮首次启动 Chromium + 解析 Phaser 1.4MB 的环境成本（杀软扫描），
+偶超 120s 卡在 `waitForScene('TitleScene')`；retry 时环境已热，秒过。
+`retries:1` 是为此设的兜底，exit 恒为 0，看到 "1 flaky" 不必排查。
+另：`reuseExistingServer:true` 会复用 5173 上残留的旧 dev server——
+若行为异常先查端口占用（曾发现 3 天前的 vite 还在跑）。
 
 ---
 

@@ -8,7 +8,7 @@ import type { Page } from '@playwright/test';
 
 const BASE = 'http://127.0.0.1:5173/';
 
-async function waitForScene(page: Page, key: string, timeout = 60000) {
+async function waitForScene(page: Page, key: string, timeout = 120000) {
   await page.waitForFunction(
     (k) => ((window as any).game?.scene?.getScenes(true) ?? []).some((s: any) => s.sys.settings.key === k),
     key, { timeout },

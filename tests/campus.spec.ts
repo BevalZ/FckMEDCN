@@ -44,7 +44,7 @@ function campusState(page: Page) {
 async function enterCampus(page: Page) {
   await page.goto(BASE, { waitUntil: 'load' });
   // 首次访问时 Vite 需现场转译 Phaser（~1.4MB），冷启动可能明显慢于后续用例
-  await waitForScene(page, 'TitleScene', 60000);
+  await waitForScene(page, 'TitleScene', 120000);
   // 清掉上一次运行留下的存档，保证每个用例都是全新开局
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: 'load' });
