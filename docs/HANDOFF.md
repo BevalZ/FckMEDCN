@@ -1,23 +1,23 @@
-# 阶段性总结 - A3 回归已补、测试基建稳定
+# 阶段性总结 - B3 链式 ESC 已闭环，发现 B7 场景链缺失
 
 ## 当前状态
 
-- **B2（NPC 站位）、B6（lifecycle-sim 偶发）、A3（ESC 取消）均已修已验**，
-  全量 28 用例绿（exit=0）。
-- **测试基建**：所有场景等待统一放宽到 120s（Windows 首启 Chromium + Phaser 环境成本，
-  见 known-issues D4）；lifecycle-sim 已播种（mulberry32），结果确定可复现。
-- **git 仓库已重建**（2026-07-30），三个提交：initial → B6 → A3。
-- ⚠️ `reuseExistingServer` 会复用 5173 残留 dev server；行为异常先查端口（已杀过 3 天前的残留进程）。
+- **B2（NPC 站位）、B6（lifecycle 偶发）、A3（ESC 取消）、B3（链式 ESC）均已修已验**，
+  全量 29 用例绿（exit=0；balance-sim 首跑 flaky 是 Windows 环境成本，见 D4）。
+- **测试基建**：场景等待统一 120s；lifecycle-sim 已播种可复现；
+  esc-cancel 三例覆盖 NPC 退还 / once 回滚 / 链上禁 ESC。
+- **git 仓库健康**，工作区干净，提交历史连续。
 
 ## 下一轮候选（按优先级）
 
-1. **B3（链式事件 ESC 回滚）** — 与 esc-cancel 测试同文件续写最顺手：
-   领带 nextEventId 的事件 → 选项进链 → 中途 ESC → 断言链上 once 事件未被永久屏蔽。
-   若复现 bug，修法：进链时记录涉及的所有 once id 统一回滚（cancelEvent 目前只回滚当前 ev）。
+1. **B7（实习/规培场景不续接链式事件）** — B3 排查时的连带发现。
+   `HospitalScene`/`GuipeiWalkScene` 的 handleChoice 没有 resolveChained，
+   规培链（m2_gp_quit_think→confirm→left/stay 等）即时续接被静默丢弃。
+   修法：移植 CampusScene 的 `resolveChained` + `openEvent(ev, chained)`（保持链上禁 ESC），
+   并在 esc-cancel 或新文件补规培链回归。先确认疏漏 vs 有意（倾向疏漏，见 known-issues B7）。
 2. **④ 新闻时序与 NEWS_TICKER 系统性对齐** — 路线图剩余唯一大块。
    `src/data/news.ts` vs 游戏内 year/quarter 推进，逐条核对 ticker 与阶段是否违和。
-3. **B4（旧存档 sceneKey 兼容）** — 构造旧格式存档（sceneKey: 'InternshipScene' 等卡片场景）
-   读档，断言不白屏、不串场景；可写成测试。
+3. **B4（旧存档 sceneKey 兼容）** — 构造旧格式存档读档，断言不白屏、不串场景；可写成测试。
 4. **A2（文字裁剪）** — 纯目视项，只能人工；A1 已有 campus.spec 覆盖视为已验。
 
 ## 验证基线（每次大改后）
