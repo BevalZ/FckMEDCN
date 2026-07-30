@@ -96,12 +96,20 @@
   链卡 ESC 不关闭、整链只扣 1 行动点、storyletUsed=true、两个 once 标记与 flag 均正确。
   全量 29 用例绿。
 
-### B4. 存档跨场景兼容 ｜ 中 ｜ 待查
+### B4. 存档跨场景兼容 ｜ 中 ｜ 已修已验
 - **现象/疑点**：新增了 CampusScene/HospitalScene/GuipeiWalkScene 三个可行走场景，
   存档以 `sceneKey` 恢复。旧存档 `sceneKey` 可能是 `UndergradScene`/`InternshipScene`/`GuipeiScene`
   （卡片版）。这些卡片场景仍注册着，理论上能读，但玩家会在同一周目里从可行走版切到卡片版。
-- **待查**：用旧格式存档（`sceneKey: 'InternshipScene'`）读档，确认不白屏、不串场景；
-  以及可行走场景存的档在卡片场景注册被移除后是否安全降级。
+- **验证结论**（2026-07-30，`tests/save-compat.spec.ts`）：
+  ① 卡片场景 sceneKey（InternshipScene/GuipeiScene）读档**正常**——场景启动、
+  季度/年份保留、firedEvents 恢复到场景（卡片场景本就为兼容保留注册，见 main.ts 注释）；
+  ② sceneKey 已删除（如未来的 TotallyDeletedScene）此前会**黑屏**——
+  `scene.start` 找不到 key 直接静默卡死。
+- **修复**：`TitleScene.continueGame` 在 start 前校验 sceneKey 是否注册，
+  未注册则按存档 stage 降级到现行场景（SCENE_BY_STAGE 映射：实习→HospitalScene 等）；
+  stage 也不认识则回退新开局。注意 applySave 必须在确认 key 可用之后才调用，
+  否则旧 stage 会污染新开局状态。
+- **已验**：三条用例全过（两条卡片场景直读 + 一条删除场景降级 HospitalScene），全量 36 用例绿。
 
 ### B5. determineEnding 的 flag 来源已核实 ｜ — ｜ 已验证无死结局
 - **背景**：核对 `determineEnding` 引用的全部 flag 是否都有事件 `flagSet` 来源，

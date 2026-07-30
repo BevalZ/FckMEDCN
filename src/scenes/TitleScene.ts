@@ -6,6 +6,18 @@ import { hasSave, loadSave, applySave } from '../data/save';
 // 标题界面。M5 之后改用 HTML 覆盖层（index.html 中的 #title-overlay）渲染文本，
 // 这样可以由浏览器做真正的字体抗锯齿/重采样，Phaser 画布文字"细笔画被裁"的问题不会复现。
 // Phaser 这边只负责：背景底色、场景淡出/启动、键盘 SPACE 快捷键、静音快捷键、进度。
+// 存档 sceneKey 失效（旧版本场景被删/改名）时的降级目标：按存档的 stage 落到现行场景。
+// 防止读档后 scene.start 找不到场景而黑屏（B4）。
+const SCENE_BY_STAGE: Record<string, string> = {
+  undergrad: 'CampusScene',
+  internship: 'HospitalScene',
+  guipei: 'GuipeiWalkScene',
+  master: 'MasterScene',
+  phd: 'PhDScene',
+  jobhunt: 'JobHuntScene',
+  career: 'CareerScene',
+};
+
 export class TitleScene extends Phaser.Scene {
   constructor() { super({ key: 'TitleScene' }); }
 
@@ -48,13 +60,18 @@ export class TitleScene extends Phaser.Scene {
       if (leaving) return;
       const blob = loadSave();
       if (!blob) { startGame(); return; }
+      // sceneKey 失效时按 stage 降级到现行场景；stage 也不认识就重开一局（B4）
+      const key = this.scene.get(blob.sceneKey)
+        ? blob.sceneKey
+        : SCENE_BY_STAGE[blob.state?.stage as string];
+      if (!key) { startGame(); return; }
       leaving = true;
       overlay?.classList.remove('show');
       sound.ensure();
       sound.startBgm();
       applySave(blob);
       this.cameras.main.fadeOut(400, 0, 0, 0);
-      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(blob.sceneKey));
+      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(key));
     };
 
     const canContinue = hasSave();
