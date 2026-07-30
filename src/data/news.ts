@@ -15,7 +15,6 @@ export const NEWS_TICKER: NewsTickerItem[] = [
   // —— 2024 ——
   { id: 'n2024q3_1', year: 2024, quarter: 3, headline: '【教育部：2024年临床医学专业报考人数同比增长23%】', type: 'event' },
   { id: 'n2024q3_2', year: 2024, quarter: 3, headline: '【协哈医学院分数线再创新高，八年制本博连读投档位次前移】', type: 'event' },
-  { id: 'n2024q4_1', year: 2024, quarter: 4, headline: '【两会代表提案：建议规培生补助提升至8万元/年】', type: 'warning' },
   { id: 'n2024q4_2', year: 2024, quarter: 4, headline: '【旺填朝案宣判：某三甲医院院长受贿千万，获刑十二年】', type: 'warning' },
   { id: 'n2024q4_3', year: 2024, quarter: 4, headline: '【张昱医生实名举报肿瘤治疗乱象，相关机构介入调查】', type: 'event' },
   { id: 'n2024q4_4', year: 2024, quarter: 4, headline: '【余鹰医生公开辞职：急诊科太累了，我去开诊所】', type: 'irony' },
@@ -24,6 +23,8 @@ export const NEWS_TICKER: NewsTickerItem[] = [
   { id: 'n2025q1_1', year: 2025, quarter: 1, headline: '【2·23伤医事件后续：多地医院上线安检与警医联动】', type: 'tragedy' },
   { id: 'n2025q1_2', year: 2025, quarter: 1, headline: '【刘晋急诊科专访：一晚上接诊百人，我也在吃救心丸】', type: 'irony' },
   { id: 'n2025q1_3', year: 2025, quarter: 1, headline: '【某院规培医师连续夜班后猝死，年仅26岁】', type: 'tragedy' },
+  // 两会在 3 月（Q1）召开，提案类新闻应落在 Q1（原误置 2024Q4）
+  { id: 'n2025q1_4', year: 2025, quarter: 1, headline: '【两会代表提案：建议规培生补助提升至8万元/年】', type: 'warning' },
   { id: 'n2025q2_1', year: 2025, quarter: 2, headline: '【执业医师资格考试改革：技能考试通过率降至六成】', type: 'warning' },
   { id: 'n2025q2_2', year: 2025, quarter: 2, headline: '【湘雅某科室疑似数据造假，被期刊撤稿调查】', type: 'warning' },
   { id: 'n2025q3_1', year: 2025, quarter: 3, headline: '【107篇论文集中撤稿，涉及多家三甲医院与高校】', type: 'warning' },
@@ -71,8 +72,9 @@ export const NEWS_TICKER: NewsTickerItem[] = [
   { id: 'n2031q3_1', year: 2031, quarter: 3, headline: '【青年医生心理健康被纳入考核：医院须配驻点心理师】', type: 'warning' },
   { id: 'n2031q4_1', year: 2031, quarter: 4, headline: '【医保支付方式改革：医生也要算"性价比"】', type: 'irony' },
   { id: 'n2032q1_1', year: 2032, quarter: 1, headline: '【人工智能辅诊写入规范：最终责任仍在医生】', type: 'event' },
-  { id: 'n2032q2_1', year: 2032, quarter: 2, headline: '【又一年医师节：致敬，也呼吁被看见的疲惫】', type: 'irony' },
   { id: 'n2032q3_1', year: 2032, quarter: 3, headline: '【三甲评审趋严：科研指标权重再调整】', type: 'warning' },
+  // 中国医师节是 8 月 19 日（Q3），原误置 Q2
+  { id: 'n2032q3_2', year: 2032, quarter: 3, headline: '【又一年医师节：致敬，也呼吁被看见的疲惫】', type: 'irony' },
   { id: 'n2032q4_1', year: 2032, quarter: 4, headline: '【多点执业常态化：医生周末"走穴"不再敏感】', type: 'event' },
   { id: 'n2033q1_1', year: 2033, quarter: 1, headline: '【儿科、急诊、病理持续缺人：定向培养扩招】', type: 'warning' },
   { id: 'n2033q2_1', year: 2033, quarter: 2, headline: '【某中年医生带病在岗突发心梗，同行唏嘘】', type: 'tragedy' },
@@ -84,4 +86,24 @@ export const NEWS_TICKER: NewsTickerItem[] = [
   { id: 'n2034q4_1', year: 2034, quarter: 4, headline: '【又一批医院亏损：运营压力传导到科室】', type: 'warning' },
   { id: 'n2035q1_1', year: 2035, quarter: 1, headline: '【医师法修订征求意见：规培待遇再被聚焦】', type: 'warning' },
   { id: 'n2035q2_1', year: 2035, quarter: 2, headline: '【银发医生返聘成趋势：经验被重新珍惜】', type: 'event' },
+
+  // —— 2036–2044（覆盖硕博/求职/职业阶段，管线终点约 2044Q3；此前 2036 起滚动条断粮）——
+  { id: 'n2036q1_1', year: 2036, quarter: 1, headline: '【DRG/DIP 支付改革全面铺开：科室开始学算账】', type: 'event' },
+  { id: 'n2036q3_1', year: 2036, quarter: 3, headline: '【专硕与规培并轨十年评估：有人省时，有人喊累】', type: 'irony' },
+  { id: 'n2037q2_1', year: 2037, quarter: 2, headline: '【延迟退休落地首批：老专家门诊排到了明年】', type: 'event' },
+  { id: 'n2037q4_1', year: 2037, quarter: 4, headline: '【考研报名连年高位：医学热度不降反升】', type: 'warning' },
+  { id: 'n2038q1_1', year: 2038, quarter: 1, headline: '【青年医师心理援助热线上线：夜班后可以打个电话】', type: 'event' },
+  { id: 'n2038q3_1', year: 2038, quarter: 3, headline: '【某副主任医师评审现场晕倒，同行唏嘘"材料比病人多"】', type: 'tragedy' },
+  { id: 'n2039q2_1', year: 2039, quarter: 2, headline: '【医疗反腐常态化：器械采购全程留痕】', type: 'warning' },
+  { id: 'n2039q4_1', year: 2039, quarter: 4, headline: '【县域医共体二期启动：专家下沉排班表引热议】', type: 'event' },
+  { id: 'n2040q1_1', year: 2040, quarter: 1, headline: '【AI 病历责任首案宣判：签字医师负最终责任】', type: 'warning' },
+  { id: 'n2040q3_1', year: 2040, quarter: 3, headline: '【临床医学招生回暖：状元回流医学院】', type: 'event' },
+  { id: 'n2041q2_1', year: 2041, quarter: 2, headline: '【副高评审破"唯论文"试点扩面：临床工作量入指标】', type: 'event' },
+  { id: 'n2041q4_1', year: 2041, quarter: 4, headline: '【求职季观察：三甲门槛博士起，基层编制无人问】', type: 'irony' },
+  { id: 'n2042q1_1', year: 2042, quarter: 1, headline: '【老龄化加深：大医院一床难求，安宁疗护纳入医保】', type: 'event' },
+  { id: 'n2042q3_1', year: 2042, quarter: 3, headline: '【中年医生健康白皮书：过劳指标全线飘红】', type: 'tragedy' },
+  { id: 'n2043q2_1', year: 2043, quarter: 2, headline: '【手术机器人准入规范出台：资质分级管理】', type: 'event' },
+  { id: 'n2043q4_1', year: 2043, quarter: 4, headline: '【住培待遇再评估：与专硕奖学金打通呼声高】', type: 'warning' },
+  { id: 'n2044q1_1', year: 2044, quarter: 1, headline: '【医学教育学制再讨论：5+3+X 要不要减一减】', type: 'irony' },
+  { id: 'n2044q2_1', year: 2044, quarter: 2, headline: '【又一年招聘季：大医院排队面试，县医院排队求人】', type: 'event' },
 ];
