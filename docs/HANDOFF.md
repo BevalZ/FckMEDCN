@@ -1,25 +1,22 @@
-# 阶段性总结 - ④ 新闻时序已对齐，路线图四大项全部闭环
+# 阶段性总结 - B4 已闭环，known-issues 可行动项仅剩 B1/A2
 
 ## 当前状态
 
-- **路线图 ①②③④ 全部完成**：④ 新闻时序 2026-07-30 收尾——
-  管线实测 81 季（2024Q3→2044Q3），ticker 原止 2035Q2（硕博起断粮 8 年），
-  已延伸 2036-2044 共 18 条并修正两会（Q4→2025Q1）、医师节（Q2→Q3）两处季节违和；
-  静态回归 `tests/news-timeline.spec.ts` 从场景源码读 MAX_TURNS 逐年断言不断粮。
-- **known-issues 已修已验**：B2、B6、A3、B3、B7；全量 **33 用例绿**（exit=0，
-  balance-sim 首跑 flaky 是 Windows 环境成本，见 D4）。
+- **路线图 ①②③④ 全部完成**；known-issues **B2/B6/A3/B3/B7/B4 全部已修已验**。
+- 全量 **36 用例绿**（exit=0，balance-sim 首跑 flaky 是 Windows 环境成本，见 known-issues D4）。
 - git 仓库健康，工作区干净。
+- 剩余项：**B1**（HMR glTexture，疑似仅开发期，需生产 build 验证）、
+  **A2**（文字裁剪，纯目视人工项）。
 
-## 下一轮候选（按优先级）
+## 下一轮候选
 
-1. **B4（旧存档 sceneKey 兼容）** — 构造旧格式存档（sceneKey: 'InternshipScene' 等卡片场景）
-   读档，断言不白屏、不串场景；可写成测试。这是 known-issues 里最后一个"待查"。
-2. **B1（HMR glTexture）** — 低优先，疑似仅开发期热重载产物；生产 build 快速划过高考选项验证。
-3. **A2（文字裁剪）** — 纯目视项，只能人工；A1 已有 campus.spec 覆盖视为已验。
-4. 之后：路线图本身已无待办，可转向新内容（事件扩充/数值微调/新系统），
-   届时与用户确认方向。
+1. **B1（HMR glTexture）** — 生产 build（`npm run build` + `vite preview`）里快速划过
+   高考选项，看 `labelText.setColor` 的 null 报错是否复现；同时顺便验证构建本身是否健康
+   （回归清单的 build 步骤久未执行）。不复现则标记"仅开发期"关闭。
+2. **A2（文字裁剪）** — 纯目视，只能人工，建议用户试玩时确认大标题/卡片标题/HUD 小字。
+3. 之后路线图与 known-issues 均无开发项，与用户确认新方向（事件扩充/数值/新系统）。
 
-## 场景转换测试经验（B7 排障得来，写新测试前先读）
+## 场景转换测试经验（写新测试前先读）
 
 - 医院出生点在办公室门口，**不是**睡觉点：睡觉得先 `tileCenter` 传送到值班室 door `[25,11]`。
 - 各场景 MAX_TURNS：本科 20 / 实习 **5** / 规培 12 / 硕 12 / 博 16 / 求职 4 / 职业 12
@@ -30,6 +27,7 @@
 
 ```bash
 npx tsc --noEmit                          # 零错误（include 仅 src，tests/ 不在覆盖范围）
+npm run build                             # 构建通过
 npx playwright test --reporter=line       # 全量；balance-sim 首跑 flaky 是环境成本（D4），重试即过
 ```
 
