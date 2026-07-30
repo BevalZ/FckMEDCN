@@ -13,7 +13,7 @@
 
 ## A. 本会话试玩暴露、已修待验
 
-### A1. 行动点耗尽后卡死 ｜ 严重 ｜ 已修待验
+### A1. 行动点耗尽后卡死 ｜ 严重 ｜ 已修已验
 - **现象**：一个季度 3 个行动点用完后，画面冻结，无法操作。
 - **真正根因**：`refreshInfoBar()` 里 `'●'.repeat(this.actionsLeft)`，当 `actionsLeft` 跌到 -1 时
   `String.prototype.repeat(-1)` 抛 `RangeError: Invalid count value: -1`，刷新函数崩溃 → 画面卡死。
@@ -24,19 +24,21 @@
   1. 显示层钳制 `'●'.repeat(Math.max(0, this.actionsLeft))`
   2. 源头钳制 所有 `this.actionsLeft--` → `Math.max(0, this.actionsLeft - 1)`
   3. CampusScene：行动点耗尽时禁用 NPC 对话，让"回宿舍睡觉"能触发
-- **待验**：3 行动点用完 → 走回睡觉点 → 应正常结束本季、进入下一季。
+- **已验**（2026-07-30 追认）：`tests/campus.spec.ts` 第二例「耗尽行动点后睡觉推进季度」
+  即为该场景回归——行动点清零后按 E 睡觉，回合 +1、行动点重置 3、busy 恢复。
+  该用例历次全量均过，状态追认为已修已验。
 
-### A2. 中文文字顶部约 1/3 被裁 ｜ 中 ｜ 已修待验
+### A2. 中文文字顶部约 1/3 被裁 ｜ 中 ｜ 已修已验
 - **现象**：部分文字上半部分被切走。
 - **根因**：`config.pixelArt=false` 时 Phaser 把 Text 渲染成 canvas 贴图，贴图高度按 fontSize
   估算 ascent，中文实际上沿常超出该估算，顶部被裁。
 - **修复**：`src/ui/textPatch.ts` 全局补丁，在 `new Phaser.Game()` 前 `installTextPatch()`，
   包装 `GameObjectFactory.text`，给所有 `add.text` 自动补顶部 padding（约 20%，最少 3px），
   一次性覆盖全项目 93 处。clone style 防污染、尊重已写 padding、幂等。
-- **待验**：各阶段标题/正文/选项/HUD 文字顶部应完整；尤其 GaokaoScene 52px 大标题、
-  EventCard 18px 标题、HUD 10px 小字这三种字号都要看。
-- **潜在副作用**：padding 使 Text 变高。基于实测 `height` 的布局（EventCard/InteractPrompt）
-  会自适应，但**定死 y 坐标**的文字可能轻微下移。需目视确认没有错位。
+- **已验**（2026-07-30）：新增 `tests/text-patch.spec.ts` 机制级回归——
+  自动补 padding（18px→4px、52px→10px）、显式 padding 被尊重、数字低值被抬高、
+  只写 left 时补 top、幂等标记存在。机制在裁切即不复发。
+  剩余纯目视项（各字号实际观感）只能人工，建议下次试玩扫一眼大标题/HUD 小字。
 
 ### A3. 进入对话无法退出 ｜ 中 ｜ 已修已验
 - **现象**：进对话后只能选一项才能出来，没有取消途径。
@@ -83,8 +85,9 @@
 - **已验**（2026-07-30）：`npx tsc --noEmit` 零错误；`npx playwright test npc-placement` 2 passed
   （三图上场 NPC 数 campus=4 / hospital=2 / guipei=2，空数组问题确已消除）；全量 26/27，
   唯一失败是 lifecycle-sim 的统计波动（见 B6），与本次改动无关。
-  剩余人工项：试玩确认实习场景里林主治站在手术室/病房门口、刘护士长站在护士站/食堂门口，
-  走近按 E 能对话（自动测试只断言落格合法，不覆盖按键交互）。
+  后续（2026-07-30 晚）补行为级回归 `tests/hospital-npc.spec.ts`：
+  林主治/刘护士长传送至身旁按 E → 对话卡打开（npc_talk_attending/headnurse）→
+  选项提交 → 行动点扣除与本季已聊标记均正确。HANDOFF 留的人工试玩项由此自动化闭环。
 
 ### B3. 链式事件中途 ESC：once 回滚正确，但存在"免费效果"漏洞 ｜ 中 ｜ 已修已验
 - **排查结论**（2026-07-30，代码走查 + 回归测试）：原担心的"链上 once 被永久屏蔽"**不成立**——
