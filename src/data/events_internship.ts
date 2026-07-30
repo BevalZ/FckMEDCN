@@ -1,0 +1,171 @@
+import type { GameEvent } from './events';
+
+// 实习阶段事件池（internship）。实习仅 5 回合，事件需精炼且冲击感强。
+export const INTERNSHIP_EVENTS: GameEvent[] = [
+  {
+    id: 'first_medical_record',
+    stage: 'internship',
+    title: '第一次写病历',
+    body: '带教老师把一份空白病历推给你："主诉、现病史、既往史，自己写。"你的手在键盘上悬了十分钟。',
+    category: 'clinical',
+    weight: 100,
+    once: true,
+    choices: [
+      { text: '照模板认真写', delta: { knowledge: 6, stamina: -5, reputation: 3 }, flagSet: 'wrote_record', consequence: '老师改了三处，说"还行，比上次那届强"。' },
+      { text: '抄旧病历改改', delta: { knowledge: 1, stamina: -2, reputation: -2 }, consequence: '你把"男"写成了"女"，被当场抓包。' },
+    ],
+  },
+  {
+    id: 'first_puncture',
+    stage: 'internship',
+    title: '第一次穿刺',
+    body: '腰穿。你拿着针，手抖得穿刺针在皮下打滑。患者问："大夫，你还行吗？"',
+    category: 'clinical',
+    weight: 90,
+    choices: [
+      { text: '深吸一口气，稳住', delta: { knowledge: 5, stamina: -8, reputation: 3 }, flagSet: 'did_puncture', consequence: '"突破感"传来，脑脊液滴了出来。' },
+      { text: '请老师接手', delta: { knowledge: 2, reputation: -3, sanity: -3 }, consequence: '老师利落地完成，你看清了全程。' },
+    ],
+  },
+  {
+    id: 'scolded_by_preceptor',
+    stage: 'internship',
+    title: '被带教老师骂',
+    body: '"这都记不住？书本都吃到狗肚子里了？"走廊里，老师的声音不大但全科室都听见了。',
+    category: 'clinical',
+    weight: 80,
+    choices: [
+      { text: '低头认错，记下要点', delta: { knowledge: 4, sanity: -5, reputation: 2 }, flagSet: 'scolded', consequence: '你把那句话写在了笔记本首页。' },
+      { text: '顶一句嘴', delta: { sanity: -2, relations: -6, reputation: -4 }, consequence: '气氛僵了，后面两周都不好过。' },
+      { text: '表面听话，内心委屈', delta: { sanity: -8, stamina: -2 }, consequence: '你躲进更衣室，红了眼眶。' },
+    ],
+  },
+  {
+    id: 'first_night_shift',
+    stage: 'internship',
+    title: '第一个夜班',
+    body: '22:00 到次日 8:00。凌晨三点，监护仪报警，护士喊"快来"。你光着拖鞋跑过去——呼叫铃此起彼伏。',
+    category: 'clinical',
+    weight: 85,
+    once: true,
+    minigame: 'nightshift',
+    choices: [
+      // 小游戏结果会覆盖；保留作无小游戏回退
+      { text: '绷紧神经扛下来', delta: { stamina: -16, knowledge: 5, sanity: -4 }, flagSet: 'night_shift_done', consequence: '天亮交班时你靠墙站了一会儿。' },
+      { text: '偷偷眯一会儿', delta: { stamina: -6, sanity: 2, reputation: -5 }, consequence: '还好没出事，但你后怕了一整天。' },
+    ],
+  },
+  {
+    id: 'first_cpr',
+    stage: 'internship',
+    title: '第一次胸外按压',
+    body: '抢救室。老师把你的手按在病人胸骨上："一百到一百二，跟着我数。"监护仪的尖鸣刺进耳朵。',
+    category: 'clinical',
+    weight: 80,
+    minTurn: 2,
+    once: true,
+    minigame: 'cpr',
+    choices: [
+      { text: '跟着节拍按', delta: { clinical: 5, stamina: -12, sanity: -3 }, flagSet: 'cpr_done', consequence: '你按完了两分钟。换人时手在抖，但病人还在。' },
+      { text: '退到一边看着', delta: { clinical: 1, sanity: -6, reputation: -2 }, consequence: '老师没说什么，但你知道自己退了。' },
+    ],
+  },
+  {
+    id: 'uncooperative_patient',
+    stage: 'internship',
+    title: '不配合的患者',
+    body: '一位大爷拒绝抽血："我好好的抽什么血！你们就是骗钱！"家属在旁边录像。',
+    category: 'clinical',
+    weight: 75,
+    choices: [
+      { text: '蹲下来慢慢解释', delta: { relations: 5, stamina: -4, reputation: 2 }, consequence: '大爷最终撸起袖子："冲你这态度。"' },
+      { text: '请老师/家属协助', delta: { stamina: -2, reputation: 1 }, consequence: '老师在旁一句话，大爷就听话了。' },
+      { text: '按规定强硬处理', delta: { relations: -8, sanity: -3 }, consequence: '血抽了，但大爷骂骂咧咧。' },
+    ],
+  },
+  {
+    id: 'rotation_choice',
+    stage: 'internship',
+    title: '轮转科室选择',
+    body: '下个月轮转。内科平稳但枯燥，外科潇洒但累，急诊刺激但费命。你只有两周考虑。',
+    category: 'clinical',
+    weight: 70,
+    choices: [
+      { text: '选外科，练手感', delta: { knowledge: 4, stamina: -6, reputation: 2 }, flagSet: 'rotation_surgery', consequence: '站了一天手术台，腿肿了但爽。' },
+      { text: '选内科，打基础', delta: { knowledge: 5, stamina: -3 }, flagSet: 'rotation_internal', consequence: '你学会了看片子、理思路。' },
+      { text: '选急诊，见世面', delta: { knowledge: 4, stamina: -10, sanity: -4 }, flagSet: 'rotation_er', consequence: '一晚见识了人间百态。' },
+    ],
+  },
+  {
+    id: 'first_death',
+    stage: 'internship',
+    title: '第一次送走病人',
+    body: '抢救四十分钟，心电图最终拉成一条直线。老师合上逝者的眼，让你去写死亡记录。',
+    category: 'mental',
+    weight: 80,
+    once: true,
+    choices: [
+      { text: '默默写好记录', delta: { knowledge: 4, sanity: -10, stamina: -4 }, flagSet: 'saw_death', consequence: '你第一次明白，有些病真的救不回来。' },
+      { text: '躲在楼梯间缓一缓', delta: { sanity: -6, stamina: -2 }, consequence: '你给家里发了条"我没事"的消息。' },
+    ],
+  },
+  {
+    id: 'near_med_error',
+    stage: 'internship',
+    title: '差点写错的医嘱',
+    body: '你把"10mg"的胰岛素开成了"10 支"。药师核对时拦了下来。冷汗瞬间湿了后背。',
+    category: 'clinical',
+    weight: 65,
+    choices: [
+      { text: '郑重道谢，记进错题本', delta: { knowledge: 4, sanity: -4, reputation: 1 }, flagSet: 'near_error', consequence: '你贴了张便签在电脑边："核对、再核对。"' },
+      { text: '觉得小题大做', delta: { knowledge: 0, sanity: -2, reputation: -3 }, consequence: '你没当回事，但这根弦松了。' },
+    ],
+  },
+  {
+    id: 'patient_thanks',
+    stage: 'internship',
+    title: '一面锦旗',
+    body: '你管床的阿姨康复出院，塞来一封手写信："小大夫，谢谢你每次都笑着进来。"',
+    category: 'social',
+    weight: 60,
+    choices: [
+      { text: '认真收下，存进相册', delta: { sanity: 10, relations: 5, reputation: 3 }, consequence: '那封信你后来低谷时常翻出来看。' },
+      { text: '客气推辞', delta: { relations: 2, sanity: 3 }, consequence: '你嘴上说不用，心里却暖。' },
+    ],
+  },
+  {
+    id: 'outbreak_surge',
+    stage: 'internship',
+    title: '突发公卫事件',
+    body: '流感季叠加突发传染病，急诊走廊加满了床。你被临时抽调去分诊，口罩戴到耳根发痛。',
+    category: 'clinical',
+    weight: 70,
+    choices: [
+      { text: '顶上去，连轴转', delta: { stamina: -18, knowledge: 4, sanity: -6, reputation: 4 }, consequence: '你第一次感到"被需要"的重量。' },
+      { text: '按流程保护自己', delta: { stamina: -8, sanity: -1, reputation: 1 }, consequence: '你严格防护，也劝同事别裸奔。' },
+    ],
+  },
+  // —— 新增：强化"第一次成为医生"的身份瞬间（R12）——
+  {
+    id: 'first_called_doctor',
+    stage: 'internship',
+    title: '第一次被叫"医生"',
+    body: '走廊里，一位阿姨怯生生地喊你"医生，帮我看看这个单子"。你愣了一下，才反应过来是在叫你。',
+    category: 'social', weight: 65, once: true,
+    choices: [
+      { text: '认真帮她看，不会的再去问', delta: { reputation: 4, relations: 5, sanity: 8 }, consequence: '那声"医生"，比你想象中重。' },
+      { text: '连忙摆手"我只是实习生"', delta: { sanity: 2, relations: 1 }, consequence: '你有点不好意思，却也有点甜。' },
+    ],
+  },
+  {
+    id: 'osce_exam',
+    stage: 'internship',
+    title: 'OSCE 临床技能考',
+    body: '十站轮换，标准化病人、模拟人、口述操作。考官盯着你每一个无菌步骤。手汗把手套都浸湿了。',
+    category: 'clinical', weight: 70,
+    choices: [
+      { text: '按流程稳稳过', delta: { knowledge: 5, stamina: -10, sanity: -3 }, consequence: '你走出考场，腿有点软。' },
+      { text: '有一站慌了神', delta: { knowledge: 2, stamina: -8, sanity: -6 }, consequence: '你卡在换药那站，丢了分。' },
+    ],
+  },
+];

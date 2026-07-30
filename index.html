@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0a0f" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>白大褂炼狱</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #0a0a0f;
+        touch-action: none;
+        overscroll-behavior: none;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      body { display: flex; justify-content: center; align-items: center; }
+
+      #game-container { width: 100%; height: 100%; }
+      #game-container canvas { }
+
+      /* 竖屏提示：仅触屏竖屏时显示，且不拦截点击 */
+      #rotate-hint {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        padding: 10px;
+        text-align: center;
+        font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', 'STHeiti', 'SimHei', '黑体', 'WenQuanYi Micro Hei', sans-serif;
+        font-size: 13px;
+        color: #ffffff;
+        background: rgba(0, 0, 0, 0.72);
+        z-index: 10;
+        pointer-events: none;
+      }
+      @media (orientation: portrait) and (pointer: coarse) {
+        #rotate-hint { display: block; }
+      }
+
+      /* —— HTML 标题层（保证中文抗锯齿完整渲染） —— */
+      /* JS 会同步该 div 的位置/尺寸到 canvas 的真实屏幕矩形 */
+      #title-overlay {
+        position: fixed;
+        left: 0; top: 0;
+        width: 0; height: 0;
+        pointer-events: none;
+        z-index: 5;
+        font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', 'STHeiti', 'SimHei', '黑体', 'WenQuanYi Micro Hei', 'Helvetica Neue', Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-weight: normal;
+        display: none;
+      }
+      #title-overlay.show { display: block; }
+      /* 坐标与 TitleScene 旧 Phaser 文本一一对应（canvas 内部坐标系） */
+      #title-main {
+        position: absolute;
+        left: 480px; top: 140px;
+        transform: translateX(-50%);
+        font-size: 52px;
+        font-weight: bold;
+        color: #cc2222;
+        margin: 0;
+        text-shadow: 0 4px 0 rgba(0, 0, 0, 0.6);
+        letter-spacing: 0.04em;
+        opacity: 0;
+      }
+      #title-sub {
+        position: absolute;
+        left: 480px; top: 206px;
+        transform: translateX(-50%);
+        font-size: 18px;
+        color: #888;
+        margin: 0;
+        white-space: nowrap;
+        opacity: 0;
+      }
+      .title-btn {
+        position: absolute;
+        left: 480px;
+        transform: translateX(-50%);
+        background: transparent;
+        border: none;
+        color: #fff;
+        font-family: inherit;
+        cursor: pointer;
+        padding: 4px 16px;
+        pointer-events: auto;
+        -webkit-tap-highlight-color: transparent;
+        opacity: 0;
+      }
+      #title-start { top: 404px; font-size: 20px; font-weight: bold; }
+      #title-continue { top: 448px; font-size: 18px; color: #ffc107; font-weight: bold; display: none; }
+      #title-continue.show { display: block; }
+    </style>
+  </head>
+  <body>
+    <div id="rotate-hint">竖屏体验不佳，建议横屏游玩 🔄</div>
+    <div id="game-container"></div>
+    <div id="title-overlay">
+      <h1 id="title-main">白大褂炼狱</h1>
+      <div id="title-sub">— 临床医学专业人生模拟器 —</div>
+      <button id="title-start" class="title-btn">[ 开始游戏 ]</button>
+      <button id="title-continue" class="title-btn">[ 继续游戏 ]</button>
+    </div>
+    <script>
+      // 同步 title-overlay 的位置/尺寸到 Phaser canvas 的真实屏幕矩形
+      (function () {
+        function sync() {
+          var canvas = document.querySelector('#game-container > canvas');
+          var overlay = document.getElementById('title-overlay');
+          if (!canvas || !overlay) return;
+          var r = canvas.getBoundingClientRect();
+          overlay.style.left = r.left + 'px';
+          overlay.style.top = r.top + 'px';
+          overlay.style.width = r.width + 'px';
+          overlay.style.height = r.height + 'px';
+        }
+        window.addEventListener('resize', sync);
+        window.addEventListener('orientationchange', sync);
+        sync();
+        // Phaser 初始化后 canvas 位置可能再微调
+        setTimeout(sync, 60);
+        setTimeout(sync, 250);
+        setTimeout(sync, 600);
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(sync);
+      })();
+    </script>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
