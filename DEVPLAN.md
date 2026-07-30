@@ -123,7 +123,19 @@ interface EventChoice {
 - [x] 3 个示例事件（gaokao_parents / anatomy_first_day / guipei_first_paycheck）
 - [x] 学校/学制/医院基础数据
 
-### 未完成 ❌
+### 未完成 ❌（历史快照，2026-07-30 核对：绝大部分已完成，保留原文仅作沿革）
+
+> 以下为立项初期清单。现状核对：
+> - ~~事件池不足~~ → 现有 304 个手写事件 id + 程序化生成池 5000+（`event-integrity` 断言）
+> - ~~realEvents.ts 未创建~~ → 已建（`src/data/realEvents.ts`）
+> - ~~news.ts 未创建~~ → 已建且时序对齐到 2044（`news-timeline.spec.ts` 回归）
+> - ~~像素美术简陋~~ → `pixelArt.ts` 程序生成贴图 + tilemap + 行走动画
+> - ~~无音效/BGM~~ → `src/audio/sound.ts`（含脚步/BGM 情绪切换）
+> - ~~结局仅 3 个~~ → `determineEnding` 现引用 17 个 flag，十余种结局
+> - ~~无存档系统~~ → `src/data/save.ts`（自动存档 + 旧档降级，`save-compat.spec.ts`）
+> - **无数据对比系统** → 曾实现后移除（存档兼容层仍剔除旧 `comparisons` 字段）；
+>   是否需要恢复，待与用户确认
+> - ~~缺少阶段间过渡动画~~ → 各场景衔接均有 camerafadeout/in 过渡
 
 - [ ] **事件池严重不足** — 仅 3 个事件，每阶段需要 10-20 个
 - [ ] **realEvents.ts 未创建** — 真实事件改编数据卡
