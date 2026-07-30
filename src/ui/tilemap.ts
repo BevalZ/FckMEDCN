@@ -40,7 +40,7 @@ export function makeIsSolid(spec: TileMapSpec): (col: number, row: number) => bo
 // —— 各字符的绘制子程序 ——
 // ',' 草地/走廊  '.' 路面/地砖  '#' 围墙  'T' 树（仅校园）  'L' 图书馆/实验室  'C' 教学楼/食堂
 // 'D' 宿舍/办公室  'F' 食堂  'P' 操场  'B' 公告栏  'E' 急诊  'W' 病房  'O' 手术室/办公室
-// 'N' 护士站  'R' 值班室  'I' 内科  'S' 外科  'U' 电梯/楼梯
+// 'N' 护士站  'R' 值班室  'I' 内科  'S' 外科  'U' 电梯/楼梯  'K' 技能中心（落 default 建筑渲染）
 // ⚠️ 一个字符全项目只能有一个 case（switch 语义：重复 case 后者永不可达）。
 //    新地图要用新字符时先查本列表，tilemap-chars.spec.ts 会静态兜底。
 function drawTile(

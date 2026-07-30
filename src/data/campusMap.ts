@@ -5,11 +5,11 @@ import type { StatDelta } from './stats';
 // 快讯条(506..540) 之间的可视区，摄像机无需移动。
 //
 // 图例：',' 草地  '.' 路面  '#' 围墙  'T' 树
-//       'L' 图书馆  'C' 教学楼  'D' 宿舍  'F' 食堂  'P' 操场  'B' 公告栏
+//       'L' 图书馆  'C' 教学楼  'D' 宿舍  'F' 食堂  'P' 操场  'B' 公告栏  'K' 技能中心
 // 草地与路面均可通行（路面只是视觉引导），其余字符为实心。
 export const CAMPUS_SPEC: TileMapSpec = {
   tile: 32, cols: 30, rows: 14,
-  solid: '#TLCDFPB',
+  solid: '#TLCDFPBK',
   grid: [
     '##############################',
     '#,,,,LLLL,,,,,,,,,CCCC,,,,,,,#',
@@ -20,8 +20,8 @@ export const CAMPUS_SPEC: TileMapSpec = {
     '#,,,,,.,,,,,,,,,,,.,,,PPPPP,,#',
     '#.....................PPPPP,,#',
     '#,,,,,.,,,,,,,,,,,.,,,PPPPP,,#',
-    '#,,,,DDDD,,,,,,,,FFFF,,,,,,,,#',
-    '#,,,,DDDD,,,,,,,,FFFF,,,,,,,,#',
+    '#,,,,DDDD,,,,,,,,FFFF,KKKKKK,#',
+    '#,,,,DDDD,,,,,,,,FFFF,KKKKKK,#',
     '#,,,,,,,,,,,T,,,,,,,,,,,,,,,,#',
     '#............................#',
     '##############################',
@@ -53,6 +53,14 @@ export const CAMPUS_SPOTS: readonly Spot[] = [
     id: 'teaching', label: '教学楼', door: [19, 3],
     categories: ['study', 'clinical'],
     daily: { label: '练操作', delta: { knowledge: 3, clinical: 3, reputation: 1, stamina: -10, sanity: -2 }, consequence: '你在模型上把那套手法练顺了。' },
+  },
+  {
+    // 技能中心：任务清单"技能中心练缝合"的实体落点（此前只有任务文案没有地点，
+    // 缝合事件 clinical_skills_lab 又混在教学楼大池里很难抽到——玩家按图索骥找不到地方）。
+    // 分类与教学楼同池（study+clinical 保证不空转），日常活动改成缝合手感。
+    id: 'skills', label: '技能中心', door: [24, 11],
+    categories: ['clinical', 'study'],
+    daily: { label: '练缝合', delta: { clinical: 4, knowledge: 1, stamina: -8, sanity: -1 }, consequence: '在模拟臂上又缝了一排，这次的线结匀称多了。' },
   },
   {
     id: 'canteen', label: '食堂', door: [18, 8],

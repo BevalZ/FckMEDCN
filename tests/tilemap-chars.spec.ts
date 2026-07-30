@@ -37,8 +37,8 @@ test('drawTile 的 case 标签无重复', () => {
 
 test('三张地图 grid 用到的字符都有绘制分支（或落入 default）', () => {
   const cases = new Set(readTilemapCases());
-  // default 分支兜底建筑类字符（L/C/D/F 等）；其余字符必须显式有 case
-  const defaultCovered = new Set(['L', 'C', 'D', 'F']);
+  // default 分支兜底建筑类字符（L/C/D/F/K 等）；其余字符必须显式有 case
+  const defaultCovered = new Set(['L', 'C', 'D', 'F', 'K']);
   const maps = ['campusMap.ts', 'hospitalMap.ts', 'guipeiMap.ts'];
   const missing: string[] = [];
   for (const f of maps) {

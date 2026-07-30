@@ -40,8 +40,7 @@
   只写 left 时补 top、幂等标记存在。机制在裁切即不复发。
   剩余纯目视项（各字号实际观感）只能人工，建议下次试玩扫一眼大标题/HUD 小字。
 
-### A3. 进入对话无法退出 ｜ 中 ｜ 已修已验
-- **现象**：进对话后只能选一项才能出来，没有取消途径。
+### A3. 进入对话无法退出 ｜ 中 ｜ 已修已验- **现象**：进对话后只能选一项才能出来，没有取消途径。
 - **修复**：EventCard 加可选 `onCancel`，ESC 触发；三个可行走场景传入 `cancelEvent(ev)`，
   干净回滚（撤销 once 标记、退还 NPC 可聊资格并重新点亮感叹号、不消耗行动点、解冻角色）。
   卡片右上角显示 `ESC 离开`。
@@ -50,6 +49,18 @@
 - **已验**（2026-07-30）：新增 `tests/esc-cancel.spec.ts` 两条用例——
   ① NPC 对话 ESC 后 talkedThisQuarter 退还、行动点不扣、可立刻重聊；
   ② once 事件 ESC 后 firedEvents 标记回滚。全量 28 passed。
+
+### A4. 技能中心不存在，缝合任务无的放矢 ｜ 中 ｜ 已修已验
+- **现象**（用户试玩报告）：任务清单有"技能中心练缝合"，但校园地图上**没有技能中心**——
+  缝合事件 `clinical_skills_lab`（category: clinical）混在教学楼 study+clinical 大池里
+  （单季 1 次抽取、十几种事件竞争），玩家按任务找地方找不到，缝合内容近似不可达。
+- **修复**：`campusMap.ts` 新增 `'K'` 技能中心建筑（rows 9-10, cols 22-27）+
+  `skills` 交互点（door [24,11]，categories `['clinical','study']` 与教学楼同池防空转，
+  daily 改为缝合手感）。缝合事件现有教学楼+技能中心两个抽取口，且任务有了真实指向。
+- **已验**（2026-07-30）：新增 `tests/skills-center.spec.ts`——
+  ① skills 点存在、门口非实心、含 clinical；② 分类池 200 抽内命中
+  clinical_skills_lab 且挂 `minigame:'suture'`；③ 传送到门口按 E 能交互。
+  spot-coverage 显示 skills 点零空转、单回合最少 15 种可抽。全量 43 passed。
 
 ---
 
