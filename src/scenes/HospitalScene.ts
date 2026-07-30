@@ -14,6 +14,7 @@ import { getState, updateStats, setFlag, hasFlag, addNews } from '../data/gameSt
 import type { LifeStage } from '../data/gameState';
 import { drawStorylet, hasStorylet, commitChoice, advanceQuarter } from '../data/turnFlow';
 import type { EventChoice, GameEvent } from '../data/events';
+import { ALL_EVENTS } from '../data/events';
 import type { StatDelta } from '../data/stats';
 import { NEWS_TICKER } from '../data/news';
 import { STAT_LABELS, STAT_ICONS, HUD_STATS } from '../data/constants';
@@ -300,7 +301,10 @@ export class HospitalScene extends Phaser.Scene {
     this.doDaily(spot);
   }
 
-  private openEvent(ev: GameEvent) {
+  // chained=true 表示本卡由上一张卡的选项链式续接而来：上游选项已提交（效果已生效），
+  // 此时允许 ESC 会留下"白拿上游效果、行动点与 storylet 额度被退还"的漏洞（B3），
+  // 故链式卡不提供 ESC，必须选完。
+  private openEvent(ev: GameEvent, chained = false) {
     if (ev.once) this.firedEvents.add(ev.id);
     this.currentEvent = ev;
     this.setBusy(true);
@@ -312,7 +316,8 @@ export class HospitalScene extends Phaser.Scene {
       return;
     }
     // 传入取消回调：允许 ESC 不做选择直接退出对话（不消耗行动点，可重来）。
-    this.eventCard.show(ev, () => this.cancelEvent(ev));
+    // 链式续接卡除外（见上）。
+    this.eventCard.show(ev, chained ? undefined : () => this.cancelEvent(ev));
   }
 
   // ESC 取消对话：干净回滚，使这次交互像从未发生。
@@ -367,8 +372,13 @@ export class HospitalScene extends Phaser.Scene {
       this.news.refresh(getState().newsLog.map(n => n.headline));
     }
 
+    // 链式事件：先解析续接目标（在后果弹窗关闭后立即接上）
+    const next = choice.nextEventId ? this.resolveChained(choice.nextEventId) : null;
+
     this.consequence.show(choice.consequence ?? '你做出了选择。', choice.delta as StatDelta, () => {
       if (this.checkCrisis()) return;
+      // 链式事件：同季度立即续接，不额外消耗行动点（与 CampusScene 语义一致，B7）
+      if (next) { this.openEvent(next, true); return; }
       // NPC 对话只花行动点，不占用"每季一次 storylet"的额度
       if (!isTalk) this.storyletUsed = true;
       this.actionsLeft = Math.max(0, this.actionsLeft - 1);
@@ -377,6 +387,18 @@ export class HospitalScene extends Phaser.Scene {
       this.autoSave();
       this.setBusy(false);
     });
+  }
+
+  private resolveChained(id: string): GameEvent | null {
+    const forced = ALL_EVENTS.find(e => e.id === id);
+    if (!forced) return null;
+    const state = getState();
+    const stages = Array.isArray(forced.stage) ? forced.stage : [forced.stage];
+    const ok = stages.includes(STAGE)
+      && !(forced.once && this.firedEvents.has(forced.id))
+      && !(forced.requireFlag && !state.flags.has(forced.requireFlag))
+      && !(forced.excludeFlag && state.flags.has(forced.excludeFlag));
+    return ok ? forced : null;
   }
 
   private doDaily(spot: Spot) {

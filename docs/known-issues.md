@@ -126,7 +126,7 @@
 - **遗留观察**：balance-sim 同样未播种，本次全量出现过 1 flaky（重试即过），
   若日后成为瓶颈可按同法播种。
 
-### B7. 实习/规培可行走场景不续接链式事件 ｜ 中 ｜ 待查
+### B7. 实习/规培可行走场景不续接链式事件 ｜ 中 ｜ 已修已验
 - **现象**（2026-07-30 B3 排查时发现）：`HospitalScene` / `GuipeiWalkScene` 的
   `handleChoice` 没有 `resolveChained`/`nextEventId` 处理（CampusScene 有）——
   选项带 nextEventId 时链条被静默丢弃。
@@ -135,10 +135,16 @@
   flag 由根选项设置，故后续季度仍可能被自然抽到——内容不死，但失去即时的戏剧连贯性
   （"今晚交申请，当晚出结果"变成"几季后莫名其妙抽到后续"）。
   实习阶段目前无 nextEventId 事件，暂不受损。
-- **修法方向**：把 CampusScene 的 `resolveChained` + `openEvent(ev, chained)` 模式
-  移植到这两个场景（注意保持 B3 的"链上不可 ESC"语义），并补回归。
-- **待查**：先确认这是疏漏还是有意简化（可行走场景想淡化链条？倾向疏漏：
-  三场景的 handleChoice 是同一模板的复制，Campus 后加链条时没同步）。
+- **修复**（2026-07-30）：两个场景补齐 CampusScene 同款 `resolveChained` +
+  `openEvent(ev, chained)`（链上禁 ESC 的 B3 语义一并保持）。确认为疏漏：
+  三场景 handleChoice 同模板复制，Campus 后加链条时未同步。
+- **已验**：新增 `tests/guipei-chain.spec.ts`——真实走过 校园→医院→规培 两级转换，
+  开「同岗同酬」选「跟教学部反映」即时续接「教学部的回复」，链上 ESC 不关闭、
+  整链只扣 1 行动点、双 once 标记与 gp_asked/gp_tonggang_no flag 均正确。全量 30 用例绿。
+- **测试经验**（下次写场景转换测试用得上）：
+  ① 医院出生点在办公室门口，**不是**睡觉点——睡觉得先传送到值班室 `[25,11]`；
+  ② 实习 `MAX_TURNS=5`（不是 lifecycle-sim STAGE_PLAN 写的 4，那是模拟自用的节拍）；
+  ③ 断言卡壳时先写无断言的诊断用例打印每步场景列表，比猜快。
 
 ---
 
