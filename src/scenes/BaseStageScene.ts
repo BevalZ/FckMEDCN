@@ -6,6 +6,7 @@ import { getState, setFlag, hasFlag, addNews } from '../data/gameState';
 import { ALL_EVENTS } from '../data/events';
 import type { EventChoice, GameEvent } from '../data/events';
 import { drawStorylet, commitChoice, advanceQuarter } from '../data/turnFlow';
+import { bindRestartKey } from '../ui/gameMenu';
 import { NEWS_TICKER } from '../data/news';
 import { STAT_LABELS, STAT_ICONS, HUD_STATS } from '../data/constants';
 import { applyStageEntry, describeStageEconomy, getQuarterEconomy } from '../data/economy';
@@ -107,6 +108,12 @@ export abstract class BaseStageScene extends Phaser.Scene {
     sound.ensure();
     sound.setBgmMood(this.paletteName);
     this.input.keyboard?.on('keydown-M', () => sound.toggleMute());
+
+    // 重新开档（R 键）：确认后放弃本局、直接开新档
+    bindRestartKey(this, this.consequence, () => this.minigame !== null || this.isEventShowing);
+    this.add.text(940, 106, 'R 重新开档', {
+      fontFamily: '"Courier New", monospace', fontSize: '11px', color: '#9aa0b5',
+    }).setOrigin(1, 0).setDepth(10);
 
     this.autoSave();
     this.presentStageBriefing();
@@ -299,7 +306,17 @@ export abstract class BaseStageScene extends Phaser.Scene {
       void this.minigame.play().then(r => this.resolveMinigame(r));
       return;
     }
-    this.eventCard.show(ev);
+    // 卡片阶段也允许 ESC 跳过：不消费 once、不结算选择，按"无事件"推进本回合。
+    this.eventCard.show(ev, () => this.skipCurrentEvent(ev));
+  }
+
+  /** ESC 跳过当前事件：视作本回合没有事件，直接推进（once 事件回滚，之后还能再遇到） */
+  private skipCurrentEvent(ev: GameEvent) {
+    if (ev.once) this.firedEvents.delete(ev.id);
+    this.eventCard.hide();
+    this.isEventShowing = false;
+    this.currentEvent = null;
+    this.doPassiveTurn();
   }
 
   private resolveMinigame(r: MinigameResult) {

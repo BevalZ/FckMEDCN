@@ -25,7 +25,7 @@ const CATEGORY_META: Record<EventCategory, { label: string; color: number }> = {
 
 export class EventCard {
   private scene: Phaser.Scene;
-  private container!: Phaser.GameObjects.Container;
+  private container: Phaser.GameObjects.Container | null = null;
   private onChoice: ChoiceCallback;
   private stage: string;
 
@@ -45,6 +45,9 @@ export class EventCard {
     this.stage = stage;
     this.onChoice = onChoice;
   }
+
+  /** 事件卡是否正在展示（供全局快捷键守卫） */
+  get busy(): boolean { return this.container !== null; }
 
   show(event: GameEvent, onCancel?: () => void) {
     this.onCancel = onCancel ?? null;
@@ -255,11 +258,18 @@ export class EventCard {
 
   private cancel() {
     this.removeKeyboard();
+    if (this.container) {
+      this.container.destroy();
+      this.container = null;
+    }
     this.onCancel?.();
   }
 
   hide() {
     this.removeKeyboard();
-    if (this.container) this.container.destroy();
+    if (this.container) {
+      this.container.destroy();
+      this.container = null;
+    }
   }
 }

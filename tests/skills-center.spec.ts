@@ -100,3 +100,58 @@ test('A4 技能中心：地点存在、缝合事件可抽、门口可交互', as
 
   expect(errors, `运行时报错：\n${errors.join('\n')}`).toEqual([]);
 });
+
+test('技能中心优先触发缝合事件（任务"技能中心练缝合"落到实处）', async ({ page }) => {
+  await page.goto(BASE, { waitUntil: 'load' });
+  await waitForScene(page, 'TitleScene', 120000);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload({ waitUntil: 'load' });
+  await waitForScene(page, 'TitleScene');
+  await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 20000 });
+
+  await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
+  await waitForScene(page, 'GaokaoScene');
+  for (let i = 0; i < 5; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  await waitForScene(page, 'CampusScene');
+  await page.keyboard.press('Space');
+  await page.waitForFunction(
+    () => (window as any).game.scene.getScene('CampusScene').busy === false,
+    null, { timeout: 10000 },
+  );
+
+  // 构造"缝合事件待做"状态：回合≥3、未触发过、本季额度与行动点充足
+  await page.evaluate(() => {
+    const { gs } = (window as any).__mod;
+    const s: any = (window as any).game.scene.getScene('CampusScene');
+    gs.patchState({ turnsInStage: 3 });
+    s.firedEvents.delete('clinical_skills_lab');
+    s.storyletUsed = false;
+    s.actionsLeft = 3;
+    s.availability['skills'] = true;
+    const { cm } = (window as any).__mod;
+    const spot = cm.CAMPUS_SPOTS.find((sp: any) => sp.id === 'skills');
+    const c = s.tileCenter(spot.door[0], spot.door[1]);
+    s.walker.sprite.setPosition(c.x, c.y);
+  });
+  await page.waitForTimeout(300);
+
+  // 提示应明确"练缝合"
+  const hint = await page.evaluate(() => (window as any).game.scene.getScene('CampusScene').prompt.hint?.text ?? '');
+  expect(String(hint).includes('练缝合'), `技能中心提示应含"练缝合"，实际：${hint}`).toBe(true);
+
+  // 按 E → 应优先打开缝合事件并启动缝合小游戏
+  await page.keyboard.press('e');
+  await page.waitForFunction(
+    () => {
+      const s: any = (window as any).game.scene.getScene('CampusScene');
+      return s.currentEvent?.id === 'clinical_skills_lab' || s.minigame !== null;
+    },
+    null, { timeout: 10000 },
+  );
+  const opened = await page.evaluate(() => {
+    const s: any = (window as any).game.scene.getScene('CampusScene');
+    return { eventId: s.currentEvent?.id ?? null, minigame: !!s.minigame };
+  });
+  expect(opened.eventId, '技能中心按 E 应打开缝合事件').toBe('clinical_skills_lab');
+  expect(opened.minigame, '缝合事件应启动缝合小游戏').toBe(true);
+});

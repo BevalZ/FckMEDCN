@@ -12,7 +12,8 @@ import { npcTileNear } from '../ui/npcPlacement';
 import { addScanlineOverlay, addVignette, getPalette, stageAmbientTint } from '../ui/pixelArt';
 import { getState, updateStats, setFlag, hasFlag, addNews } from '../data/gameState';
 import { drawStorylet, hasStorylet, commitChoice, advanceQuarter } from '../data/turnFlow';
-import { ALL_EVENTS } from '../data/events';
+import { bindRestartKey } from '../ui/gameMenu';
+import { ALL_EVENTS, getAvailableEvents } from '../data/events';
 import type { EventChoice, GameEvent } from '../data/events';
 import type { StatDelta } from '../data/stats';
 import { NEWS_TICKER } from '../data/news';
@@ -140,6 +141,9 @@ export class CampusScene extends Phaser.Scene {
     sound.setBgmMood(STAGE);
     this.input.keyboard?.on('keydown-M', () => sound.toggleMute());
 
+    // 重新开档（R 键）
+    bindRestartKey(this, this.consequence, () => this.minigame !== null || this.eventCard.busy);
+
     this.hud.update(getState().stats, STAGE);
     this.refreshInfoBar();
     this.pumpNewsForQuarter();
@@ -170,7 +174,7 @@ export class CampusScene extends Phaser.Scene {
     const s = getState();
     const holdback = hasFlag('ug_holdback') ? ' · 重修中' : '';
     this.infoLabel.setText(
-      `第${s.year}年 Q${s.quarter} | ${s.stats.age}岁 | 本科第 ${s.turnsInStage}/${this.totalTurns()} 季${holdback}  ·  移动 WASD/方向键 · 交互 E · 任务 Q`,
+      `第${s.year}年 Q${s.quarter} | ${s.stats.age}岁 | 本科第 ${s.turnsInStage}/${this.totalTurns()} 季${holdback}  ·  移动 WASD/方向键 · 交互 E · 任务 Q · R 重新开档`,
     );
     const left = Math.max(0, Math.min(ACTIONS_PER_QUARTER, this.actionsLeft));
     const dots = '●'.repeat(left) + '○'.repeat(ACTIONS_PER_QUARTER - left);
@@ -342,8 +346,22 @@ export class CampusScene extends Phaser.Scene {
 
   private hintFor(spot: Spot): string {
     if (spot.sleep && this.actionsLeft <= 0) return '[E] 睡觉 · 结束本季';
+    // 技能中心：缝合事件未做时，明确提示"练缝合"（任务清单同名），不让玩家以为没这个选项
+    if (spot.id === 'skills' && this.canDrawAt(spot) && this.suturePending()) {
+      return `[E] ${spot.label}：练缝合`;
+    }
     if (this.canDrawAt(spot)) return `[E] ${spot.label}：看看发生了什么`;
     return `[E] ${spot.daily.label}`;
+  }
+
+  /** 技能中心的缝合小游戏事件尚未触发（once + minTurn 门槛未满足时不算待做） */
+  private suturePending(): boolean {
+    const st = getState();
+    const pool = getAvailableEvents(
+      STAGE, st.flags, st.stats as unknown as Record<string, number>,
+      this.firedEvents, st.turnsInStage, st.marital,
+    );
+    return pool.some(e => e.id === 'clinical_skills_lab');
   }
 
   private canDrawAt(spot: Spot): boolean {
@@ -362,7 +380,12 @@ export class CampusScene extends Phaser.Scene {
 
     // 有可领事件的地点优先出事件；否则走日常活动
     if (this.canDrawAt(spot)) {
-      const ev = drawStorylet(STAGE, this.firedEvents, spot.categories);
+      // 技能中心：优先触发"临床技能操作"（缝合小游戏），让"技能中心练缝合"任务落到实处
+      let ev: GameEvent | null = null;
+      if (spot.id === 'skills' && this.suturePending()) {
+        ev = ALL_EVENTS.find(e => e.id === 'clinical_skills_lab') ?? null;
+      }
+      if (!ev) ev = drawStorylet(STAGE, this.firedEvents, spot.categories);
       if (ev) { this.openEvent(ev); return; }
     }
 

@@ -11,17 +11,39 @@ export class ConsequencePopup {
   private scene: Phaser.Scene;
   private container: Phaser.GameObjects.Container | null = null;
   private stage: string;
-  private pendingKeys: (Phaser.Input.Keyboard.Key | undefined)[] = [];
+  private onDone: (() => void) | null = null;
+  private escapeMode: 'dismiss' | 'cancel' = 'dismiss';
 
   constructor(scene: Phaser.Scene, stage: string) {
     this.scene = scene;
     this.stage = stage;
+
+    // 键盘 handler 在构造时注册一次，show/dismiss 只存取状态。
+    // 不采用"show 时 addKey 后 dismiss 时 removeAllListeners"——多个弹窗/场景共用
+    // 同一 KeyboardPlugin，Key 实例监听会被其它弹窗的 removeAllListeners 误清。
+    // 这里 handler 常驻，仅当有弹窗展示（container 非空）时才响应。
+    scene.input.keyboard?.on('keydown', (e: KeyboardEvent) => {
+      if (!this.container) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        this.dismiss(this.onDone);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        if (this.escapeMode === 'cancel') this.cancel(); else this.dismiss(this.onDone);
+      }
+    });
   }
 
-  show(text: string, _delta: StatDelta, onDone: () => void) {
-    for (const k of this.pendingKeys) k?.removeAllListeners();
-    this.pendingKeys = [];
+  /** 是否有弹窗正在展示（供"重新开档"等全局快捷键防重复触发） */
+  get busy(): boolean { return this.container !== null; }
+
+  // opts.escape：
+  //  - 'dismiss'（默认）：ESC 与 空格/回车 等价，继续（调用 onDone）
+  //  - 'cancel'：ESC 仅关闭弹窗、不调用 onDone（用于"重新开档"等需要可反悔的确认）
+  show(text: string, _delta: StatDelta, onDone: () => void, opts?: { escape?: 'dismiss' | 'cancel' }) {
     if (this.container) this.container.destroy();
+    this.onDone = onDone;
+    this.escapeMode = opts?.escape ?? 'dismiss';
     const pal = getPalette(this.stage);
     const scene = this.scene;
 
@@ -73,25 +95,26 @@ export class ConsequencePopup {
 
     if (naturalH > MAX_H) this.container.setScale(MAX_H / naturalH);
 
-    // 键盘：空格 / 回车 均可继续（监听在 dismiss 时清理，避免跨弹窗泄漏）
-    const spaceKey = scene.input.keyboard?.addKey('SPACE');
-    const enterKey = scene.input.keyboard?.addKey('ENTER');
-    const onKey = () => this.dismiss(onDone);
-    spaceKey?.once('down', onKey);
-    enterKey?.once('down', onKey);
-    this.pendingKeys = [spaceKey, enterKey];
-
     this.container.setAlpha(0);
     scene.tweens.add({ targets: this.container, alpha: 1, duration: 150 });
   }
 
-  private dismiss(onDone: () => void) {
+  private dismiss(onDone: (() => void) | null) {
     if (!this.container) return;
-    for (const k of this.pendingKeys) k?.removeAllListeners();
-    this.pendingKeys = [];
+    const c = this.container;
+    this.container = null;
+    this.onDone = null;
     this.scene.tweens.add({
-      targets: this.container, alpha: 0, duration: 100,
-      onComplete: () => { this.container?.destroy(); this.container = null; onDone(); },
+      targets: c, alpha: 0, duration: 100,
+      onComplete: () => { c.destroy(); onDone?.(); },
     });
+  }
+
+  /** 仅关闭弹窗、不执行 onDone（用于"重新开档"确认的 ESC 取消） */
+  private cancel() {
+    if (!this.container) return;
+    this.container.destroy();
+    this.container = null;
+    this.onDone = null;
   }
 }

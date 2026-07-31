@@ -5,6 +5,7 @@ import { ConsequencePopup } from '../ui/ConsequencePopup';
 import { NewsTicker } from '../ui/NewsTicker';
 import { InteractPrompt } from '../ui/InteractPrompt';
 import { QuestLog, internshipQuests } from '../ui/QuestLog';
+import { bindRestartKey } from '../ui/gameMenu';
 import { Walker, createWalkerKeys } from '../ui/Walker';
 import type { WalkerKeys } from '../ui/Walker';
 import { renderTileMap } from '../ui/tilemap';
@@ -114,6 +115,9 @@ export class HospitalScene extends Phaser.Scene {
     sound.setBgmMood(STAGE);
     this.input.keyboard?.on('keydown-M', () => sound.toggleMute());
 
+    // 重新开档（R 键）
+    bindRestartKey(this, this.consequence, () => this.minigame !== null || this.eventCard.busy);
+
     this.presentStageBriefing();
   }
 
@@ -137,7 +141,7 @@ export class HospitalScene extends Phaser.Scene {
   private refreshInfoBar() {
     const s = getState();
     this.infoLabel.setText(
-      `第${s.year}年 Q${s.quarter} | ${s.stats.age}岁 | 实习第 ${s.turnsInStage}/${MAX_TURNS} 季  ·  移动 WASD/方向键 · 交互 E · 任务 Q`,
+      `第${s.year}年 Q${s.quarter} | ${s.stats.age}岁 | 实习第 ${s.turnsInStage}/${MAX_TURNS} 季  ·  移动 WASD/方向键 · 交互 E · 任务 Q · R 重新开档`,
     );
     const left = Math.max(0, this.actionsLeft);
     const dots = '●'.repeat(left) + '○'.repeat(Math.max(0, ACTIONS_PER_QUARTER - left));

@@ -5,7 +5,7 @@
 - **路线图 ①②③④ 全部完成**。
 - **known-issues 全部清零**：A1/A2/A3、B2/B3/B4/B6/B7 已修已验，B1/B5 设计如此/已验证，
   D1-D4 为设计记录。
-- 全量 **50 用例绿**（exit=0；balance-sim 首跑 flaky 是 Windows 环境成本，见 D4）。
+- 全量 **54 用例绿**（exit=0；balance-sim/冷启动首跑 flaky 是 Windows 环境成本，见 D4）。
 - `npm run build` 通过；git 仓库健康，工作区干净。
 - **唯一剩余**：A2 文字渲染的实际观感（各字号扫一眼），纯人工目视项，无代码待办。
 
@@ -24,6 +24,14 @@ perk，临床/科研 2 点其余 1 点；TitleScene.create 对每次新开局统
 **数据对比系统**（恢复原 M4 规划：comparison.ts 给 15 结局各配 3 个可比指标——年龄/存款/论文，
 带真实区间与"低于参考/在参考区间内/高于参考"判定；EndingScene 中部改为逐项对齐对比表
 [你的值 vs 真实值 + 判定]，感情/家人/状态 行与真实数据卡保留；data-comparison 回归）。
+**ESC 交互完善**（ConsequencePopup 键盘 handler 改为构造时注册一次——旧 addKey Key 对象在多弹窗
+共用 KeyboardPlugin 时会互相 removeAllListeners 误清；支持 opts.escape 'dismiss'/'cancel'；事件卡
+卡片阶段 ESC 跳过 [skipCurrentEvent，不耗 once、按无事件推进]；EventCard.hide/cancel 补 container
+置空，否则 busy() 首显后恒 true 卡死 R 守卫；restart-game 回归 + 冷启动容忍 120s）。
+**技能中心缝合修复**（用户反馈"技能中心没有练习缝合选项"——根因：任务"技能中心练缝合"只认缝合
+小游戏 flag，但事件混在大池随机抽、日常"练缝合"不设 flag；修复：技能中心交互优先触发
+clinical_skills_lab 缝合小游戏 + 提示改"[E] 技能中心：练缝合；新增 quest-reachability 审计
+[4 个任务目标事件可达+小游戏配置正确] 防同类错误复发）。
 剩余可选项（与用户确认后再动）：
 1. **用户试玩**：回归清单的 5 条试玩路径（known-issues 末尾），顺手确认 A2 文字观感与图鉴/传承手感。
 2. **移动端**：评估结论——底子比预想的好，但**不建议现在做**（详见下节）。
