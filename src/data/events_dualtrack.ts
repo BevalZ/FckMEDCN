@@ -327,6 +327,7 @@ export const DUALTRACK_EVENTS: GameEvent[] = [
     body: '学位撤销、职称取消、五年内不得申报课题。白大褂还能穿，但很多门关上了。',
     category: 'mental', weight: 60, once: true,
     requireFlag: 'exposed_ruin',
+    newsTickerAfter: '【被通报后转行的医生增多：医疗行业人才流失引热议】',
     choices: [
       { text: '回到最基础的临床岗位', delta: { clinical: 8, research: -20, reputation: 2, sanity: 6, money: -5000 }, flagSet: 'dt_back_to_bedside', consequence: '你去了门诊。一天看六十个号，没人问你发过什么文章。' },
       { text: '离开医疗行业', delta: { sanity: 10, reputation: -5, clinical: -20, research: -20 }, flagSet: 'left_med', consequence: '你脱下白大褂，去了一家医疗器械公司。有时会梦见实验室。' },

@@ -6,7 +6,8 @@ import { getState, setFlag, hasFlag, addNews } from '../data/gameState';
 import { ALL_EVENTS } from '../data/events';
 import type { EventChoice, GameEvent } from '../data/events';
 import { drawStorylet, commitChoice, advanceQuarter } from '../data/turnFlow';
-import { bindRestartKey } from '../ui/gameMenu';
+import { bindGameMenu } from '../ui/gameMenu';
+import { HelpPanel } from '../ui/HelpPanel';
 import { NEWS_TICKER } from '../data/news';
 import { STAT_LABELS, STAT_ICONS, HUD_STATS } from '../data/constants';
 import { applyStageEntry, describeStageEconomy, getQuarterEconomy } from '../data/economy';
@@ -37,6 +38,7 @@ export abstract class BaseStageScene extends Phaser.Scene {
   protected stageLabel!: Phaser.GameObjects.Text;
   protected turnLabel!: Phaser.GameObjects.Text;
   protected econLabel!: Phaser.GameObjects.Text;
+  protected helpPanel!: HelpPanel;
   protected nextSceneKey!: string;
   protected maxTurns: number = 20;
   protected isEventShowing = false;
@@ -110,10 +112,20 @@ export abstract class BaseStageScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-M', () => sound.toggleMute());
 
     // 重新开档（R 键）：确认后放弃本局、直接开新档
-    bindRestartKey(this, this.consequence, () => this.minigame !== null || this.isEventShowing);
+    bindGameMenu(this, this.consequence, () => this.minigame !== null || this.isEventShowing);
     this.add.text(940, 106, 'R 重新开档', {
       fontFamily: '"Courier New", monospace', fontSize: '11px', color: '#9aa0b5',
     }).setOrigin(1, 0).setDepth(10);
+
+    // 操作帮助（H 键）
+    this.helpPanel = new HelpPanel(this, [
+      '选择：数字键 / 字母键 / ↑↓ + 回车',
+      '任务清单 Q · 导师对话 T',
+      '重新开档 R · 帮助 H · 静音 M',
+      'ESC 跳过本事件（不消耗、可再遇）',
+      `本阶段：${this.getStageLabelText()}`,
+      '提示：心理归零会触发危机结局，注意休息。',
+    ], () => this.isEventShowing || this.minigame !== null || this.consequence.busy);
 
     this.autoSave();
     this.presentStageBriefing();

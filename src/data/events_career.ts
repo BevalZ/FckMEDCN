@@ -28,6 +28,7 @@ export const CAREER_EVENTS: GameEvent[] = [
     minTurn: 6,
     once: true,
     requireFlag: 'passed_zhuzhi',
+    newsTickerAfter: '【卫生高级职称评审结果公布：评价体系加快向临床实绩倾斜】',
     choices: [
       { text: '埋头补文章、备答辩', delta: { reputation: 6, knowledge: 5, papers: 1, stamina: -14, sanity: -4 }, flagSet: 'passed_fugao', consequence: '答辩通过那天，你给恩师发了条消息。' },
       { text: '顺其自然，下批再战', delta: { sanity: 4 }, consequence: '你把材料收进抽屉。' },
@@ -499,6 +500,7 @@ export const CAREER_EVENTS: GameEvent[] = [
     title: '冲刺主任医师',
     body: '正高评审开始了。这一次，材料、年限、口碑都齐了，差的只是最后再熬一熬。',
     category: 'career', weight: 70, once: true, requireFlag: 'passed_fugao', minTurn: 9,
+    newsTickerAfter: '【正高职称评审新规落地：论文不再是唯一"硬杠杠"】',
     choices: [
       { text: '全力冲刺正高', delta: { reputation: 8, knowledge: 5, papers: 1, stamina: -16, sanity: -5 }, flagSet: 'passed_zhenggao', consequence: '公示名单里有你。你第一个电话打给了家里。' },
       { text: '副高也挺好，不折腾了', delta: { sanity: 5, stamina: 2 }, consequence: '你把机会让给了更年轻的人。' },

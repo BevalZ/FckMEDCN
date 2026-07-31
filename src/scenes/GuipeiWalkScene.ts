@@ -5,7 +5,8 @@ import { ConsequencePopup } from '../ui/ConsequencePopup';
 import { NewsTicker } from '../ui/NewsTicker';
 import { InteractPrompt } from '../ui/InteractPrompt';
 import { QuestLog, guipeiQuests } from '../ui/QuestLog';
-import { bindRestartKey } from '../ui/gameMenu';
+import { bindGameMenu } from '../ui/gameMenu';
+import { HelpPanel } from '../ui/HelpPanel';
 import { Walker, createWalkerKeys } from '../ui/Walker';
 import type { WalkerKeys } from '../ui/Walker';
 import { renderTileMap } from '../ui/tilemap';
@@ -118,7 +119,17 @@ export class GuipeiWalkScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-M', () => sound.toggleMute());
 
     // 重新开档（R 键）
-    bindRestartKey(this, this.consequence, () => this.minigame !== null || this.eventCard.busy);
+    bindGameMenu(this, this.consequence, () => this.minigame !== null || this.eventCard.busy);
+
+    // 操作帮助（H 键）
+    new HelpPanel(this, [
+      '移动 WASD/方向键 · 交互 E',
+      '任务清单 Q · 导师对话 T',
+      '重新开档 R · 帮助 H · 静音 M',
+      'ESC 取消当前交互',
+      '提示：规培是心理压力最大的阶段，注意休息。',
+      '执业医师考试 通过后才能独立执业。',
+    ], () => this.minigame !== null || this.eventCard.busy || this.consequence.busy);
 
     this.presentStageBriefing();
   }

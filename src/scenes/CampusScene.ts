@@ -12,7 +12,8 @@ import { npcTileNear } from '../ui/npcPlacement';
 import { addScanlineOverlay, addVignette, getPalette, stageAmbientTint } from '../ui/pixelArt';
 import { getState, updateStats, setFlag, hasFlag, addNews } from '../data/gameState';
 import { drawStorylet, hasStorylet, commitChoice, advanceQuarter } from '../data/turnFlow';
-import { bindRestartKey } from '../ui/gameMenu';
+import { bindGameMenu } from '../ui/gameMenu';
+import { HelpPanel } from '../ui/HelpPanel';
 import { ALL_EVENTS, getAvailableEvents } from '../data/events';
 import type { EventChoice, GameEvent } from '../data/events';
 import type { StatDelta } from '../data/stats';
@@ -142,7 +143,17 @@ export class CampusScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-M', () => sound.toggleMute());
 
     // 重新开档（R 键）
-    bindRestartKey(this, this.consequence, () => this.minigame !== null || this.eventCard.busy);
+    bindGameMenu(this, this.consequence, () => this.minigame !== null || this.eventCard.busy);
+
+    // 操作帮助（H 键）
+    new HelpPanel(this, [
+      '移动 WASD/方向键 · 交互 E',
+      '任务清单 Q · 导师对话 T',
+      '重新开档 R · 帮助 H · 静音 M',
+      'ESC 取消当前交互',
+      '提示：每季 3 个行动点，睡觉得回宿舍。',
+      '技能中心可练缝合（完成任务目标）。',
+    ], () => this.minigame !== null || this.eventCard.busy || this.consequence.busy);
 
     this.hud.update(getState().stats, STAGE);
     this.refreshInfoBar();

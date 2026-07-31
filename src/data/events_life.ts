@@ -52,6 +52,7 @@ export const LIFE_EVENTS: GameEvent[] = [
     title: '谈婚论嫁',
     body: '在一起久了，双方家庭开始催婚。你攒下了一点钱，是时候给彼此一个交代吗？',
     category: 'personal', weight: 9, requireMarital: 'dating', requireStat: { money: [1500, 1000000] },
+    newsTickerAfter: '【民政部数据：初婚平均年龄持续推迟】',
     choices: [
       {
         text: '风风光光办婚礼', delta: { money: -8000, sanity: 15, relations: 15, reputation: 5 },
@@ -88,6 +89,7 @@ export const LIFE_EVENTS: GameEvent[] = [
     title: '新生命',
     body: '你们讨论要不要一个孩子。病房与奶粉钱都在前方等着。',
     category: 'personal', weight: 7, requireMarital: 'married', excludeFlag: 'has_child',
+    newsTickerAfter: '【生育支持政策再加码：多地上调育儿补贴标准】',
     choices: [
       {
         text: '迎接宝宝到来', delta: { money: -6000, stamina: -10, sanity: 12, relations: 10 },

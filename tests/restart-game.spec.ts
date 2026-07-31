@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
 
-// "直接重新开档"（R 键）回归：
-// 1) 游戏内按 R 弹出确认，空格确认后回到全新的 GaokaoScene（属性/flag/回合重置，存档清除）；
-// 2) 有弹窗/事件展示时 R 不抢占（busy 守卫）。
+// 游戏内菜单（R 键）回归：
+// 1) R 打开菜单，数字键选择，空格确认；
+// 2) "返回标题"保留存档（自动存档在，标题页可继续游戏恢复）；
+// 3) "重新开档"先弹确认，空格确认后回全新 GaokaoScene（属性/flag/回合重置，存档清除）。
 
 const BASE = 'http://127.0.0.1:5173/';
 
@@ -14,40 +15,69 @@ async function waitForScene(page: Page, key: string, timeout = 120000) {
   );
 }
 
-test('游戏内按 R 重新开档：确认后回新档且状态重置', async ({ page }) => {
+async function enterCampus(page: Page) {
   await page.goto(BASE, { waitUntil: 'load' });
-  await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 30000 });
+  await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 60000 });
   await waitForScene(page, 'TitleScene');
-
-  // 清空图鉴（避免传承干扰断言）
   await page.evaluate(() => (window as any).__mod.col.resetCollectionForTest());
-
-  // 开新局 → 进入校园
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
   for (let i = 0; i < 5; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
   await waitForScene(page, 'CampusScene');
   await page.keyboard.press('Enter'); // 关掉阶段经济简报
   await page.waitForTimeout(500);
+}
 
-  // 打上"已玩过"痕迹：改钱 + 置 flag
+test('游戏菜单：返回标题保留存档', async ({ page }) => {
+  await enterCampus(page);
+
+  // 打上"已玩过"痕迹并确认存档存在
+  await page.evaluate(() => {
+    const { gs } = (window as any).__mod;
+    gs.patchState({ stats: { ...gs.getState().stats, money: 999999 } });
+    gs.setFlag('ug_tutoring');
+  });
+  await page.waitForTimeout(300);
+  const saveBefore = await page.evaluate(() => localStorage.getItem('fckmedcn_save_v1') !== null);
+  expect(saveBefore, '游玩中应有自动存档').toBe(true);
+
+  // R → 菜单 → 选"返回标题"
+  await page.keyboard.press('r');
+  await page.waitForTimeout(400);
+  const menuShown = await page.evaluate(() => {
+    const scene = (window as any).game.scene.getScene('CampusScene');
+    return scene.children.list.some((o: any) => o.type === 'Container' && o.depth === 190 && o.list && o.list.length > 0);
+  });
+  expect(menuShown, 'R 应打开游戏菜单').toBe(true);
+
+  await page.keyboard.press('2'); // 返回标题
+  await waitForScene(page, 'TitleScene');
+
+  const saveAfter = await page.evaluate(() => localStorage.getItem('fckmedcn_save_v1') !== null);
+  expect(saveAfter, '返回标题不应清除存档').toBe(true);
+});
+
+test('游戏菜单：重新开档 → 确认 → 回新档且状态重置', async ({ page }) => {
+  await enterCampus(page);
+
   await page.evaluate(() => {
     const { gs } = (window as any).__mod;
     gs.patchState({ stats: { ...gs.getState().stats, money: 999999 } });
     gs.setFlag('ug_tutoring');
   });
 
-  // 按 R → 应弹出确认
+  // R → 菜单 → 选"重新开档" → 弹确认
   await page.keyboard.press('r');
+  await page.waitForTimeout(400);
+  await page.keyboard.press('3');
   await page.waitForTimeout(400);
   const confirmShown = await page.evaluate(() => {
     const scene = (window as any).game.scene.getScene('CampusScene');
-    const texts = scene.children.list.filter((o: any) => o.type === 'Text').map((o: any) => o.text as string);
-    return texts.some((t: string) => t.includes('重新开档'));
+    return scene.children.list.some((o: any) => o.type === 'Text' && (o.text as string).includes('重新开档'));
   });
-  expect(confirmShown, 'R 应弹出重新开档确认').toBe(true);
+  expect(confirmShown, '选重新开档应弹确认').toBe(true);
 
-  // 空格确认 → 应回到全新 GaokaoScene，痕迹清空、存档清除
+  // 空格确认 → 回到全新 GaokaoScene
   await page.keyboard.press('Space');
   await waitForScene(page, 'GaokaoScene');
   const fresh = await page.evaluate(() => {
@@ -67,12 +97,12 @@ test('游戏内按 R 重新开档：确认后回新档且状态重置', async ({
   expect(fresh.age, '年龄回到 18').toBe(18);
   expect(fresh.money, '钱回到初始（5000+无传承）').toBe(5000);
   expect(fresh.hasMarkerFlag, 'flag 已清空').toBe(false);
-  expect(fresh.saveCleared, '存档应被清除').toBe(true);
+  expect(fresh.saveCleared, '重开应清除存档').toBe(true);
 });
 
 test('卡片阶段事件卡按 ESC 跳过：不选择、推进本回合', async ({ page }) => {
   await page.goto(BASE, { waitUntil: 'load' });
-  await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 30000 });
+  await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 60000 });
   await waitForScene(page, 'TitleScene');
 
   // 直接以职业阶段开局（该阶段无小游戏事件，首个 storylet 必是事件卡）

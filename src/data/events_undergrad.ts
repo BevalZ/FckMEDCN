@@ -71,6 +71,7 @@ export const UNDERGRAD_EVENTS: GameEvent[] = [
     maxTurn: 19,
     once: true,
     requireStat: { knowledge: [55, 100] },
+    newsTickerAfter: '【考研报名人数再创新高，医学生连续多年位居报名主力】',
     choices: [
       { text: '冲刺保研，拼绩点', delta: { reputation: 5, stamina: -10, knowledge: 3 }, flagSet: 'baoyan', consequence: '你挤进了保研名单，不用受考研的罪。' },
       { text: '备战考研，放手一搏', delta: { knowledge: 6, stamina: -14, sanity: -5 }, flagSet: 'kaoyan', consequence: '自习室成了你的第二个家。' },
@@ -291,6 +292,7 @@ export const UNDERGRAD_EVENTS: GameEvent[] = [
     title: '奖学金评定公示',
     body: '公告栏贴出国家励志奖学金的申报通知。名额按绩点和贫困认定排，五千块，够半年生活费。',
     category: 'financial', weight: 55, minTurn: 3,
+    newsTickerAfter: '【高校奖学金评审季：国家励志奖学金名额持续扩大】',
     choices: [
       { text: '认真准备材料去争', delta: { money: 5000, stamina: -8, reputation: 3 }, flagSet: 'ug_got_scholarship', consequence: '公示名单里有你的名字，你截图发给了家里。' },
       { text: '绩点不够，放弃', delta: { sanity: -3, knowledge: 1 }, consequence: '你盯着第一名的绩点看了很久。' },
@@ -534,6 +536,7 @@ export const UNDERGRAD_EVENTS: GameEvent[] = [
     body: '红榜贴在公告栏最中间。名字、专业、金额，一行一行印得很清楚。',
     category: 'career', weight: 60, once: true,
     requireFlag: 'ug_guojiang_honest',
+    newsTickerAfter: '【教育部公示本年度国家奖学金名单，获奖学生超十万人】',
     choices: [
       { text: '名字在上面', delta: { money: 8000, reputation: 6, sanity: 8 }, flagSet: 'ug_guojiang_done', consequence: '你给家里打了电话，第一次听见父亲对别人说"我儿子/女儿拿了国奖"。' },
       { text: '差了零点几分', delta: { reputation: 2, sanity: -6, knowledge: 2 }, flagSet: 'ug_guojiang_done', consequence: '你盯着第一名的名字看了很久，然后回图书馆了。' },

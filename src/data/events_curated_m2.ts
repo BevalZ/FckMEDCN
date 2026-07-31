@@ -195,6 +195,7 @@ export const CURATED_M2_EVENTS: GameEvent[] = [
     id: 'm2_gp_quit_confirm', stage: 'guipei', title: '退，还是不退', requireFlag: 'gp_quit_think', once: true, weight: 50,
     body: '退培意味着此前时间"归零"，且部分省份要求退赔补助。留下则还要熬两年。',
     category: 'career',
+    newsTickerAfter: '【规培生退培现象引关注：多地试点弹性退出机制】',
     choices: [
       { text: '真的退了', delta: { money: 1500, reputation: -5, sanity: 6, knowledge: -4 }, flagSet: 'left_med', nextEventId: 'm2_gp_left', consequence: '你交了退培申请，长出一口气。' },
       { text: '咬牙留下', delta: { sanity: -4, stamina: -4 }, flagSet: 'gp_stay', nextEventId: 'm2_gp_stay', consequence: '你把招聘软件删了。' },
