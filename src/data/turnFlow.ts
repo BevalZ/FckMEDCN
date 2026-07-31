@@ -7,6 +7,7 @@ import type { QuarterEconomy } from './economy';
 import { rollIntegrity } from './integrity';
 import type { IntegrityOutcome } from './integrity';
 import type { StatDelta } from './stats';
+import { checkBadges } from './badges';
 
 // 回合流程的共享逻辑。
 // BaseStageScene（卡片模式）与 CampusScene（可行走地图）都走这里，
@@ -95,11 +96,13 @@ export function hasStorylet(
 }
 
 // 提交一个选项的全部副作用：置 flag、执行声明式 effect、结算属性变化。
+// 同时评估生涯里程碑（徽章），新达成的进入待展示队列，由 ConsequencePopup 消费。
 // 注意：不含 UI 反馈（飘字 / 音效 / 后果弹窗），由调用方负责。
 export function commitChoice(choice: EventChoice) {
   if (choice.flagSet) setFlag(choice.flagSet);
   if (choice.effect) applyChoiceEffect(choice.effect);
   updateStats(choice.delta as StatDelta);
+  checkBadges();
 }
 
 // 推进一个季度：回合数 / 年份季度递增 + 固定收支结算 + 学术诚信判定。

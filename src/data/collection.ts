@@ -9,6 +9,7 @@ const KEY = 'fckmedcn_collection_v1';
 interface CollectionBlob {
   version: number;
   endings: string[]; // 已解锁结局 id
+  badges: string[];  // 已达成里程碑 id
   runs: number;      // 累计通关次数（到达结局页算一次）
 }
 
@@ -16,13 +17,18 @@ let cache: CollectionBlob | null = null;
 
 function load(): CollectionBlob {
   if (cache) return cache;
-  let blob: CollectionBlob = { version: 1, endings: [], runs: 0 };
+  let blob: CollectionBlob = { version: 1, endings: [], badges: [], runs: 0 };
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as CollectionBlob;
       if (parsed && parsed.version === 1 && Array.isArray(parsed.endings)) {
-        blob = { version: 1, endings: parsed.endings, runs: parsed.runs ?? 0 };
+        blob = {
+          version: 1,
+          endings: parsed.endings,
+          badges: Array.isArray(parsed.badges) ? parsed.badges : [],
+          runs: parsed.runs ?? 0,
+        };
       }
     }
   } catch {
@@ -54,9 +60,23 @@ export function recordEnding(id: string): RecordResult {
   return { isNew, unlocked: blob.endings.length, total: ENDINGS.length, runs: blob.runs };
 }
 
-export function getCollection(): { endings: ReadonlySet<string>; runs: number; total: number } {
+// 达成里程碑时调用。返回是否首次达成。
+export function recordBadge(id: string): boolean {
   const blob = load();
-  return { endings: new Set(blob.endings), runs: blob.runs, total: ENDINGS.length };
+  if (blob.badges.includes(id)) return false;
+  blob.badges.push(id);
+  persist(blob);
+  return true;
+}
+
+export function getCollection(): { endings: ReadonlySet<string>; badges: ReadonlySet<string>; runs: number; total: number } {
+  const blob = load();
+  return {
+    endings: new Set(blob.endings),
+    badges: new Set(blob.badges),
+    runs: blob.runs,
+    total: ENDINGS.length,
+  };
 }
 
 // 仅测试与调试使用：清空图鉴缓存与持久化数据。

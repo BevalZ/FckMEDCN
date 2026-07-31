@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { getPalette } from './pixelArt';
 import type { StatDelta } from '../data/stats';
+import { takePendingBadges } from '../data/badges';
 
 // M5 文字完整性：弹窗高度随正文自动调整，过长则整体等比缩小，保证不裁切。
 const POP_W = 600;
@@ -24,13 +25,24 @@ export class ConsequencePopup {
     const pal = getPalette(this.stage);
     const scene = this.scene;
 
+    // 里程碑达成提示：本选择新达成的徽章，金色行显示在正文上方
+    const badgeTitles = takePendingBadges();
+    const badgeLine = badgeTitles.length > 0 ? '★ 达成里程碑：' + badgeTitles.join(' · ') : '';
+
     const body = scene.add.text(0, 0, text, {
       fontFamily: '"Courier New", monospace', fontSize: '14px', color: '#eeeeee',
       wordWrap: { width: POP_W - 40 }, lineSpacing: 4, align: 'center',
     }).setOrigin(0.5, 0);
 
-    const padTop = 30, gap = 18, btnH = 24, padBottom = 14;
-    const naturalH = padTop + body.height + gap + btnH + padBottom;
+    let padTop = 30;
+    const badgeText = badgeLine ? scene.add.text(0, 0, badgeLine, {
+      fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#ffc107', fontStyle: 'bold',
+      wordWrap: { width: POP_W - 40 }, align: 'center',
+    }).setOrigin(0.5, 0) : null;
+
+    const gap = 18, btnH = 24, padBottom = 14;
+    const headerH = badgeText ? badgeText.height + 10 : 0;
+    const naturalH = padTop + headerH + body.height + gap + btnH + padBottom;
     const H = Math.min(naturalH, MAX_H);
 
     this.container = scene.add.container(960 / 2, 540 / 2 + 20);
@@ -42,7 +54,12 @@ export class ConsequencePopup {
     bg.lineStyle(2, pal.accent, 1);
     bg.strokeRoundedRect(-POP_W / 2, -H / 2, POP_W, H, 10);
 
-    body.setPosition(0, -H / 2 + padTop);
+    let y = -H / 2 + padTop;
+    if (badgeText) {
+      badgeText.setPosition(0, y);
+      y += badgeText.height + 10;
+    }
+    body.setPosition(0, y);
 
     const btnText = scene.add.text(0, H / 2 - 20, '继续 [ 点击 / 空格 / 回车 ]', {
       fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#ffffff',
@@ -52,7 +69,7 @@ export class ConsequencePopup {
       .setInteractive({ cursor: 'pointer' });
     hitArea.on('pointerdown', () => this.dismiss(onDone));
 
-    this.container.add([bg, body, btnText, hitArea]);
+    this.container.add([bg, body, btnText, hitArea, ...(badgeText ? [badgeText] : [])]);
 
     if (naturalH > MAX_H) this.container.setScale(MAX_H / naturalH);
 
