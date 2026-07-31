@@ -51,3 +51,46 @@ test('里程碑事件选择后新闻入 log 并弹横幅', async ({ page }) => {
   expect(result.toast.some((t: string) => t.startsWith('新闻 ·') && t.includes('奖学金评审季')),
     '屏幕上方应弹出新闻横幅').toBe(true);
 });
+
+test('医院场景新闻横幅正常弹出', async ({ page }) => {
+  await page.goto(BASE, { waitUntil: 'load' });
+  await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 60000 });
+  await waitForScene(page, 'TitleScene');
+
+  // 直接以实习阶段开局（该阶段有带回声的新闻事件 m2_in_overwork_seen）
+  await page.evaluate(() => {
+    const { gs } = (window as any).__mod;
+    gs.patchState({ stage: 'internship', turnsInStage: 3 });
+    (window as any).game.scene.getScene('TitleScene').scene.start('HospitalScene');
+  });
+  await waitForScene(page, 'HospitalScene');
+  await page.keyboard.press('Enter'); // 关简报
+  await page.waitForTimeout(400);
+
+  // 强制打开带回声的新闻事件并选第一项
+  await page.evaluate(() => {
+    const s: any = (window as any).game.scene.getScene('HospitalScene');
+    const ev = (window as any).__mod.ev.ALL_EVENTS.find((e: any) => e.id === 'm2_in_overwork_seen');
+    if (!ev) return;
+    s.openEvent(ev);
+  });
+  await page.keyboard.press('1');
+  await page.waitForTimeout(500);
+
+  const result = await page.evaluate(() => {
+    const { gs } = (window as any).__mod;
+    const scene = (window as any).game.scene.getScene('HospitalScene');
+    const news = gs.getState().newsLog.map((n: any) => n.headline);
+    const toast = scene.children.list
+      .filter((o: any) => o.type === 'Text' && o.depth === 120)
+      .map((o: any) => o.text as string);
+    return {
+      inLog: news.some((h: string) => h.includes('年轻医生倒下')),
+      toast,
+    };
+  });
+
+  expect(result.inLog, '回声头条应进入 newsLog').toBe(true);
+  expect(result.toast.some((t: string) => t.startsWith('新闻 ·') && t.includes('年轻医生倒下')),
+    '医院场景屏幕上方应弹出新闻横幅').toBe(true);
+});
