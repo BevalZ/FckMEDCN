@@ -5,7 +5,7 @@
 - **路线图 ①②③④ 全部完成**。
 - **known-issues 全部清零**：A1/A2/A3、B2/B3/B4/B6/B7 已修已验，B1/B5 设计如此/已验证，
   D1-D4 为设计记录。
-- 全量 **47 用例绿**（exit=0；balance-sim 首跑 flaky 是 Windows 环境成本，见 D4）。
+- 全量 **48 用例绿**（exit=0；balance-sim 首跑 flaky 是 Windows 环境成本，见 D4）。
 - `npm run build` 通过；git 仓库健康，工作区干净。
 - **唯一剩余**：A2 文字渲染的实际观感（各字号扫一眼），纯人工目视项，无代码待办。
 
@@ -17,12 +17,14 @@
 **人生图鉴**（collection.ts 独立 key 跨周目累计，EndingScene 收录 + CollectionScene 左右栏图鉴，
 标题页 G 键/按钮入口，collection-gallery 回归）；
 **生涯里程碑徽章**（badges.ts 22 条跨阶段 flag/state 判定，commitChoice 统一检查，
-ConsequencePopup 弹窗顶部金色展示，图鉴第二页签 TAB 切换 + ←/→ 翻页，badges-gallery 回归）。
+ConsequencePopup 弹窗顶部金色展示，图鉴第二页签 TAB 切换 + ←/→ 翻页，badges-gallery 回归）；
+**多周目传承**（collection.ts 加点数经济——通关 +1/每 5 徽章 +1；legacy.ts 8 条克制式开局加成
+perk，临床/科研 2 点其余 1 点；TitleScene.create 对每次新开局统一应用加成（继续游戏读档会覆盖，
+不受污染）；图鉴第三页签空格购买；legacy-inheritance 回归）。
 剩余可选项（与用户确认后再动）：
-1. **用户试玩**：回归清单的 5 条试玩路径（known-issues 末尾），顺手确认 A2 文字观感与图鉴手感。
+1. **用户试玩**：回归清单的 5 条试玩路径（known-issues 末尾），顺手确认 A2 文字观感与图鉴/传承手感。
 2. **数据对比系统**（结局页"真实数据 vs 你的数据"）：曾被移除的特性，是否恢复需确认。
 3. **移动端**：评估结论——底子比预想的好，但**不建议现在做**（详见下节）。
-4. **多周目继承**：徽章图鉴已就位，若要做"开局继承金钱/属性"需先讨论平衡影响。
 
 ## 移动端可行性评估（2026-07-30，只出方案未改代码）
 

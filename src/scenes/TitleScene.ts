@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
-import { resetGame } from '../data/gameState';
+import { resetGame, getState, patchState } from '../data/gameState';
 import { sound } from '../audio/sound';
 import { hasSave, loadSave, applySave } from '../data/save';
+import { applyLegacyPerks } from '../data/legacy';
 
 // 标题界面。M5 之后改用 HTML 覆盖层（index.html 中的 #title-overlay）渲染文本，
 // 这样可以由浏览器做真正的字体抗锯齿/重采样，Phaser 画布文字"细笔画被裁"的问题不会复现。
@@ -23,6 +24,9 @@ export class TitleScene extends Phaser.Scene {
 
   create() {
     resetGame();
+    // 多周目传承：把已购买的永久加成叠加到新开局属性上。
+    // 所有新开局（开始游戏/重开/心理崩溃重开）都会经过本场景的 create。
+    patchState({ stats: applyLegacyPerks(getState().stats) });
     const bg = this.add.graphics();
     bg.fillStyle(0x0a0a0f);
     bg.fillRect(0, 0, 960, 540);

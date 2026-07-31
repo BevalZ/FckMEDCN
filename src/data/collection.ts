@@ -11,13 +11,15 @@ interface CollectionBlob {
   endings: string[]; // 已解锁结局 id
   badges: string[];  // 已达成里程碑 id
   runs: number;      // 累计通关次数（到达结局页算一次）
+  points: number;    // 传承点（未使用余额）
+  purchased: string[]; // 已购买的传承 perk id
 }
 
 let cache: CollectionBlob | null = null;
 
 function load(): CollectionBlob {
   if (cache) return cache;
-  let blob: CollectionBlob = { version: 1, endings: [], badges: [], runs: 0 };
+  let blob: CollectionBlob = { version: 1, endings: [], badges: [], runs: 0, points: 0, purchased: [] };
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
@@ -28,6 +30,8 @@ function load(): CollectionBlob {
           endings: parsed.endings,
           badges: Array.isArray(parsed.badges) ? parsed.badges : [],
           runs: parsed.runs ?? 0,
+          points: parsed.points ?? 0,
+          purchased: Array.isArray(parsed.purchased) ? parsed.purchased : [],
         };
       }
     }
@@ -51,11 +55,13 @@ export interface RecordResult {
 }
 
 // 到达结局页时调用：收录结局并累计通关次数。返回本次收录情况供 UI 提示。
+// 每次通关 +1 传承点（多周目传承的经济来源）。
 export function recordEnding(id: string): RecordResult {
   const blob = load();
   const isNew = !blob.endings.includes(id);
   if (isNew) blob.endings.push(id);
   blob.runs += 1;
+  blob.points += 1;
   persist(blob);
   return { isNew, unlocked: blob.endings.length, total: ENDINGS.length, runs: blob.runs };
 }
@@ -69,13 +75,36 @@ export function recordBadge(id: string): boolean {
   return true;
 }
 
-export function getCollection(): { endings: ReadonlySet<string>; badges: ReadonlySet<string>; runs: number; total: number } {
+// 增加传承点（每 5 个徽章由 badges.ts 触发调用）。
+export function grantPoint(n = 1) {
+  const blob = load();
+  blob.points += n;
+  persist(blob);
+}
+
+// 购买传承 perk。成功返回 true，点数不足或已购返回 false。
+export function buyPerk(id: string, cost: number): boolean {
+  const blob = load();
+  if (blob.purchased.includes(id)) return false;
+  if (blob.points < cost) return false;
+  blob.points -= cost;
+  blob.purchased.push(id);
+  persist(blob);
+  return true;
+}
+
+export function getCollection(): {
+  endings: ReadonlySet<string>; badges: ReadonlySet<string>;
+  runs: number; total: number; points: number; purchased: readonly string[];
+} {
   const blob = load();
   return {
     endings: new Set(blob.endings),
     badges: new Set(blob.badges),
     runs: blob.runs,
     total: ENDINGS.length,
+    points: blob.points,
+    purchased: blob.purchased,
   };
 }
 

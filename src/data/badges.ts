@@ -1,5 +1,5 @@
 import { getState } from './gameState';
-import { getCollection, recordBadge } from './collection';
+import { getCollection, recordBadge, grantPoint } from './collection';
 
 // 生涯里程碑（徽章）：一组跨阶段、可判定的"人生节点"。
 // 与结局图鉴互补——结局记录"你怎么结束"，徽章记录"你经历过什么"。
@@ -124,6 +124,7 @@ export const BADGES: Badge[] = [
 let pending: string[] = [];
 
 // 评估全部徽章条件，将新达成的写入图鉴并进入待展示队列。返回新达成徽章。
+// 每达成 5 个徽章奖励 1 传承点（多周目传承经济的一部分）。
 export function checkBadges(): Badge[] {
   const unlocked = getCollection().badges;
   const fresh: Badge[] = [];
@@ -133,6 +134,11 @@ export function checkBadges(): Badge[] {
       pending.push(b.title);
       fresh.push(b);
     }
+  }
+  if (fresh.length > 0) {
+    const count = getCollection().badges.size;
+    const before = count - fresh.length;
+    if (Math.floor(count / 5) > Math.floor(before / 5)) grantPoint();
   }
   return fresh;
 }

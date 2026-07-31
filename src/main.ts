@@ -84,10 +84,11 @@ if (import.meta.env.DEV) {
     import('./ui/tilemap'),
     import('./data/collection'),
     import('./data/badges'),
-  ]).then(([gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad]) => {
+    import('./data/legacy'),
+  ]).then(([gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad, leg]) => {
     w.__state = gs.getState;
     w.__setFlag = gs.setFlag;
     w.__patchState = gs.patchState;
-    w.__mod = { gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad };
+    w.__mod = { gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad, leg };
   });
 }

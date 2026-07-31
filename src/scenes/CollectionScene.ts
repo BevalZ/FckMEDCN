@@ -1,12 +1,13 @@
 import Phaser from 'phaser';
 import { ENDINGS, ENDING_HINTS } from '../data/endings';
 import { BADGES } from '../data/badges';
+import { LEGACY_PERKS, tryBuyPerk } from '../data/legacy';
 import { getCollection } from '../data/collection';
 
-// 人生图鉴：跨周目收集界面。两个页签——结局图鉴 / 生涯里程碑。
-// TAB 或点击页签切换；结局页 15 条一屏，里程碑页 22 条分两页（←/→ 翻页）。
-// ↑↓/点击 选择，右栏详情；未解锁/未达成只显示提示。ESC 返回标题。
-type Mode = 'ending' | 'badge';
+// 人生图鉴：跨周目收集界面。三个页签——结局图鉴 / 生涯里程碑 / 传承。
+// TAB 或点击页签切换；结局页 15 条一屏，里程碑页 22 条分两页（←/→ 翻页），
+// 传承页 8 条一屏（空格购买）。↑↓/点击 选择，右栏详情；ESC 返回标题。
+type Mode = 'ending' | 'badge' | 'legacy';
 
 const LIST_X = 90, LIST_Y = 128;
 const BADGE_PAGE_SIZE = 13;
@@ -15,6 +16,7 @@ export class CollectionScene extends Phaser.Scene {
   private mode: Mode = 'ending';
   private selEnding = 0;
   private selBadge = 0;
+  private selPerk = 0;
   private badgePage = 0;
   private rowTexts: Phaser.GameObjects.Text[] = [];
   private cursorText!: Phaser.GameObjects.Text;
@@ -23,6 +25,7 @@ export class CollectionScene extends Phaser.Scene {
   private progressText!: Phaser.GameObjects.Text;
   private tabEnding!: Phaser.GameObjects.Text;
   private tabBadge!: Phaser.GameObjects.Text;
+  private tabLegacy!: Phaser.GameObjects.Text;
 
   constructor() { super({ key: 'CollectionScene' }); }
 
@@ -48,6 +51,10 @@ export class CollectionScene extends Phaser.Scene {
       fontFamily: '"Courier New", monospace', fontSize: '15px', color: '#555555',
     }).setInteractive({ cursor: 'pointer' });
     this.tabBadge.on('pointerdown', () => this.setMode('badge'));
+    this.tabLegacy = this.add.text(350, 96, '◆ 传承', {
+      fontFamily: '"Courier New", monospace', fontSize: '15px', color: '#555555',
+    }).setInteractive({ cursor: 'pointer' });
+    this.tabLegacy.on('pointerdown', () => this.setMode('legacy'));
 
     // 左列清单（两种模式共用同一批 Text，refresh 时重建内容）
     this.cursorText = this.add.text(LIST_X - 22, LIST_Y, '▶', {
@@ -57,12 +64,22 @@ export class CollectionScene extends Phaser.Scene {
     // 键盘导航
     this.input.keyboard?.on('keydown-UP', () => this.move(-1));
     this.input.keyboard?.on('keydown-DOWN', () => this.move(1));
-    this.input.keyboard?.on('keydown-TAB', () => { this.setMode(this.mode === 'ending' ? 'badge' : 'ending'); });
+    this.input.keyboard?.on('keydown-TAB', () => {
+      const order: Mode[] = ['ending', 'badge', 'legacy'];
+      this.setMode(order[(order.indexOf(this.mode) + 1) % order.length]);
+    });
     this.input.keyboard?.on('keydown-LEFT', () => {
       if (this.mode === 'badge') this.flipPage(-1); else this.setMode('badge');
     });
     this.input.keyboard?.on('keydown-RIGHT', () => {
       if (this.mode === 'badge') this.flipPage(1); else this.setMode('badge');
+    });
+    this.input.keyboard?.on('keydown-SPACE', () => {
+      if (this.mode !== 'legacy') return;
+      if (tryBuyPerk(LEGACY_PERKS[this.selPerk]!.id)) {
+        this.refreshList();
+        this.refreshDetail();
+      }
     });
     this.input.keyboard?.once('keydown-ESC', () => {
       this.cameras.main.fadeOut(300, 0, 0, 0);
@@ -92,10 +109,12 @@ export class CollectionScene extends Phaser.Scene {
     if (this.mode === 'ending') {
       const n = ENDINGS.length;
       this.selEnding = (this.selEnding + dir + n) % n;
-    } else {
+    } else if (this.mode === 'badge') {
       const pageStart = this.badgePage * BADGE_PAGE_SIZE;
       const n = Math.min(BADGE_PAGE_SIZE, BADGES.length - pageStart);
       this.selBadge = (this.selBadge + dir + n) % n;
+    } else {
+      this.selPerk = (this.selPerk + dir + LEGACY_PERKS.length) % LEGACY_PERKS.length;
     }
     this.refreshList();
     this.refreshDetail();
@@ -112,7 +131,9 @@ export class CollectionScene extends Phaser.Scene {
     this.progressText.setText(
       this.mode === 'ending'
         ? `已解锁 ${unlockedEndings} / ${ENDINGS.length} 种人生 · 累计通关 ${col.runs} 次`
-        : `已达成 ${unlockedBadges} / ${BADGES.length} 个里程碑`,
+        : this.mode === 'badge'
+          ? `已达成 ${unlockedBadges} / ${BADGES.length} 个里程碑`
+          : `传承点 ${col.points} · 已购 ${col.purchased.length} / ${LEGACY_PERKS.length}`,
     );
 
     this.rowTexts.forEach(t => t.destroy());
@@ -134,7 +155,7 @@ export class CollectionScene extends Phaser.Scene {
         t.setColor(i === this.selEnding ? '#ffc107' : col.endings.has(ENDINGS[i]!.id) ? '#cccccc' : '#555555');
         t.setFontStyle(i === this.selEnding ? 'bold' : 'normal');
       });
-    } else {
+    } else if (this.mode === 'badge') {
       const pageStart = this.badgePage * BADGE_PAGE_SIZE;
       const page = BADGES.slice(pageStart, pageStart + BADGE_PAGE_SIZE);
       page.forEach((b, i) => {
@@ -153,6 +174,26 @@ export class CollectionScene extends Phaser.Scene {
         t.setColor(i === this.selBadge ? '#ffc107' : col.badges.has(id) ? '#cccccc' : '#555555');
         t.setFontStyle(i === this.selBadge ? 'bold' : 'normal');
       });
+    } else {
+      // 传承页：✓ 已购 / ○ 未购；未购且有足够点数时金色可购
+      LEGACY_PERKS.forEach((p, i) => {
+        const owned = col.purchased.includes(p.id);
+        const affordable = col.points >= p.cost;
+        const y = startY + i * rowH;
+        const t = this.add.text(LIST_X, y, `${owned ? '✓' : '○'} ${p.title} · ${p.cost} 点`, {
+          fontFamily: '"Courier New", monospace', fontSize: '13px',
+          color: owned ? '#cccccc' : affordable ? '#ffc107' : '#555555',
+        }).setInteractive({ cursor: 'pointer' });
+        t.on('pointerdown', () => { this.selPerk = i; this.refreshList(); this.refreshDetail(); });
+        this.rowTexts.push(t);
+      });
+      this.cursorText.setY(startY + this.selPerk * rowH);
+      this.rowTexts.forEach((t, i) => {
+        const owned = col.purchased.includes(LEGACY_PERKS[i]!.id);
+        const affordable = col.points >= LEGACY_PERKS[i]!.cost;
+        t.setColor(i === this.selPerk ? '#ffc107' : owned ? '#cccccc' : affordable ? '#ffc107' : '#555555');
+        t.setFontStyle(i === this.selPerk ? 'bold' : 'normal');
+      });
     }
 
     // 页签高亮
@@ -160,12 +201,16 @@ export class CollectionScene extends Phaser.Scene {
     this.tabEnding.setFontStyle(this.mode === 'ending' ? 'bold' : 'normal');
     this.tabBadge.setColor(this.mode === 'badge' ? '#ffc107' : '#555555');
     this.tabBadge.setFontStyle(this.mode === 'badge' ? 'bold' : 'normal');
+    this.tabLegacy.setColor(this.mode === 'legacy' ? '#ffc107' : '#555555');
+    this.tabLegacy.setFontStyle(this.mode === 'legacy' ? 'bold' : 'normal');
 
     // 页面提示
     this.pageLabel?.destroy();
     const hint = this.mode === 'ending'
       ? `↑↓ 选择 · TAB 切换 · ESC 返回`
-      : `↑↓ 选择 · ←/→ 翻页（${this.badgePage + 1}/${Math.ceil(BADGES.length / BADGE_PAGE_SIZE)}）· TAB 切换 · ESC 返回`;
+      : this.mode === 'badge'
+        ? `↑↓ 选择 · ←/→ 翻页（${this.badgePage + 1}/${Math.ceil(BADGES.length / BADGE_PAGE_SIZE)}）· TAB 切换 · ESC 返回`
+        : `↑↓ 选择 · 空格 购买 · TAB 切换 · ESC 返回`;
     this.pageLabel = this.add.text(480, 508, hint, {
       fontFamily: '"Courier New", monospace', fontSize: '11px', color: '#555555',
     }).setOrigin(0.5);
@@ -201,15 +246,30 @@ export class CollectionScene extends Phaser.Scene {
       return;
     }
 
-    const b = BADGES[this.badgePage * BADGE_PAGE_SIZE + this.selBadge]!;
-    const unlocked = col.badges.has(b.id);
-    mk(128, `${unlocked ? '✓' : '○'} ${b.title}`, {
-      fontSize: '18px', color: unlocked ? '#ffc107' : '#666666', fontStyle: 'bold',
+    if (this.mode === 'badge') {
+      const b = BADGES[this.badgePage * BADGE_PAGE_SIZE + this.selBadge]!;
+      const unlocked = col.badges.has(b.id);
+      mk(128, `${unlocked ? '✓' : '○'} ${b.title}`, {
+        fontSize: '18px', color: unlocked ? '#ffc107' : '#666666', fontStyle: 'bold',
+      });
+      mk(158, `所属阶段：${b.group}`, { fontSize: '12px', color: '#777777' });
+      mk(184, b.desc, { fontSize: '12px', color: '#cccccc', wordWrap: { width: w }, lineSpacing: 5 });
+      mk(230, unlocked ? '已达成' : '未达成', {
+        fontSize: '13px', color: unlocked ? '#4fc3f7' : '#888888', fontStyle: 'bold',
+      });
+      return;
+    }
+
+    // —— 传承页详情 ——
+    const p = LEGACY_PERKS[this.selPerk]!;
+    const owned = col.purchased.includes(p.id);
+    mk(128, `${owned ? '✓' : '○'} ${p.title}`, {
+      fontSize: '18px', color: owned ? '#ffc107' : '#888888', fontStyle: 'bold',
     });
-    mk(158, `所属阶段：${b.group}`, { fontSize: '12px', color: '#777777' });
-    mk(184, b.desc, { fontSize: '12px', color: '#cccccc', wordWrap: { width: w }, lineSpacing: 5 });
-    mk(230, unlocked ? '已达成' : '未达成', {
-      fontSize: '13px', color: unlocked ? '#4fc3f7' : '#888888', fontStyle: 'bold',
+    mk(158, `费用：${p.cost} 传承点`, { fontSize: '12px', color: '#777777' });
+    mk(184, p.desc, { fontSize: '12px', color: '#cccccc', wordWrap: { width: w }, lineSpacing: 5 });
+    mk(230, owned ? '已购入，新开局自动生效' : col.points >= p.cost ? '可购买（按空格）' : '传承点不足', {
+      fontSize: '13px', color: owned ? '#4fc3f7' : col.points >= p.cost ? '#ffc107' : '#888888', fontStyle: 'bold',
     });
   }
 }
