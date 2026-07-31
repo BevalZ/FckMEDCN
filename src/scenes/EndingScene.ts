@@ -5,6 +5,7 @@ import { REAL_EVENTS_AS_CARDS } from '../data/realEvents';
 import { sound } from '../audio/sound';
 import { clearSave } from '../data/save';
 import { recordEnding } from '../data/collection';
+import { compareEnding } from '../data/comparison';
 
 export class EndingScene extends Phaser.Scene {
   private endingId!: string;
@@ -41,41 +42,53 @@ export class EndingScene extends Phaser.Scene {
       fontFamily: '"Courier New", monospace', fontSize: '14px', color: '#ffc107', fontStyle: 'bold',
     }).setOrigin(0.5);
 
-    // 左列：玩家实际现状
-    const st = getState().stats;
+    // 逐项对比表：你的值 ｜ vs ｜ 真实值 ｜ 判定
     const state = getState();
     const maritalLabel: Record<string, string> = { single: '单身', dating: '恋爱中', married: '已婚' };
-    const playerRows: [string, string][] = [
-      ['年龄', `${st.age}岁`],
-      ['存款', `¥${st.money.toLocaleString()}`],
-      ['声望', `${st.reputation}`],
-      ['论文', `${st.papers}篇`],
-      ['心理', `${st.sanity}`],
+    const verdictText: Record<string, string> = { low: '低于参考', mid: '在参考区间内', high: '高于参考' };
+    const verdictColor: Record<string, number> = { low: 0xff8a95, mid: 0x4fc3f7, high: 0xffc107 };
+
+    const compareRows = compareEnding(ending.id, state);
+    const infoRows: [string, string][] = [
       ['感情', maritalLabel[state.marital]],
       ['家人/子女', `${state.familyAlive}/4 在世 · ${state.hasChild ? '有娃' : '无娃'}`],
       ['状态', state.flags.has('grieving') ? '丧亲之痛' : '——'],
     ];
-    this.add.text(60, 210, '你的现状', {
-      fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#ffc107', fontStyle: 'bold',
-    });
-    playerRows.forEach((r, i) => {
-      const y = 236 + i * 22;
-      this.add.text(60, y, r[0], { fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#999999' });
-      this.add.text(150, y, r[1], { fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#ffffff', fontStyle: 'bold' });
+
+    this.add.text(60, 210, '你的数据', { fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#ffc107', fontStyle: 'bold' });
+    this.add.text(480, 210, '真实数据', { fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#4fc3f7', fontStyle: 'bold' });
+
+    const rowY = (i: number) => 236 + i * 28;
+    compareRows.forEach((r, i) => {
+      const y = rowY(i);
+      this.add.text(60, y, `${r.label}：`, { fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#999999' });
+      this.add.text(150, y, r.yoursText, { fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#ffffff', fontStyle: 'bold' });
+      this.add.text(330, y, 'vs', { fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#555555' });
+      this.add.text(420, y, r.real, {
+        fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#bbbbbb', wordWrap: { width: 420 },
+      });
+      if (r.verdict !== 'none') {
+        this.add.text(820, y, verdictText[r.verdict], {
+          fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#ffffff',
+        }).setColor(`#${verdictColor[r.verdict].toString(16).padStart(6, '0')}`);
+      }
     });
 
-    // 右列：真实数据参照卡
-    this.add.text(480, 210, '真实参照', {
-      fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#4fc3f7', fontStyle: 'bold',
+    infoRows.forEach((r, i) => {
+      const y = rowY(compareRows.length + i);
+      this.add.text(60, y, `${r[0]}：`, { fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#999999' });
+      this.add.text(150, y, r[1], { fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#ffffff', fontStyle: 'bold' });
+      this.add.text(420, y, '——', { fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#555555' });
     });
-    ending.realDataCard.forEach((c, i) => {
-      const y = 236 + i * 36;
-      this.add.text(480, y, `${c.label}：${c.value}`, {
-        fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#ffffff', wordWrap: { width: 440 },
+
+    // 真实数据参照卡（来源注脚）
+    let cardY = rowY(compareRows.length + infoRows.length) + 8;
+    ending.realDataCard.forEach((c) => {
+      this.add.text(60, cardY, `◆ ${c.label}：${c.value}（来源：${c.source}）`, {
+        fontFamily: '"Courier New", monospace', fontSize: '11px', color: '#777777',
+        wordWrap: { width: 860 },
       });
-      this.add.text(480, y + 17, `来源：${c.source}`, {
-        fontFamily: '"Courier New", monospace', fontSize: '10px', color: '#777777',
-      });
+      cardY += 18;
     });
 
     // 真实事件注脚
@@ -83,7 +96,7 @@ export class EndingScene extends Phaser.Scene {
       .filter(c => c.relatedStages.includes('career') || c.relatedStages.includes('guipei'))
       .slice(0, 3)
       .map(c => c.title);
-    this.add.text(480, 432, '真实世界里也发生过：' + reTitles.join('  ·  '), {
+    this.add.text(480, cardY + 6, '真实世界里也发生过：' + reTitles.join('  ·  '), {
       fontFamily: '"Courier New", monospace', fontSize: '11px', color: '#bbbbbb',
       wordWrap: { width: 840 }, align: 'center',
     }).setOrigin(0.5, 0);

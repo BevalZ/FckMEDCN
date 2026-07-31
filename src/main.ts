@@ -85,10 +85,11 @@ if (import.meta.env.DEV) {
     import('./data/collection'),
     import('./data/badges'),
     import('./data/legacy'),
-  ]).then(([gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad, leg]) => {
+    import('./data/comparison'),
+  ]).then(([gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad, leg, cmp]) => {
     w.__state = gs.getState;
     w.__setFlag = gs.setFlag;
     w.__patchState = gs.patchState;
-    w.__mod = { gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad, leg };
+    w.__mod = { gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad, leg, cmp };
   });
 }
