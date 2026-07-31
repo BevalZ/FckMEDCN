@@ -123,17 +123,12 @@ test('卡片阶段事件卡按 ESC 跳过：不选择、推进本回合', async 
 
   const before = await page.evaluate(() => ((window as any).__mod.gs.getState().turnsInStage));
 
-  // ESC 跳过：事件卡关闭、回合推进、未做选择
+  // ESC 跳过：回合应推进（跳过后会按无事件推进，并可能立刻画出下一张卡）
   await page.keyboard.press('Escape');
-  await page.waitForTimeout(600);
-  const after = await page.evaluate(() => {
-    const { gs } = (window as any).__mod;
-    const scene = (window as any).game.scene.getScene('CareerScene');
-    return {
-      cardGone: !scene.eventCard?.busy,
-      turnsInStage: gs.getState().turnsInStage,
-    };
-  });
-  expect(after.cardGone, 'ESC 后事件卡应关闭').toBe(true);
-  expect(after.turnsInStage, 'ESC 跳过应推进本回合').toBeGreaterThan(before);
+  await page.waitForFunction(
+    (b) => ((window as any).__mod.gs.getState().turnsInStage) > b,
+    before, { timeout: 5000 },
+  );
+  const after = await page.evaluate(() => ((window as any).__mod.gs.getState().turnsInStage));
+  expect(after, 'ESC 跳过应推进本回合').toBeGreaterThan(before);
 });

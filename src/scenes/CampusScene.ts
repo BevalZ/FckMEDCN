@@ -14,6 +14,7 @@ import { getState, updateStats, setFlag, hasFlag, addNews } from '../data/gameSt
 import { drawStorylet, hasStorylet, commitChoice, advanceQuarter } from '../data/turnFlow';
 import { bindGameMenu } from '../ui/gameMenu';
 import { HelpPanel } from '../ui/HelpPanel';
+import { showNewsToast } from '../ui/newsToast';
 import { ALL_EVENTS, getAvailableEvents } from '../data/events';
 import type { EventChoice, GameEvent } from '../data/events';
 import type { StatDelta } from '../data/stats';
@@ -493,6 +494,8 @@ export class CampusScene extends Phaser.Scene {
       const s = getState();
       addNews({ year: s.year, quarter: s.quarter, headline: ev.newsTickerAfter, type: 'irony' });
       this.news.refresh(getState().newsLog.map(n => n.headline));
+      sound.news();
+      showNewsToast(this, ev.newsTickerAfter);
     }
 
     this.hud.update(getState().stats, STAGE);

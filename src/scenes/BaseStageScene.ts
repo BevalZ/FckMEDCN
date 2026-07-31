@@ -8,6 +8,7 @@ import type { EventChoice, GameEvent } from '../data/events';
 import { drawStorylet, commitChoice, advanceQuarter } from '../data/turnFlow';
 import { bindGameMenu } from '../ui/gameMenu';
 import { HelpPanel } from '../ui/HelpPanel';
+import { showNewsToast } from '../ui/newsToast';
 import { NEWS_TICKER } from '../data/news';
 import { STAT_LABELS, STAT_ICONS, HUD_STATS } from '../data/constants';
 import { applyStageEntry, describeStageEconomy, getQuarterEconomy } from '../data/economy';
@@ -403,6 +404,8 @@ export abstract class BaseStageScene extends Phaser.Scene {
       const s = getState();
       addNews({ year: s.year, quarter: s.quarter, headline: ev.newsTickerAfter, type: 'irony' });
       this.news.refresh(getState().newsLog.map(n => n.headline));
+      sound.news();
+      showNewsToast(this, ev.newsTickerAfter);
     }
 
     const consequenceText = choice.consequence ?? '你做出了选择。';

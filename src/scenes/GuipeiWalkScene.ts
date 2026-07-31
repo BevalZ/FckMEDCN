@@ -7,6 +7,7 @@ import { InteractPrompt } from '../ui/InteractPrompt';
 import { QuestLog, guipeiQuests } from '../ui/QuestLog';
 import { bindGameMenu } from '../ui/gameMenu';
 import { HelpPanel } from '../ui/HelpPanel';
+import { showNewsToast } from '../ui/newsToast';
 import { Walker, createWalkerKeys } from '../ui/Walker';
 import type { WalkerKeys } from '../ui/Walker';
 import { renderTileMap } from '../ui/tilemap';
@@ -391,6 +392,8 @@ export class GuipeiWalkScene extends Phaser.Scene {
       const s = getState();
       addNews({ year: s.year, quarter: s.quarter, headline: ev.newsTickerAfter, type: 'irony' });
       this.news.refresh(getState().newsLog.map(n => n.headline));
+      sound.news();
+      showNewsToast(this, ev.newsTickerAfter);
     }
 
     // 链式事件：先解析续接目标（在后果弹窗关闭后立即接上）
