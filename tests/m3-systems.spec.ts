@@ -23,7 +23,7 @@ async function enterCampus(page: Page) {
   await waitForScene(page, 'TitleScene');
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
-  for (let i = 0; i < 7; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
   await waitForScene(page, 'CampusScene');
   await page.keyboard.press('Space');
   await page.waitForFunction(

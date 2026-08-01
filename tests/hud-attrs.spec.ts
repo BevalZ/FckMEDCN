@@ -25,7 +25,7 @@ async function toGaokao(page: Page) {
 test('HUD 显示开局属性与家庭/理财策略', async ({ page }) => {
   await toGaokao(page);
   // 过完整高考进入校园
-  for (let i = 0; i < 7; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
   await waitForScene(page, 'CampusScene');
   await page.keyboard.press('Enter'); // 关简报
   await page.waitForTimeout(500);

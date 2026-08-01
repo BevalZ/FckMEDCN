@@ -47,16 +47,11 @@ test('开局默认选男生：性别写入状态，放榜夜称"儿子"', async 
   const textsAttr = await phaseTexts(page);
   expect(textsAttr.some((t: string) => t.includes('分配你的初始属性')), '应进入属性分配阶段').toBe(true);
 
-  // 回车确认属性 → 进入估分阶段
+  // 回车确认属性 → 放榜夜（成绩由属性直接定档，不再自选估分）应称"儿子"
   await page.keyboard.press('Enter');
-  await page.waitForTimeout(600);
-  const texts1 = await phaseTexts(page);
-  expect(texts1.some((t: string) => t.includes('你的高考成绩是多少')), '应进入估分阶段').toBe(true);
-
-  // 选最高分 → 放榜夜应称"儿子"
-  await page.keyboard.press('Enter');
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(1000);
   const texts2 = await phaseTexts(page);
+  expect(texts2.some((t: string) => t.includes('放榜夜')), '应进入放榜夜').toBe(true);
   expect(texts2.some((t: string) => t.includes('儿子')), '放榜夜应称儿子').toBe(true);
 });
 
@@ -71,10 +66,8 @@ test('选女生：性别写入状态，放榜夜称"女儿"', async ({ page }) =
   expect(gender, '选择女生后 gender 应为 female').toBe('female');
 
   // 过属性分配 → 选最高分 → 放榜夜应称"女儿"
-  await page.keyboard.press('Enter'); // 属性分配确认
-  await page.waitForTimeout(600);
-  await page.keyboard.press('Enter'); // 选最高分
-  await page.waitForTimeout(600);
+  await page.keyboard.press('Enter'); // 属性分配确认 → 放榜夜（成绩直接定档）
+  await page.waitForTimeout(1000);
   const texts = await phaseTexts(page);
   expect(texts.some((t: string) => t.includes('女儿')), '放榜夜应称女儿').toBe(true);
   expect(texts.some((t: string) => t.includes('儿子')), '放榜夜不应再出现"儿子"').toBe(false);
@@ -87,7 +80,7 @@ test('女生路径的事件后果按性别渲染占位符', async ({ page }) => 
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await page.waitForTimeout(600);
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  for (let i = 0; i < 5; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
   await waitForScene(page, 'CampusScene');
   await page.keyboard.press('Enter'); // 关简报
   await page.waitForTimeout(400);
@@ -116,7 +109,7 @@ async function enterCampusDefault(page: Page) {
   await waitForScene(page, 'TitleScene');
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
-  for (let i = 0; i < 7; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
   await waitForScene(page, 'CampusScene');
   await page.keyboard.press('Enter'); // 关简报
   await page.waitForTimeout(400);
@@ -173,7 +166,7 @@ test('女生：三种占位符全部渲染为阴性称谓', async ({ page }) => 
   await page.keyboard.press('ArrowDown'); // 选女生
   await page.keyboard.press('Enter');
   await page.waitForTimeout(600);
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  for (let i = 0; i < 5; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
   await waitForScene(page, 'CampusScene');
   await page.keyboard.press('Enter'); // 关简报
   await page.waitForTimeout(400);

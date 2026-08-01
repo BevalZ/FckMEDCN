@@ -24,7 +24,7 @@ test('四类小游戏均可构造并给出 grade', async ({ page }) => {
     // exam：直接 finish 路径 —— 通过超时全 miss
     const exam = launchMinigame(scene, 'exam', 'test-exam');
     // 把剩余题全超时
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 6; i++) {
       (exam as any).deadline = performance.now() - 1;
       (exam as any).update(0, 16);
       await new Promise(r => setTimeout(r, 30));

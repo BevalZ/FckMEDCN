@@ -86,7 +86,7 @@ test('R 菜单可调整理财策略并持久化', async ({ page }) => {
     () => ((window as any).game?.scene?.getScenes(true) ?? []).some((s: any) => s.sys.settings.key === 'GaokaoScene'),
     null, { timeout: 60000 },
   );
-  for (let i = 0; i < 7; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
   await page.waitForFunction(
     () => ((window as any).game?.scene?.getScenes(true) ?? []).some((s: any) => s.sys.settings.key === 'CampusScene'),
     null, { timeout: 60000 },

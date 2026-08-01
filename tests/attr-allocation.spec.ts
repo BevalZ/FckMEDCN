@@ -71,14 +71,15 @@ test('属性分配：可调整；成绩低时高分数档不可选', async ({ pa
   const mid = await phaseTexts(page);
   expect(mid.some((t: string) => t.includes('剩余点数：3 / 10')), '减 3 点后应剩 3 点').toBe(true);
 
-  // 回车确认 → 估分阶段应按成绩划档（成绩 2 → 最高 560-609 档，685 不可选）
+  // 回车确认 → 成绩直接定档（成绩 2 → 560-609 档），放榜夜分数应在该档区间
   await page.keyboard.press('Enter');
   await page.waitForTimeout(1000);
   const texts = await phaseTexts(page);
-  expect(texts.some((t: string) => t.includes('你的高考成绩是多少')), '应进入估分阶段').toBe(true);
-  expect(texts.some((t: string) => t.includes('以你的成绩底子（2/5）')), '应显示成绩档提示').toBe(true);
-  expect(texts.some((t: string) => t.includes('更高的分数档需提升')), '应有划档提示').toBe(true);
-  expect(texts.some((t: string) => t.includes('685分以上')), '成绩不足时不应出现 685 档').toBe(false);
+  expect(texts.some((t: string) => t.includes('放榜夜')), '应进入放榜夜').toBe(true);
+  const state = await page.evaluate(() => ((window as any).__mod.gs.getState()));
+  expect(state.attrs.academic, '成绩应改为 2').toBe(2);
+  expect(state.score, '分数应由成绩定档（560-609）').toBeGreaterThanOrEqual(595);
+  expect(state.score, '分数不应越档到 685').toBeLessThan(610);
 });
 
 test('助学贷款开关：在属性分配阶段可选并写入 student_loan', async ({ page }) => {

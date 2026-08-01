@@ -594,4 +594,29 @@ export const CAREER_EVENTS: GameEvent[] = [
       { text: '紧张，但稳稳讲完', delta: { reputation: 3, sanity: 2 }, consequence: '掌声响起来时，你想起实验室的无数个深夜。' },
     ],
   },
+
+  // —— 职业经济损失：医保拒付 / 病历扣费（现实医生会遇到的"白干活倒贴钱"）——
+  {
+    id: 'career_fin_insurance_denial',
+    stage: 'career',
+    title: '医保拒付',
+    body: '一个昂贵治疗方案被医保拒付了——材料没问题，流程挑得出毛病。科室要自担这笔钱，主任把名单放到了你桌上。',
+    category: 'clinical', weight: 55,
+    choices: [
+      { text: '整理证据去申诉', delta: { money: -1500, stamina: -10, reputation: 2, knowledge: 2 }, flagSet: 'fin_appealed', consequence: '流程跑了三周，追回来一半。另一半，科室认了。' },
+      { text: '认了，从绩效里扣', delta: { money: -3000, sanity: -3 }, consequence: '那个月你看着工资条，沉默了。' },
+      { text: '跟主任据理力争', delta: { money: -2000, relations: -3, sanity: -3 }, consequence: '钱还是扣了，你多了个"难缠"的名声。' },
+    ],
+  },
+  {
+    id: 'career_fin_record_fine',
+    stage: 'career',
+    title: '病历扣费',
+    body: '病历质控抽查，你三份病历的书写有缺陷——病程记录缺一段、签字时间对不上。医院按制度扣钱。',
+    category: 'career', weight: 50,
+    choices: [
+      { text: '连夜整改补写', delta: { money: -800, stamina: -8, knowledge: 2 }, consequence: '凌晨的办公室里，你把每一份病历重新顺了一遍。' },
+      { text: '申诉"是系统bug"', delta: { money: -1500, relations: -2, sanity: -2 }, consequence: '最后按"书写不规范"定性，扣得更多。' },
+    ],
+  },
 ];

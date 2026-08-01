@@ -54,7 +54,7 @@ async function enterCampus(page: Page) {
   await waitForScene(page, 'GaokaoScene');
 
   // 分数 → 放榜 → 选校 → 选学制 → 确认：每步都取焦点项
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 6; i++) {
     await page.keyboard.press('Enter');
     await page.waitForTimeout(700);
   }

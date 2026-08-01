@@ -291,7 +291,7 @@ export class GaokaoScene extends Phaser.Scene {
         sanity: s.stats.sanity + a.luck * 2,
       },
     });
-    this.time.delayedCall(200, () => this.showScorePhase());
+    this.time.delayedCall(200, () => this.resolveScoreAndReveal());
   }
 
   private clearContainer() {
@@ -412,56 +412,31 @@ export class GaokaoScene extends Phaser.Scene {
     o.action();
   }
 
-  private showScorePhase() {
-    this.clearContainer();
-    const pal = getPalette('gaokao');
-
-    const panel = this.add.graphics();
-    panel.fillStyle(pal.panel, 0.9);
-    panel.fillRoundedRect(160, 70, 640, 420, 10);
-    this.container.add(panel);
-
-    this.container.add(this.add.text(480, 88, '你的高考成绩是多少？', {
-      fontFamily: '"Courier New", monospace', fontSize: '18px', color: '#ffffff', fontStyle: 'bold',
-    }).setOrigin(0.5));
-
-    const scoreOptions = [
-      { label: '685分以上', desc: '清北复交协级别', score: 685, flag: 'score_680plus',
-        reaction: `父亲的手抖了一下，把成绩单看了三遍："${this.sonWord()}，你这是要上天。"\n母亲在厨房默默多炒了两个菜。你成了家族近百年来第一个够得着协和的。` },
-      { label: '650 ~ 684分', desc: '老牌985医学院', score: 670,
-        reaction: '父母在亲戚群里连发了三条消息。\n"985的临床，稳了。"父亲拍着你肩膀，"不过以后同辈也猛，别飘。"' },
-      { label: '610 ~ 649分', desc: '211 / 强校医学院', score: 645,
-        reaction: '父母松了口气："211，挺好，至少是个正经大学。"\n饭桌上他们开始盘算，毕业能不能进市里的医院。' },
-      { label: '560 ~ 609分', desc: '省属重点医科大学', score: 605,
-        reaction: '父亲皱了下眉："怎么不是211？"母亲打圆场："医学生嘛，能学上就行。"\n你低头扒饭，没接话。' },
-      { label: '540分及以下', desc: '普通医学院 / 医专', score: 540,
-        reaction: '屋里安静了很久。父亲最后说："要不……复读一年？"\n你看着自己的分数，心里两个声音打架：再拼一次，还是认了这条路。' },
-    ];
-
-    // 成绩属性决定分数线划档：成绩越高，能申报的分数档越高
+  // 成绩属性直接决定高考分数档（附小幅随机抖动）——分数=成绩划档的依据，不再档内自选。
+  private resolveScoreAndReveal() {
     const academic = getState().attrs?.academic ?? 5;
-    const maxScore = academic >= 5 ? 999 : academic === 4 ? 684 : academic === 3 ? 649 : academic === 2 ? 609 : 540;
-    const eligible = scoreOptions.filter(o => o.score <= maxScore);
-    const maxLabel = eligible.length ? eligible[0].label : '540分及以下';
-    this.container.add(this.add.text(480, 112, `以你的成绩底子（${academic}/5），最高能到：${maxLabel}`, {
-      fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#ffd54f',
-    }).setOrigin(0.5));
-
-    const specs: OptionSpec[] = eligible.map((opt, i) => ({
-      x: 200, y: 150 + i * 64, w: 560, h: 52,
-      label: opt.label, sub: opt.desc,
-      action: () => {
-        this.selectedScore = opt.score;
-        if (opt.flag) setFlag(opt.flag);
-        this.time.delayedCall(200, () => this.showScoreReveal(opt.reaction));
-      },
-    }));
-    if (eligible.length < scoreOptions.length) {
-      this.container.add(this.add.text(480, 150 + eligible.length * 64 + 8, '（更高的分数档需提升"成绩"属性）', {
-        fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#666688',
-      }).setOrigin(0.5));
+    const jitter = (lo: number, hi: number) => Math.round(lo + Math.random() * (hi - lo));
+    let tier: { score: number; flag?: string; reaction: string };
+    if (academic >= 5) {
+      tier = { score: jitter(685, 695), flag: 'score_680plus',
+        reaction: `父亲的手抖了一下，把成绩单看了三遍："${this.sonWord()}，你这是要上天。"\n母亲在厨房默默多炒了两个菜。你成了家族近百年来第一个够得着协和的。` };
+    } else if (academic === 4) {
+      tier = { score: jitter(660, 684),
+        reaction: '父母在亲戚群里连发了三条消息。\n"985的临床，稳了。"父亲拍着你肩膀，"不过以后同辈也猛，别飘。"' };
+    } else if (academic === 3) {
+      tier = { score: jitter(635, 649),
+        reaction: '父母松了口气："211，挺好，至少是个正经大学。"\n饭桌上他们开始盘算，毕业能不能进市里的医院。' };
+    } else if (academic === 2) {
+      tier = { score: jitter(595, 609),
+        reaction: '父亲皱了下眉："怎么不是211？"母亲打圆场："医学生嘛，能学上就行。"\n你低头扒饭，没接话。' };
+    } else {
+      tier = { score: jitter(530, 540),
+        reaction: '屋里安静了很久。父亲最后说："要不……复读一年？"\n你看着自己的分数，心里两个声音打架：再拼一次，还是认了这条路。' };
     }
-    this.renderOptions(specs);
+    this.selectedScore = tier.score;
+    patchState({ score: tier.score });
+    if (tier.flag) setFlag(tier.flag);
+    this.time.delayedCall(200, () => this.showScoreReveal(tier.reaction));
   }
 
   // “放榜夜”：把分数落进家庭情绪里，让高中生玩家先体会一次“成绩=全家心情”
