@@ -3,6 +3,7 @@ import type { Stats } from '../data/stats';
 import { STAT_LABELS, STAT_ICONS, HUD_STATS } from '../data/constants';
 import { getPalette } from './pixelArt';
 import { sound } from '../audio/sound';
+import { getState } from '../data/gameState';
 
 export class HUD {
   private scene: Phaser.Scene;
@@ -14,6 +15,7 @@ export class HUD {
   private balanceBar!: Phaser.GameObjects.Graphics;
   private balanceLabel!: Phaser.GameObjects.Text;
   private riskLabel!: Phaser.GameObjects.Text;
+  private attrsLabel!: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene, stage: string) {
     this.scene = scene;
@@ -65,7 +67,11 @@ export class HUD {
     this.riskLabel = this.scene.add.text(290, 36, '', {
       fontFamily: '"Courier New", monospace', fontSize: '10px', color: '#aaaaaa',
     });
-    this.container.add([this.balanceLabel, this.balanceBar, this.riskLabel]);
+    // 属性/家庭/理财策略（HUD 第二行右侧）
+    this.attrsLabel = this.scene.add.text(430, 36, '', {
+      fontFamily: '"Courier New", monospace', fontSize: '10px', color: '#9aa0b5',
+    });
+    this.container.add([this.balanceLabel, this.balanceBar, this.riskLabel, this.attrsLabel]);
   }
 
   private drawBalance(clinical: number, research: number, fakeRisk: number) {
@@ -156,6 +162,16 @@ export class HUD {
       }
     }
     this.drawBalance(statMap.clinical ?? 0, statMap.research ?? 0, statMap.fakeRisk ?? 0);
+
+    // 属性 / 家庭 / 理财策略
+    const s = getState();
+    const a = s.attrs ?? { family: 2, academic: 5, luck: 1, looks: 2 };
+    const wealthWord = { rich: '殷实', middle: '普通', tight: '拮据' }[s.familyWealth] ?? '';
+    const finWord = { thrifty: '节流', stable: '稳健', invest: '投资' }[s.financeStrategy] ?? '稳健';
+    const loanMark = s.flags.has('student_loan') ? '贷' : '';
+    this.attrsLabel.setText(
+      `家境${a.family}/${wealthWord} · 成绩${a.academic} · 运气${a.luck} · 外貌${a.looks}${loanMark ? ` · 助学${loanMark}` : ''} ｜ 理财:${finWord}`,
+    );
   }
 
   getContainer() { return this.container; }

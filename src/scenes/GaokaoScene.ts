@@ -49,6 +49,9 @@ export class GaokaoScene extends Phaser.Scene {
   private loanOn = false;
   private loanToggleText!: Phaser.GameObjects.Text;
   private loanBarText!: Phaser.GameObjects.Text;
+  // 开局阶段标记（ESC 返回用）
+  private inGenderPhase = false;
+  private inAttrPhase = false;
 
   constructor() { super({ key: 'GaokaoScene' }); }
 
@@ -63,6 +66,14 @@ export class GaokaoScene extends Phaser.Scene {
 
     sound.ensure();
     this.input.keyboard?.on('keydown-M', () => sound.toggleMute());
+
+    // 开局阶段 ESC 返回：属性 → 性别 → 标题（避免选错只能重开）
+    this.input.keyboard?.on('keydown-ESC', () => {
+      if (this.inAttrPhase) { this.showGenderPhase(); return; }
+      if (this.inGenderPhase) {
+        this.scene.start('TitleScene'); // 尚未开始，回到标题
+      }
+    });
 
     const pal = getPalette('gaokao');
     const header = this.add.graphics();
@@ -85,6 +96,8 @@ export class GaokaoScene extends Phaser.Scene {
   // —— 开局性别选择（叙述中"学长/儿子"等称谓按此决定）——
   private showGenderPhase() {
     this.clearContainer();
+    this.inGenderPhase = true;
+    this.inAttrPhase = false;
     const pal = getPalette('gaokao');
 
     const panel = this.add.graphics();
@@ -96,6 +109,10 @@ export class GaokaoScene extends Phaser.Scene {
       fontFamily: '"Courier New", monospace', fontSize: '20px', color: '#ffffff', fontStyle: 'bold',
     }).setOrigin(0.5));
     this.container.add(this.add.text(480, 132, '只影响叙述里的称谓（学长/学姐、儿子/女儿等），此后可重新开档修改', {
+      fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#888899',
+    }).setOrigin(0.5));
+
+    this.container.add(this.add.text(480, 460, '↑↓ 选择 · 空格 确认 · ESC 返回标题', {
       fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#888899',
     }).setOrigin(0.5));
 
@@ -126,6 +143,8 @@ export class GaokaoScene extends Phaser.Scene {
 
   private showAttrPhase() {
     this.clearContainer();
+    this.inGenderPhase = false;
+    this.inAttrPhase = true;
     const pal = getPalette('gaokao');
 
     const panel = this.add.graphics();
@@ -191,7 +210,7 @@ export class GaokaoScene extends Phaser.Scene {
     this.loanOn = getState().flags.has('student_loan');
     this.refreshAttrUI();
 
-    const foot = this.add.text(480, 466, '↑↓ 选择 · ←/→ 调整 · 空格 确认', {
+    const foot = this.add.text(480, 466, '↑↓ 选择 · ←/→ 调整 · 空格 确认 · ESC 返回', {
       fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#888899',
     }).setOrigin(0.5);
     this.container.add(foot);
