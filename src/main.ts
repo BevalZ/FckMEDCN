@@ -86,10 +86,12 @@ if (import.meta.env.DEV) {
     import('./data/badges'),
     import('./data/legacy'),
     import('./data/comparison'),
-  ]).then(([gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad, leg, cmp]) => {
+    import('./data/npcGen'),
+    import('./data/patientType'),
+  ]).then(([gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad, leg, cmp, ngn, pt]) => {
     w.__state = gs.getState;
     w.__setFlag = gs.setFlag;
     w.__patchState = gs.patchState;
-    w.__mod = { gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad, leg, cmp };
+    w.__mod = { gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad, leg, cmp, ngn, pt };
   });
 }
