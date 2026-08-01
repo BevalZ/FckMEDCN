@@ -731,7 +731,7 @@ export const UNDERGRAD_EVENTS: GameEvent[] = [
     id: 'ug_holdback_life',
     stage: 'undergrad',
     title: '重修的日子',
-    body: '你坐在比你小一届的教室里。老师点名时会多看你一眼，同学不知道该叫你同学还是学长。',
+    body: '你坐在比你小一届的教室里。老师点名时会多看你一眼，同学不知道该叫你同学还是学长/学姐。',
     category: 'mental', weight: 55, once: true, requireFlag: 'ug_holdback',
     choices: [
       { text: '把这一年当成重来一次的机会', delta: { knowledge: 8, sanity: 4, stamina: -8 }, flagSet: 'ug_holdback_recovered', consequence: '这次你听懂了。原来当初不是笨，是没喘过气。' },

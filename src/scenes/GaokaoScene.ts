@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { SCHOOLS, TRACKS } from '../data/constants';
 import type { School, Track } from '../data/constants';
-import { getState, setState, setFlag } from '../data/gameState';
+import { getState, setState, setFlag, patchState } from '../data/gameState';
 import type { DegreeType } from '../data/constants';
 import { getPalette, createBgTexture, createStageDecor } from '../ui/pixelArt';
 import { CharacterSprite } from '../ui/CharacterSprite';
@@ -65,7 +65,48 @@ export class GaokaoScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     this.container = this.add.container(0, 0);
-    this.showScorePhase();
+    this.showGenderPhase();
+  }
+
+  /** 性别称谓：按开局选择返回"儿子/女儿"，供叙述文案使用 */
+  private sonWord(): string { return getState().gender === 'female' ? '女儿' : '儿子'; }
+
+  // —— 开局性别选择（叙述中"学长/儿子"等称谓按此决定）——
+  private showGenderPhase() {
+    this.clearContainer();
+    const pal = getPalette('gaokao');
+
+    const panel = this.add.graphics();
+    panel.fillStyle(pal.panel, 0.9);
+    panel.fillRoundedRect(160, 70, 640, 420, 10);
+    this.container.add(panel);
+
+    this.container.add(this.add.text(480, 96, '先介绍一下自己', {
+      fontFamily: '"Courier New", monospace', fontSize: '20px', color: '#ffffff', fontStyle: 'bold',
+    }).setOrigin(0.5));
+    this.container.add(this.add.text(480, 132, '这段人生里，你是——', {
+      fontFamily: '"Courier New", monospace', fontSize: '15px', color: '#bbbbbb',
+    }).setOrigin(0.5));
+
+    const specs: OptionSpec[] = [
+      {
+        x: 240, y: 190, w: 480, h: 64,
+        label: '男生', sub: '叙述里会以"学长 / 儿子"等称谓称呼你',
+        action: () => {
+          patchState({ gender: 'male' });
+          this.time.delayedCall(150, () => this.showScorePhase());
+        },
+      },
+      {
+        x: 240, y: 274, w: 480, h: 64,
+        label: '女生', sub: '叙述里会以"学姐 / 女儿"等称谓称呼你',
+        action: () => {
+          patchState({ gender: 'female' });
+          this.time.delayedCall(150, () => this.showScorePhase());
+        },
+      },
+    ];
+    this.renderOptions(specs);
   }
 
   private clearContainer() {
@@ -201,7 +242,7 @@ export class GaokaoScene extends Phaser.Scene {
 
     const scoreOptions = [
       { label: '685分以上', desc: '清北复交协级别', score: 685, flag: 'score_680plus',
-        reaction: '父亲的手抖了一下，把成绩单看了三遍："儿子，你这是要上天。"\n母亲在厨房默默多炒了两个菜。你成了家族近百年来第一个够得着协和的。' },
+        reaction: `父亲的手抖了一下，把成绩单看了三遍："${this.sonWord()}，你这是要上天。"\n母亲在厨房默默多炒了两个菜。你成了家族近百年来第一个够得着协和的。` },
       { label: '650 ~ 684分', desc: '老牌985医学院', score: 670,
         reaction: '父母在亲戚群里连发了三条消息。\n"985的临床，稳了。"父亲拍着你肩膀，"不过以后同辈也猛，别飘。"' },
       { label: '610 ~ 649分', desc: '211 / 强校医学院', score: 645,

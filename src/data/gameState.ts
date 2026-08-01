@@ -6,11 +6,15 @@ export type LifeStage = 'gaokao' | 'undergrad' | 'internship' | 'guipei' | 'mast
 
 export interface NewsItem { year: number; quarter: number; headline: string; type: 'event' | 'warning' | 'irony' | 'tragedy'; }
 
+export type PlayerGender = 'male' | 'female';
+
 export interface GameState {
   stats: Stats; stage: LifeStage; school: School | null; track: TrackType | null;
   degree: DegreeType; score: number; year: number; quarter: number;
   turnsInStage: number; guipeiCity: string; newsLog: NewsItem[];
   flags: Set<string>; endingId: string | null;
+  // —— 玩家性别（开局选择，仅影响少量称谓/叙述文案）——
+  gender: PlayerGender;
   // —— 真实人生状态（恋爱/婚姻/家庭），会影响事件触发与经济 ——
   marital: 'single' | 'dating' | 'married';
   spouse: string | null;
@@ -27,6 +31,7 @@ export function createInitialState(): GameState {
     stats: createDefaultStats(), stage: 'gaokao', school: null, track: null,
     degree: 'bachelor', score: 0, year: 2024, quarter: 3, turnsInStage: 0,
     guipeiCity: '', newsLog: [], flags: new Set(), endingId: null,
+    gender: 'male',
     marital: 'single', spouse: null, hasChild: false, familyAlive: 4,
     affinity: {},
   };

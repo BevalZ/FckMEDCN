@@ -63,8 +63,9 @@ export function applySave(blob: SaveBlob): string {
     flags: new Set(blob.state.flags),
     // 旧档没有 clinical/research/fakeRisk，补默认值，否则运算得 NaN
     stats: migrateStats(rest.stats),
-    // 旧档没有 affinity
+    // 旧档没有 affinity / gender，补默认值
     affinity: rest.affinity ?? {},
+    gender: (rest as { gender?: string }).gender === 'female' ? 'female' : 'male',
   } as GameState);
   pendingFired = { firedEvents: blob.firedEvents ?? [], firedNews: blob.firedNews ?? [] };
   return blob.sceneKey;

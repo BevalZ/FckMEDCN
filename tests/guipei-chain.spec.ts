@@ -50,7 +50,7 @@ test('B7 规培链：同岗同酬选项即时续接教学部回复', async ({ pa
   await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 20000 });
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
-  for (let i = 0; i < 5; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
   await waitForScene(page, 'CampusScene');
   await dismissPopups(page, 'CampusScene');
 
