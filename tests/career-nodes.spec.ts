@@ -97,3 +97,41 @@ test('管理层事件（took_admin）可达', async ({ page }) => {
   expect(r.hit, 'took_admin 时应可达').toBeGreaterThan(0);
   expect(r.requiresAdmin, '未任管理层时不可达').toBe(true);
 });
+
+test('职业初期压力事件按亚专科差异化', async ({ page }) => {
+  await page.goto(BASE, { waitUntil: 'load' });
+  await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 60000 });
+
+  const r = await page.evaluate(() => {
+    const { ev, stats: st } = (window as any).__mod;
+    const base = st.createDefaultStats();
+    const CASES: Array<[string, string]> = [
+      ['career_early_surgery_pressure', 'sub_surgery'],
+      ['career_early_peds_pressure', 'sub_pediatrics'],
+      ['career_early_obgyn_pressure', 'sub_obgyn'],
+      ['career_early_internal_pressure', 'sub_internal'],
+    ];
+    return CASES.map(([id, flag]) => {
+      const own = ev.getAvailableEvents('career', new Set([flag]), { ...base }, new Set(), 3, 'single')
+        .some((e: any) => e.id === id);
+      // 换到其它专科 flag 时，该事件不应可达（差异化门控）
+      const otherFlag = flag === 'sub_surgery' ? 'sub_pediatrics' : 'sub_surgery';
+      const cross = ev.getAvailableEvents('career', new Set([otherFlag]), { ...base }, new Set(), 3, 'single')
+        .some((e: any) => e.id === id);
+      return { id, own, cross };
+    });
+  });
+  for (const x of r) {
+    console.log(`  ${x.own && !x.cross ? '✓' : '✗'} ${x.id}: 本专科${x.own} 他专科${x.cross}`);
+    expect(x.own, `${x.id} 本专科应可达`).toBe(true);
+    expect(x.cross, `${x.id} 不应在其它专科触发`).toBe(false);
+  }
+
+  // 共通事件：无专科 flag 也可达（独立执业压力）
+  const common = await page.evaluate(() => {
+    const { ev, stats: st } = (window as any).__mod;
+    const pool = ev.getAvailableEvents('career', new Set(), st.createDefaultStats(), new Set(), 1, 'single');
+    return pool.some((e: any) => e.id === 'career_early_independent');
+  });
+  expect(common, '共通独立执业压力事件可达').toBe(true);
+});

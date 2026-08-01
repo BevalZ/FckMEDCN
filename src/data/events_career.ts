@@ -701,4 +701,65 @@ export const CAREER_EVENTS: GameEvent[] = [
       { text: '替他兜底，各打五十大板', delta: { relations: 2, sanity: -4, stamina: -3 }, flagSet: 'admin_covered', consequence: '事情压下去了，但你知道这样管不长久。' },
     ],
   },
+
+  // —— 职业初期压力事件（按亚专科差异化）：从规培/住院医到独立执业的第一波冲击 ——
+  {
+    id: 'career_early_independent',
+    stage: 'career',
+    title: '第一次独立管床',
+    body: '没人再给你兜底了。床位上十几位病人的医嘱、签字、抢救，全落在你一个人身上。值班电话一响，你心跳先漏一拍。',
+    category: 'mental', weight: 60, once: true, minTurn: 1, maxTurn: 4,
+    choices: [
+      { text: '硬着头皮顶上去', delta: { stamina: -10, knowledge: 3, sanity: -4 }, consequence: '一个月后，你发现自己真的扛下来了。' },
+      { text: '频繁呼叫上级', delta: { relations: -2, sanity: 2, reputation: -1 }, consequence: '上级没说什么，但你知道"成长"两个字有代价。' },
+    ],
+  },
+  {
+    id: 'career_early_surgery_pressure',
+    stage: 'career',
+    title: '手术排满的清晨',
+    body: '外科的早晨从一台接一台开始。巡回护士喊"下一台准备好了"，你灌了口浓茶，白大褂还没干透。',
+    category: 'clinical', weight: 55, once: true, minTurn: 2, maxTurn: 5,
+    requireFlag: 'sub_surgery',
+    choices: [
+      { text: '顶住，站完今天的台', delta: { stamina: -14, clinical: 4, sanity: -3 }, consequence: '下台时腿在抖，但手是稳的。' },
+      { text: '申请休整半日', delta: { sanity: 6, relations: 2, reputation: -2 }, consequence: '你在值班室眯了一觉，醒来觉得丢人。' },
+    ],
+  },
+  {
+    id: 'career_early_peds_pressure',
+    stage: 'career',
+    title: '被家长围住的诊室',
+    body: '儿科诊室外排着队，一个家长嗓门越来越大："等了俩小时了！"孩子在你怀里哭，你喉咙发紧。',
+    category: 'social', weight: 55, once: true, minTurn: 2, maxTurn: 5,
+    requireFlag: 'sub_pediatrics',
+    choices: [
+      { text: '一个个安抚，先稳情绪', delta: { relations: 4, sanity: -5, stamina: -4 }, consequence: '那位家长最后说了声"大夫辛苦了"。' },
+      { text: '让护士帮忙压场', delta: { relations: -2, sanity: -2, reputation: -1 }, consequence: '场面压住了，但你心里不是滋味。' },
+    ],
+  },
+  {
+    id: 'career_early_obgyn_pressure',
+    stage: 'career',
+    title: '深夜的产科急诊',
+    body: '凌晨两点，电话把你从值班室拽起来：胎盘早剥。你一边往手术室跑，一边在脑子里过流程。',
+    category: 'clinical', weight: 55, once: true, minTurn: 2, maxTurn: 5,
+    requireFlag: 'sub_obgyn',
+    choices: [
+      { text: '顶住，主刀接生', delta: { clinical: 4, stamina: -12, sanity: -3 }, consequence: '天亮时母婴平安，你在走廊长出一口气。' },
+      { text: '呼叫二线支援', delta: { relations: 3, stamina: -4, reputation: -1 }, consequence: '有惊无险，但你记下了自己的边界。' },
+    ],
+  },
+  {
+    id: 'career_early_internal_pressure',
+    stage: 'career',
+    title: '大查房的难堪',
+    body: '主任带着一群人查房，当众指出你一份医嘱的漏洞："这么开，病人肾功能怎么办？"二十几双眼睛看着你。',
+    category: 'mental', weight: 55, once: true, minTurn: 2, maxTurn: 5,
+    requireFlag: 'sub_internal',
+    choices: [
+      { text: '虚心记下，回去改', delta: { knowledge: 3, sanity: -3, reputation: 1 }, consequence: '你把那条医嘱背了下来，从此再没犯过。' },
+      { text: '当场辩解两句', delta: { relations: -2, sanity: -3, reputation: -2 }, consequence: '主任没再追问，但查房的气氛冷了下来。' },
+    ],
+  },
 ];
