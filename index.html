@@ -99,10 +99,10 @@
       #title-start { top: 404px; font-size: 20px; font-weight: bold; }
       #title-continue { top: 448px; font-size: 18px; color: #ffc107; font-weight: bold; display: none; }
       #title-continue.show { display: block; }
-      #title-gallery { top: 492px; font-size: 16px; color: #4fc3f7; }
+      #title-gallery { top: 512px; font-size: 16px; color: #4fc3f7; }
       #title-gender-hint {
         position: absolute;
-        left: 480px; top: 526px;
+        left: 480px; top: 534px;
         transform: translateX(-50%);
         font-size: 11px;
         color: #556;
@@ -110,6 +110,22 @@
         white-space: nowrap;
         opacity: 0;
       }
+      #title-gender-edit { top: 474px; font-size: 14px; color: #ffc107; display: none; }
+      #title-gender-edit.show { display: block; }
+      #gender-edit-panel { top: 474px; font-size: 14px; color: #ffc107; display: none; }
+      #gender-edit-panel.show { display: block; }
+      .gender-pick {
+        background: transparent;
+        border: 1px solid #4fc3f7;
+        color: #4fc3f7;
+        font-family: inherit;
+        font-size: 13px;
+        cursor: pointer;
+        padding: 2px 14px;
+        margin-left: 6px;
+        pointer-events: auto;
+      }
+      #gender-edit-label { color: #cccccc; }
     </style>
   </head>
   <body>
@@ -120,6 +136,13 @@
       <div id="title-sub">— 临床医学专业人生模拟器 —</div>
       <button id="title-start" class="title-btn">[ 开始游戏 ]</button>
       <button id="title-continue" class="title-btn">[ 继续游戏 ]</button>
+      <button id="title-gender-edit" class="title-btn">[ 修改性别 ]</button>
+      <div id="gender-edit-panel" class="title-btn">
+        <span id="gender-edit-label">性别：</span>
+        <button id="gender-pick-male" class="gender-pick">男生</button>
+        <button id="gender-pick-female" class="gender-pick">女生</button>
+        <button id="gender-edit-cancel" class="gender-pick">取消</button>
+      </div>
       <button id="title-gallery" class="title-btn">[ 人生图鉴 (G) ]</button>
       <div id="title-gender-hint">新开一局时可选择性别，学长/学姐、儿子/女儿等称谓会随之变化</div>
     </div>

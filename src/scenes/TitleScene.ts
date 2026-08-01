@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { resetGame, getState, patchState } from '../data/gameState';
 import { sound } from '../audio/sound';
-import { hasSave, loadSave, applySave } from '../data/save';
+import { hasSave, loadSave, applySave, saveGame } from '../data/save';
 import { applyLegacyPerks } from '../data/legacy';
 
 // 标题界面。M5 之后改用 HTML 覆盖层（index.html 中的 #title-overlay）渲染文本，
@@ -38,6 +38,11 @@ export class TitleScene extends Phaser.Scene {
     const contBtn = document.getElementById('title-continue') as HTMLButtonElement | null;
     const galleryBtn = document.getElementById('title-gallery') as HTMLButtonElement | null;
     const genderHint = document.getElementById('title-gender-hint');
+    const genderEditBtn = document.getElementById('title-gender-edit') as HTMLButtonElement | null;
+    const genderPanel = document.getElementById('gender-edit-panel');
+    const pickMale = document.getElementById('gender-pick-male') as HTMLButtonElement | null;
+    const pickFemale = document.getElementById('gender-pick-female') as HTMLButtonElement | null;
+    const genderCancel = document.getElementById('gender-edit-cancel') as HTMLButtonElement | null;
 
     const fadeIn = (el: Element | null, delay: number) => {
       if (!el) return;
@@ -97,6 +102,42 @@ export class TitleScene extends Phaser.Scene {
       startBtn?.addEventListener('click', startGame);
       contBtn?.addEventListener('click', continueGame);
       this.input.keyboard?.once('keydown-SPACE', continueGame);
+
+      // 存档界面：修改性别入口（改完写回存档，继续游戏生效）
+      genderEditBtn?.classList.add('show');
+      fadeIn(genderEditBtn, 1900);
+      genderEditBtn?.addEventListener('click', () => {
+        genderEditBtn.classList.remove('show');
+        genderPanel?.classList.add('show');
+      });
+      const flash = (msg: string) => {
+        const t = this.add.text(480, 500, msg, {
+          fontFamily: '"Courier New", monospace', fontSize: '14px', color: '#ffc107', fontStyle: 'bold',
+        }).setOrigin(0.5).setDepth(300).setAlpha(0);
+        this.tweens.add({
+          targets: t, alpha: 1, duration: 300,
+          onComplete: () => this.tweens.add({
+            targets: t, alpha: 0, duration: 700, delay: 900, onComplete: () => t.destroy(),
+          }),
+        });
+      };
+      const applyGender = (g: 'male' | 'female') => {
+        const blob = loadSave();
+        if (!blob) return;
+        applySave(blob);
+        patchState({ gender: g });
+        // 写回存档（保留 firedEvents/firedNews，防止 once 事件丢失）
+        saveGame(blob.sceneKey, blob.firedEvents ?? [], blob.firedNews ?? []);
+        genderPanel?.classList.remove('show');
+        genderEditBtn?.classList.add('show');
+        flash(g === 'male' ? '性别已改为：男生' : '性别已改为：女生');
+      };
+      pickMale?.addEventListener('click', () => applyGender('male'));
+      pickFemale?.addEventListener('click', () => applyGender('female'));
+      genderCancel?.addEventListener('click', () => {
+        genderPanel?.classList.remove('show');
+        genderEditBtn?.classList.add('show');
+      });
     } else {
       fadeIn(startBtn, 1500);
       startBtn?.addEventListener('click', startGame);

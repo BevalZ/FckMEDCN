@@ -5,7 +5,7 @@
 - **路线图 ①②③④ 全部完成**。
 - **known-issues 全部清零**：A1/A2/A3、B2/B3/B4/B6/B7 已修已验，B1/B5 设计如此/已验证，
   D1-D4 为设计记录。
-- 全量 **63 用例绿**（exit=0；balance-sim/冷启动首跑 flaky 是 Windows 环境成本，见 D4）。
+- 全量 **65 用例绿**（exit=0；balance-sim/冷启动首跑 flaky 是 Windows 环境成本，见 D4）。
 - `npm run build` 通过；git 仓库健康，工作区干净。
 - **唯一剩余**：A2 文字渲染的实际观感（各字号扫一眼），纯人工目视项，无代码待办。
 
@@ -46,6 +46,11 @@ gender-selection 回归守两性路径）。
 留级"学长/学姐"、规培"师兄/师姐"，其余"师兄/学姐"均为 NPC 指称不动；实现 src/data/gender.ts
 的 renderGendered() 占位符系统，EventCard/ConsequencePopup 渲染时统一按 gender 替换
 {son}/{senior}/{seniorFellow} 等，gender-selection 补占位符渲染断言[女生路径后果="我女儿拿了国奖"]）。
+**性别修改入口**（用户建议存档界面可改性别）：①标题页当有存档时显示"[修改性别]"按钮 → 弹出
+男生/女生/取消 → 改后写回存档[保留 firedEvents/firedNews 防 once 丢失]，Phaser 文字闪烁反馈；
+②游戏内 R 菜单新增第 3 项"修改性别"→ 子菜单 男生/女生 → 即时生效并持久化（loadSave+saveGame
+保留 fired 集合）。注意：R 菜单项增加后"重新开档"移到第 4 项，restart 测试按 4。gender-edit
+回归覆盖两处入口。
 剩余可选项（与用户确认后再动）：
 1. **用户试玩**：回归清单的 5 条试玩路径（known-issues 末尾），顺手确认 A2 文字观感与图鉴/传承手感。
 2. **移动端**：评估结论——底子比预想的好，但**不建议现在做**（详见下节）。

@@ -1,31 +1,37 @@
 import Phaser from 'phaser';
 import { resetGame, patchState, getState } from '../data/gameState';
-import { clearSave } from '../data/save';
+import { clearSave, loadSave, saveGame } from '../data/save';
 import { applyLegacyPerks } from '../data/legacy';
 import type { ConsequencePopup } from './ConsequencePopup';
 
-// 游戏内菜单（R 键）：继续游戏 / 返回标题 / 重新开档。
+// 游戏内菜单（R 键）：继续游戏 / 返回标题 / 修改性别 / 重新开档。
 // ↑↓ 或 数字键 选择，空格/回车 确认，ESC 关闭。
 // 返回标题不清档（自动存档仍在，标题页可"继续游戏"恢复）；
+// 修改性别即时生效并写回存档（保留已触发事件集合）；
 // 重新开档先弹确认（ESC 可反悔）再放弃本局。
 export function bindGameMenu(
   scene: Phaser.Scene,
   consequence: ConsequencePopup,
   isBusy?: () => boolean,
 ) {
-  const ITEMS = ['继续游戏', '返回标题', '重新开档'] as const;
-  type Item = typeof ITEMS[number];
+  const MAIN_ITEMS = ['继续游戏', '返回标题', '修改性别', '重新开档'] as const;
+  const GENDER_ITEMS = ['男生', '女生'] as const;
+  type MainItem = typeof MAIN_ITEMS[number];
 
   let container: Phaser.GameObjects.Container | null = null;
   let selected = 0;
+  let mode: 'main' | 'gender' = 'main';
   let kbHandler: ((e: KeyboardEvent) => void) | null = null;
   const rowTexts: Phaser.GameObjects.Text[] = [];
+  const items = () => (mode === 'gender' ? GENDER_ITEMS : MAIN_ITEMS);
 
   const redraw = () => {
+    const list = items();
     rowTexts.forEach((t, i) => {
+      if (i >= list.length) { t.setText(''); return; }
       t.setColor(i === selected ? '#ffc107' : '#cccccc');
       t.setFontStyle(i === selected ? 'bold' : 'normal');
-      t.setText(i === selected ? `▶ ${ITEMS[i]}` : `  ${ITEMS[i]}`);
+      t.setText(i === selected ? `▶ ${list[i]}` : `  ${list[i]}`);
     });
   };
 
@@ -34,17 +40,33 @@ export function bindGameMenu(
     container = null;
     if (kbHandler) { scene.input.keyboard?.off('keydown', kbHandler); kbHandler = null; }
     rowTexts.length = 0;
+    mode = 'main';
   };
 
-  const doAction = (item: Item) => {
-    close();
-    if (item === '继续游戏') return;
+  /** 修改性别：即时写入状态并写回存档（保留 firedEvents/firedNews，防止 once 事件丢失） */
+  const setGender = (g: 'male' | 'female') => {
+    patchState({ gender: g });
+    try {
+      const blob = loadSave();
+      if (blob) saveGame(blob.sceneKey, blob.firedEvents ?? [], blob.firedNews ?? []);
+    } catch { /* 存档不可用时静默 */ }
+  };
+
+  const doMainAction = (item: MainItem) => {
+    if (item === '继续游戏') { close(); return; }
     if (item === '返回标题') {
-      // 不清档：自动存档仍在，标题页可"继续游戏"恢复本局
-      scene.scene.start('TitleScene');
+      close();
+      scene.scene.start('TitleScene'); // 不清档
+      return;
+    }
+    if (item === '修改性别') {
+      selected = getState().gender === 'female' ? 1 : 0;
+      mode = 'gender';
+      redraw();
       return;
     }
     // 重新开档：先确认，ESC 可反悔
+    close();
     consequence.show(
       '【重新开档】\n确定放弃本局，直接开新档吗？\n当前进度将被覆盖。\n\n（空格/回车 确认，ESC 取消）',
       {},
@@ -60,7 +82,7 @@ export function bindGameMenu(
 
   const open = () => {
     if (container || isBusy?.()) return;
-    const W = 340, H = 200;
+    const W = 340, H = 250;
     const c = scene.add.container(480, 300).setDepth(190);
     container = c;
     const bg = scene.add.graphics();
@@ -76,30 +98,45 @@ export function bindGameMenu(
     c.add(title);
 
     rowTexts.length = 0;
-    ITEMS.forEach((_item, i) => {
-      const t = scene.add.text(-W / 2 + 40, -H / 2 + 62 + i * 34, '', {
+    for (let i = 0; i < MAIN_ITEMS.length; i++) {
+      const t = scene.add.text(-W / 2 + 40, -H / 2 + 62 + i * 36, '', {
         fontFamily: '"Courier New", monospace', fontSize: '15px',
       });
       rowTexts.push(t);
       c.add(t);
-    });
+    }
     const foot = scene.add.text(0, H / 2 - 20, '↑↓ 选择 · 空格 确认 · ESC 关闭', {
       fontFamily: '"Courier New", monospace', fontSize: '11px', color: '#888888',
     }).setOrigin(0.5);
     c.add(foot);
 
+    mode = 'main';
     selected = 0;
     redraw();
 
     kbHandler = (e: KeyboardEvent) => {
-      const n = ITEMS.length;
+      const n = items().length;
       if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); selected = (selected + n - 1) % n; redraw(); }
       else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); selected = (selected + 1) % n; redraw(); }
-      else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); doAction(ITEMS[selected]); }
-      else if (e.key === 'Escape') { close(); }
-      else {
+      else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const list = items();
+        if (mode === 'gender') {
+          setGender(selected === 0 ? 'male' : 'female');
+          close();
+        } else {
+          doMainAction(list[selected] as MainItem);
+        }
+      } else if (e.key === 'Escape') {
+        if (mode === 'gender') { mode = 'main'; selected = 0; redraw(); } else { close(); }
+      } else {
         const num = parseInt(e.key, 10);
-        if (!Number.isNaN(num) && num >= 1 && num <= n) doAction(ITEMS[num - 1]);
+        if (!Number.isNaN(num) && num >= 1 && num <= n) {
+          const list = items();
+          if (mode === 'gender') setGender(selected === 0 ? 'male' : 'female');
+          else doMainAction(list[num - 1] as MainItem);
+          if (mode !== 'gender') close();
+        }
       }
     };
     scene.input.keyboard?.on('keydown', kbHandler);
