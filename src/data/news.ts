@@ -106,4 +106,6 @@ export const NEWS_TICKER: NewsTickerItem[] = [
   { id: 'n2043q4_1', year: 2043, quarter: 4, headline: '【住培待遇再评估：与专硕奖学金打通呼声高】', type: 'warning' },
   { id: 'n2044q1_1', year: 2044, quarter: 1, headline: '【医学教育学制再讨论：5+3+X 要不要减一减】', type: 'irony' },
   { id: 'n2044q2_1', year: 2044, quarter: 2, headline: '【又一年招聘季：大医院排队面试，县医院排队求人】', type: 'event' },
+  { id: 'n2044q3_1', year: 2044, quarter: 3, headline: '【医保飞检常态化：今年已追回违规资金数十亿】', type: 'warning' },
+  { id: 'n2044q4_1', year: 2044, quarter: 4, headline: '【年终观察：医生年度关键词——过劳、纠纷与坚守】', type: 'tragedy' },
 ];

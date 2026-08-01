@@ -2,7 +2,7 @@ import { getState, updateStats, advanceTurn, hasFlag, setFlag } from './gameStat
 import { applyChoiceEffect } from './effects';
 import { getAvailableEvents, weightedRandom } from './events';
 import type { EventCategory, EventChoice, GameEvent } from './events';
-import { applyStageEconomy } from './economy';
+import { applyStageEconomy, currentRegionTier, REGION_HOUSE } from './economy';
 import type { QuarterEconomy } from './economy';
 import { rollIntegrity } from './integrity';
 import type { IntegrityOutcome } from './integrity';
@@ -108,9 +108,17 @@ export function commitChoice(choice: EventChoice, event?: GameEvent) {
   let delta = choice.delta;
   if (event?.rankScaled && (choice.delta?.money ?? 0) < 0) {
     const st = getState();
-    const factor = st.flags.has('passed_zhenggao') ? 1.5
+    // 职级因子：住院医轻、主任重
+    const rank = st.flags.has('passed_zhenggao') ? 1.5
       : st.flags.has('passed_fugao') ? 1.3
       : st.flags.has('passed_zhuzhi') ? 1.0 : 0.7;
+    // 地区因子：三甲/私立房价高、基层县城房价低（深挖第五部分 R2 落地）。
+    // 购房事件（career_mid_house）用 regionScaled 标记，首付/赔付随地区档位浮动。
+    let factor = rank;
+    if (event.regionScaled) {
+      const base = 8000; // 默认档位（市级）首付基数
+      factor = rank * (REGION_HOUSE[currentRegionTier()].down / base);
+    }
     delta = { ...choice.delta, money: Math.round(choice.delta!.money! * factor) };
   }
   if (choice.flagSet) setFlag(choice.flagSet);
@@ -127,6 +135,23 @@ export function advanceQuarter(stageName: string): {
 } {
   advanceTurn();
   const econ = applyStageEconomy(stageName);
+  // 职业期亚专科被动消耗 + 日常回血（深挖第五部分 R28 落地）。
+  // 放在共享季度结算层，保证真实游戏（场景调用）与纯模拟（直接调 advanceQuarter）行为一致。
+  if (stageName === 'career') {
+    const f = getState().flags;
+    const isPeds = f.has('sub_pediatrics');
+    const isSurg = f.has('sub_surgery');
+    const isObgyn = f.has('sub_obgyn');
+    // 被动消耗：外科最费体力、儿科最费心理
+    const drain: StatDelta = isSurg ? { stamina: -13, knowledge: 3, sanity: -2 }
+      : isObgyn ? { stamina: -10, knowledge: 2, sanity: -2 }
+      : isPeds ? { stamina: -8, knowledge: 2, sanity: -5 }
+      : { stamina: -8, knowledge: 2, sanity: -2 };
+    // 日常回血：在职靠门诊/科室生活回 +2；儿科额外 +2（暖色时刻）
+    const heal: StatDelta = isPeds ? { sanity: 4 } : { sanity: 2 };
+    updateStats(heal);
+    updateStats(drain);
+  }
   const grieving = hasFlag('grieving');
   if (grieving) updateStats({ sanity: -2 });
   const integrity = rollIntegrity();

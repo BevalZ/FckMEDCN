@@ -359,6 +359,31 @@ export const CAREER_EVENTS: GameEvent[] = [
   },
 
   // —— 职业中期：已站稳脚跟、却开始被"中年命题"围住的主治/副主任医师 ——
+  // 职业期小游戏回归（深挖第五部分 R29 / REVIEW-PLAYABILITY R11 落地）：
+  // 主治后"手术/抢救/操作"终于有动手检验——不再零小游戏。
+  {
+    id: 'career_er_rescue',
+    stage: 'career',
+    title: '急诊的深夜抢救',
+    body: '120 推进来一个呼吸心跳骤停的病人。麻醉/内科刚被叫走，监护仪在滴——你上，还是呼叫支援？',
+    category: 'clinical', weight: 55, minTurn: 1, minigame: 'cpr',
+    choices: [
+      { text: '顶上去，按节拍抢救', delta: { clinical: 6, reputation: 4, stamina: -14, sanity: -4 }, flagSet: 'career_rescue_done', consequence: '病人被拉了回来。你摘下手套，手心全是汗。' },
+      { text: '呼叫支援，维持现场', delta: { clinical: 3, stamina: -10, sanity: -2 }, consequence: '团队接手后把人救了回来。你在一旁打下手，也算出了一份力。' },
+    ],
+  },
+  {
+    id: 'career_high_difficulty_surgery',
+    stage: 'career',
+    title: '一台高难度手术',
+    body: '一台复杂的腹腔手术排到了你名下。主刀盯着你："你来缝最后一层。"台下十几双眼睛等着。',
+    category: 'clinical', weight: 50, minTurn: 2, minigame: 'suture',
+    choices: [
+      { text: '稳住手，一针一针来', delta: { clinical: 6, reputation: 4, stamina: -12, sanity: -3 }, flagSet: 'career_surgery_done', consequence: '缝完最后一针，主刀点了点头。你才知道自己已能独当一面。' },
+      { text: '请主刀收尾', delta: { clinical: 2, reputation: -1, stamina: -8 }, consequence: '主刀利落地收完，没说什么。你记下了这台的每个细节。' },
+    ],
+  },
+
   {
     id: 'career_mid_health_alarm',
     stage: 'career',
@@ -441,7 +466,7 @@ export const CAREER_EVENTS: GameEvent[] = [
     stage: 'career',
     title: '房贷的重量',
     body: '同事都在聊月供。你算了算自己的存款，犹豫要不要在这个城市"上车"。',
-    category: 'financial', weight: 50, once: true, minTurn: 4,
+    category: 'financial', weight: 50, once: true, minTurn: 4, rankScaled: true, regionScaled: true,
     choices: [
       { text: '咬牙付首付，扎根', delta: { money: -8000, sanity: -3, relations: 2 }, flagSet: 'bought_house', consequence: '合同签完那晚，你站在空荡荡的客厅里，既踏实又有点慌。' },
       { text: '继续租房，自由些', delta: { money: 500, sanity: 4 }, consequence: '你把首付留在了账户里。' },
@@ -711,6 +736,85 @@ export const CAREER_EVENTS: GameEvent[] = [
     choices: [
       { text: '承认谈话不充分，配合补记录', delta: { money: -5000, reputation: -2, sanity: -6 }, flagSet: 'lawsuit_done_1', consequence: '你补了记录，但还是被列为被告之一。那晚你复盘了很久。' },
       { text: '咬定流程走了，签字为证', delta: { reputation: -4, sanity: -10 }, flagSet: 'lawsuit_done_1', consequence: '仲裁时你被问到"当时讲清楚了吗"，你答不上来。' },
+    ],
+  },
+
+  // —— 职业暴露：针刺伤 → 上报/预防用药 → 感染风险 → 心理阴影（深挖第五部分 R30 落地）——
+  {
+    id: 'career_needlestick',
+    stage: 'career',
+    title: '针刺伤',
+    body: '抢救结束时拔针，一根用过的针头扎进了你的手指。血珠渗出来，患者病历上"乙肝"一栏是阳性。',
+    category: 'clinical', weight: 45, once: true, minTurn: 2,
+    choices: [
+      { text: '立即挤血、消毒、上报感染科', delta: { stamina: -4, sanity: -6, reputation: 2 }, flagSet: 'needlestick_reported', consequence: '感染科开了预防用药。你盯着注射器，第一次觉得白大褂没那么安全。' },
+      { text: '挤了挤血，没当回事', delta: { sanity: -3, stamina: -2 }, flagSet: 'needlestick_hidden', consequence: '你用水冲了冲继续忙。夜里想起那管血，你睡不着。' },
+    ],
+  },
+  // 上报后的回响：预防用药的副作用与随访
+  {
+    id: 'career_needlestick_followup',
+    stage: 'career',
+    title: '预防用药的三个月',
+    body: '暴露后第 6 周、第 3 个月要去抽血复查。这期间你不敢告诉家人，药吃得胃里翻江倒海。',
+    category: 'mental', weight: 40, once: true, minTurn: 3,
+    requireFlag: 'needlestick_reported',
+    choices: [
+      { text: '按时复查，熬过去', delta: { stamina: -8, sanity: -8, knowledge: 3 }, flagSet: 'needlestick_cleared', consequence: '三个月后结果阴性。你抱着化验单，在走廊站了很久。' },
+      { text: '工作太忙，漏了一次复查', delta: { sanity: -12, stamina: -4 }, flagSet: 'needlestick_anxious', consequence: '漏查那几天，你满脑子都是最坏的结果。后来补查没事，但那份恐慌留了很久。' },
+    ],
+  },
+  // 没上报的回响：担惊受怕
+  {
+    id: 'career_needlestick_guilt',
+    stage: 'career',
+    title: '那根针的阴影',
+    body: '过去快一个月了。你时不时想起那管血，查了几次资料，越想越怕，又不敢去医院查。',
+    category: 'mental', weight: 40, once: true, minTurn: 3,
+    requireFlag: 'needlestick_hidden',
+    choices: [
+      { text: '终于去抽血，给自己一个交代', delta: { sanity: -6, stamina: -3 }, flagSet: 'needlestick_cleared', consequence: '结果阴性。你发誓下次一定当场上报。' },
+      { text: '继续硬扛着', delta: { sanity: -10, stamina: -4 }, flagSet: 'needlestick_anxious', consequence: '心理的阴影比针尖还细，却扎得深。' },
+    ],
+  },
+
+  // —— 医保飞检 / 科室自查（经济+合规压力，复用病历质量 flag）——
+  {
+    id: 'career_insurance_flycheck',
+    stage: 'career',
+    title: '医保飞行检查',
+    body: '医保局不打招呼进了科室，抽查近一年的病历与收费。主任脸色发白——DRG 下"超支"是悬在头上的刀。',
+    category: 'financial', weight: 40, once: true, minTurn: 2,
+    choices: [
+      { text: '主动配合，把问题病历整理清楚', delta: { stamina: -10, sanity: -4, reputation: 2, money: -2000 }, flagSet: 'flycheck_ok', consequence: '检查组没抓到实质违规，但医院按例追回了两笔超支费用。' },
+      { text: '拖一拖，等风声过去', delta: { sanity: -6, money: -4000, reputation: -2 }, flagSet: 'flycheck_fined', consequence: '拖的结果是被从重处理，科室被扣了一笔绩效，你写了检讨。' },
+    ],
+  },
+
+  // 飞检被罚的回响：整改压力
+  {
+    id: 'career_flycheck_aftermath',
+    stage: 'career',
+    title: '整改的日子',
+    body: '飞检被罚后，科室要求全员补病历、开规范培训。主任点名让你负责整理历史病历。',
+    category: 'financial', weight: 35, once: true, minTurn: 3,
+    requireFlag: 'flycheck_fined',
+    choices: [
+      { text: '硬着头皮补完，学会规范', delta: { knowledge: 4, stamina: -12, sanity: -6, reputation: 2 }, flagSet: 'flycheck_reformed', consequence: '你通宵补完所有病历，顺手把科室的模板也规范了。主任难得说了句"辛苦了"。' },
+      { text: '敷衍应付，能拖就拖', delta: { stamina: -6, sanity: -4, reputation: -2 }, flagSet: 'flycheck_resisted', consequence: '你交上去的补录被打了回来，又重写了一遍。' },
+    ],
+  },
+  // 飞检过关的回响：成为科室的"医保明白人"
+  {
+    id: 'career_flycheck_clean_echo',
+    stage: 'career',
+    title: '科室的"医保明白人"',
+    body: '飞检过后，大家发现你懂 DRG 结算的门道，新来的同事开始来问你"这个病怎么编码"。',
+    category: 'career', weight: 35, once: true, minTurn: 3,
+    requireFlag: 'flycheck_ok',
+    choices: [
+      { text: '耐心教，自己也学得更透', delta: { reputation: 4, relations: 4, knowledge: 3, stamina: -6 }, flagSet: 'flycheck_mentor', consequence: '你带出了几个"小明白人"，科室的扣款率降了。' },
+      { text: '保留一点，够用就行', delta: { relations: 1, stamina: -3 }, consequence: '你帮了几个人，但没把自己彻底搭进去。' },
     ],
   },
 

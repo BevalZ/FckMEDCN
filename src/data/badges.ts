@@ -88,6 +88,22 @@ export const BADGES: Badge[] = [
     id: 'b_admin', group: '职业', title: '科室掌舵', desc: '接下行政担子，从"医生"变成"管理者"。',
     check: () => has('took_admin'),
   },
+  {
+    id: 'b_career_rescue', group: '职业', title: '深夜的抢救', desc: '职业后独立拉回一个心跳骤停的病人。手还会抖，但人救回来了。',
+    check: () => has('career_rescue_done'),
+  },
+  {
+    id: 'b_career_surgery', group: '职业', title: '独当一面', desc: '一台高难度手术的最后一层，主刀点名让你来缝。',
+    check: () => has('career_surgery_done'),
+  },
+  {
+    id: 'b_needlestick', group: '职业', title: '那根针', desc: '职业暴露后当场上报，熬过三个月复查。白大褂从此有了重量。',
+    check: () => has('needlestick_cleared'),
+  },
+  {
+    id: 'b_flycheck', group: '职业', title: '飞检过关', desc: '医保飞行检查中主动配合，病历经得起查。',
+    check: () => has('flycheck_ok'),
+  },
   // —— 人生 · 结局 ——
   {
     id: 'b_marriage', group: '人生', title: '步入婚姻', desc: '牵起一个人的手，把余生也算进去。',

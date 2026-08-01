@@ -88,10 +88,11 @@ if (import.meta.env.DEV) {
     import('./data/comparison'),
     import('./data/npcGen'),
     import('./data/patientType'),
-  ]).then(([gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad, leg, cmp, ngn, pt]) => {
+    import('./data/economy'),
+  ]).then(([gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad, leg, cmp, ngn, pt, ec]) => {
     w.__state = gs.getState;
     w.__setFlag = gs.setFlag;
     w.__patchState = gs.patchState;
-    w.__mod = { gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad, leg, cmp, ngn, pt };
+    w.__mod = { gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad, leg, cmp, ngn, pt, ec };
   });
 }

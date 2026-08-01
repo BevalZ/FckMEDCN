@@ -181,4 +181,82 @@ export const INTERNSHIP_EVENTS: GameEvent[] = [
       { text: '谢绝，怕出错', delta: { relations: -2, sanity: 2 }, consequence: '老师没说什么，但下次没再叫你。' },
     ],
   },
+  // —— 实习手写补厚（深挖第五部分 R25 落地）：5 季手写事件密度不足 ——
+  {
+    id: 'first_blood_draw',
+    stage: 'internship',
+    title: '第一次扎静脉',
+    body: '实习第一次静脉穿刺。你拿着针，患者手臂上的血管明明那么清晰，你手却不受控地抖。',
+    category: 'clinical', weight: 60,
+    choices: [
+      { text: '深呼吸，一针见血', delta: { clinical: 4, knowledge: 2, stamina: -6, reputation: 2 }, flagSet: 'did_puncture', consequence: '回血的那一刻，你比患者还高兴。' },
+      { text: '扎了两针没中', delta: { clinical: 1, sanity: -6, reputation: -3 }, consequence: '患者皱眉说"换个人吧"。你记了一整天。' },
+    ],
+  },
+  {
+    id: 'nurse_tips',
+    stage: 'internship',
+    title: '护士长教你做人',
+    body: '"病历要早上写完，夜里别让护士替你盯。"护士长把一摞病历拍在桌上，看了你一眼。',
+    category: 'clinical', weight: 55,
+    choices: [
+      { text: '虚心听，当天改完', delta: { relations: 5, knowledge: 3, stamina: -6 }, consequence: '护士长再没找你麻烦，还教了你几个小技巧。' },
+      { text: '心里不服，嘴上不说', delta: { relations: -3, sanity: -2 }, consequence: '你以为过去了，第二天病历又被打回来。' },
+    ],
+  },
+  {
+    id: 'family_question',
+    stage: 'internship',
+    title: '家属的连环追问',
+    body: '患者家属堵在走廊："我爸到底什么病？能不能好？为什么检查这么多？"你夹在中间，回答不上来。',
+    category: 'clinical', weight: 55,
+    choices: [
+      { text: '认真听，把问题转达给老师', delta: { relations: 4, knowledge: 3, sanity: -3 }, consequence: '老师说你"会办事"。家属也平静了。' },
+      { text: '急着撇清"我不是主管医生"', delta: { relations: -5, sanity: -2 }, consequence: '家属眼神冷了："那谁能管？"你意识到自己躲了。' },
+    ],
+  },
+  {
+    id: 'intensive_pager',
+    stage: 'internship',
+    title: '呼机一响，神经一紧',
+    body: '值班室的呼机/手机每响一次，你心跳就漏一拍。一晚上响了十几次，凌晨才安静下来。',
+    category: 'mental', weight: 50, once: true, minTurn: 2,
+    choices: [
+      { text: '爬起来处理，一次比一次稳', delta: { clinical: 3, stamina: -10, sanity: -2 }, consequence: '到后半夜，你已经能闭着眼睛判断轻重缓急。' },
+      { text: '让护士先挡一挡', delta: { relations: -3, sanity: 1 }, consequence: '护士嘴上没说，但看你的眼神多了层意思。' },
+    ],
+  },
+  {
+    id: 'see_blood_hemophobia',
+    stage: 'internship',
+    title: '晕血',
+    body: '手术台上，电刀切开的一瞬间，视野里一片红。你眼前发黑，扶住了无影灯。',
+    category: 'clinical', weight: 45, once: true,
+    choices: [
+      { text: '稳住，背过身深呼吸', delta: { clinical: 2, stamina: -8, sanity: -4, reputation: 1 }, consequence: '老师没点破，但护士递了杯糖水。' },
+      { text: '退下来缓一缓', delta: { sanity: -3, reputation: -3 }, consequence: '你靠着墙蹲了很久，第一次怀疑自己选没选对。' },
+    ],
+  },
+  {
+    id: 'elderly_waits_alone',
+    stage: 'internship',
+    title: '独自来就诊的老人',
+    body: '一位老人自己挂号、自己排队、自己看诊，病历本上写满字，却没人陪。轮到他说："大夫，我识字不多，你能念给我听吗？"',
+    category: 'social', weight: 50,
+    choices: [
+      { text: '放慢语速，逐条念给他听', delta: { relations: 5, sanity: 4, stamina: -3 }, consequence: '他听得很认真，临走时朝你鞠了一躬。' },
+      { text: '让他去找护士台', delta: { relations: -2, sanity: -2 }, consequence: '你后来隔着走廊看他迷茫地站着，心里不是滋味。' },
+    ],
+  },
+  {
+    id: 'preceptor_teach_round',
+    stage: 'internship',
+    title: '查房被点名',
+    body: '主任查房，指着床上的病人问你："这个病人的诊断依据是什么？"全科室十几双眼睛齐刷刷看向你。',
+    category: 'clinical', weight: 60, minTurn: 2,
+    choices: [
+      { text: '硬着头皮答，卡壳也答完', delta: { knowledge: 5, sanity: -5, reputation: 3 }, consequence: '主任帮你补全了思路："思路对，回去再看两页书。"' },
+      { text: '低头说"我不知道"', delta: { sanity: -6, reputation: -2 }, consequence: '主任没难为你，但你知道下次得做足功课。' },
+    ],
+  },
 ];

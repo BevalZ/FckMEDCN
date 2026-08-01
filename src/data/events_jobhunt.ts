@@ -27,6 +27,22 @@ export const JOBHUNT_EVENTS: GameEvent[] = [
       { text: '先签合同制干着', delta: { sanity: 3, money: 1000 }, flagSet: 'contract', consequence: '你告诉自己"以后再说"。' },
     ],
   },
+  // 死磕编制的回响：考编结果（深挖第五部分 R24 补消费者）
+  {
+    id: 'bianzhi_result',
+    stage: 'jobhunt',
+    title: '编制岗的结局',
+    body: '1:40 的竞争比，笔试、面试、体检、政审一路走完。等公示的日子，你连手机震动都心跳加速。',
+    category: 'career',
+    weight: 60,
+    once: true,
+    requireFlag: 'bianzhi',
+    minTurn: 2,
+    choices: [
+      { text: '上岸了，正式入编', delta: { reputation: 6, sanity: 8, stamina: -4 }, flagSet: 'jh_bianzhi_in', consequence: '公示名单里有你的名字。爸妈比你还高兴，你终于"有编制"了。' },
+      { text: '差一名，落榜', delta: { reputation: -3, sanity: -8, stamina: -4 }, flagSet: 'jh_bianzhi_out', consequence: '名单上你排在前一名之后。你关掉网页，想了很久下一步。' },
+    ],
+  },
   {
     id: 'interview_written',
     stage: 'jobhunt',

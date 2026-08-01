@@ -20,6 +20,8 @@ import { MASTER_TRACK_EVENTS } from './events_master_track';
 import { ADVISOR_EVENTS } from './events_advisor';
 // —— 跨阶段回声：把早期埋下的 flag 在后续阶段兑现，串起"一生"叙事（② 选择后果链）——
 import { ECHO_EVENTS } from './events_echoes';
+// —— NPC 好感度门控事件：关系决定你在随机事件里的处境（REVIEW-INTERACTION P0）——
+import { NPC_AFFINITY_EVENTS } from './events_npc_affinity';
 
 export type EventCategory = 'study' | 'clinical' | 'social' | 'financial' | 'mental' | 'career' | 'news' | 'system' | 'personal';
 
@@ -53,6 +55,8 @@ export interface GameEvent {
   minigame?: 'suture' | 'cpr' | 'exam' | 'nightshift';
   /** 职业赔付/扣罚事件：金钱损失按职级差异化（住院医轻、主任重） */
   rankScaled?: boolean;
+  /** 购房等大额支出：金额随医院/地区档位浮动（三甲贵、基层便宜） */
+  regionScaled?: boolean;
 }
 
 // 合并各阶段事件池。按阶段拆分文件便于维护，最终统一展开到 ALL_EVENTS。
@@ -76,6 +80,8 @@ export const ALL_EVENTS: GameEvent[] = [
   ...ADVISOR_EVENTS,
   // —— 跨阶段回声事件：早期 flag 在后续阶段回响，仅在玩家确实做过该选择时才触发 ——
   ...ECHO_EVENTS,
+  // —— NPC 好感度门控事件：trust_xxx/distant_xxx 决定事件走向 ——
+  ...NPC_AFFINITY_EVENTS,
   // —— 以下为原有示例事件，保留以兼容旧流程 ——
   {
     id: 'anatomy_first_day', stage: 'undergrad', title: '解剖课第一天',

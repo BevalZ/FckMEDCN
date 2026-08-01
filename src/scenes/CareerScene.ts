@@ -1,7 +1,6 @@
 import { BaseStageScene } from './BaseStageScene';
-import { getState, updateStats } from '../data/gameState';
+import { getState } from '../data/gameState';
 import { determineEnding } from '../data/endings';
-import type { StatDelta } from '../data/stats';
 
 // 亚专科选择：开局选科室，决定职业阶段被动体力/心理消耗（劳累程度不同）。
 export const SUB_SPECIALTIES: Array<{ flag: string; label: string; desc: string }> = [
@@ -14,17 +13,6 @@ export const SUB_SPECIALTIES: Array<{ flag: string; label: string; desc: string 
 export function currentSubspecialty(): string {
   for (const s of SUB_SPECIALTIES) if (getState().flags.has(s.flag)) return s.flag;
   return 'sub_internal';
-}
-
-// 各亚专科每季被动消耗：外科最费体力、儿科最费心理、妇产科居中、内科平稳
-function subDrain(): StatDelta {
-  const sub = currentSubspecialty();
-  switch (sub) {
-    case 'sub_surgery': return { stamina: -13, knowledge: 3, sanity: -2 };
-    case 'sub_obgyn': return { stamina: -10, knowledge: 2, sanity: -2 };
-    case 'sub_pediatrics': return { stamina: -8, knowledge: 2, sanity: -5 };
-    default: return { stamina: -8, knowledge: 2, sanity: -2 };
-  }
 }
 
 export class CareerScene extends BaseStageScene {
@@ -56,7 +44,8 @@ export class CareerScene extends BaseStageScene {
   }
 
   protected doPassiveTurn() {
-    updateStats(subDrain());
+    // 亚专科被动消耗 + 职业期日常回血已统一移到 turnFlow.advanceQuarter（共享结算层），
+    // 保证真实游戏与纯模拟行为一致；这里不再重复扣减，避免双扣。
     super.doPassiveTurn();
   }
 

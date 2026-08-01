@@ -63,9 +63,53 @@ export function cityPremiumPct(): number {
   return 0;
 }
 
+// —— 职业阶段：医院/地区档位（深挖第五部分 R2 / OPTIMIZATION-ROADMAP R2 落地）——
+// 求职阶段的选择（三甲/市级/基层/私立/回老家）决定职业收入系数与房价档位。
+// 现实口径：一线三甲 vs 县城基层薪资差 1.5-3 倍、房价差 3-10 倍。
+export type RegionTier = 'top' | 'city' | 'county' | 'private';
+
+/** 依据求职 flag 判定玩家当前医院/地区档位。 */
+export function currentRegionTier(): RegionTier {
+  const f = getState().flags;
+  if (f.has('took_private')) return 'private';
+  if (f.has('offer_sanjia') || f.has('took_hospital_a') || f.has('took_hospital_b')) {
+    // took_hospital_a 是"选A平台(三甲)"、took_hospital_b 是"选B编制"——按城市档计
+    return f.has('took_hospital_b') ? 'county' : 'top';
+  }
+  if (f.has('offer_grass') || f.has('base_home') || f.has('city_home')) return 'county';
+  if (f.has('city_tier1')) return 'top';
+  return 'city'; // 默认市级
+}
+
+export const REGION_LABEL: Record<RegionTier, string> = {
+  top: '一线三甲', city: '市级医院', county: '基层/县城', private: '民营私立',
+};
+
+/** 职业收入系数：三甲最高、基层最低（现实 1.5-3 倍差，游戏内压缩为 1.35 倍差以保平衡）。 */
+const REGION_INCOME: Record<RegionTier, number> = { top: 1.35, city: 1.1, county: 0.85, private: 1.2 };
+
+/** 房价档位：三甲城市首付/月供重，基层县城轻（首付 4-5 倍差、月供 6 倍差）。 */
+export const REGION_HOUSE: Record<RegionTier, { down: number; monthly: number }> = {
+  top: { down: 16000, monthly: 5000 },
+  city: { down: 10000, monthly: 3000 },
+  county: { down: 3500, monthly: 900 },
+  private: { down: 12000, monthly: 3800 },
+};
+
+/** 职业期购房首付（随地区档位）。事件里展示用。 */
+export function houseDownPayment(): number {
+  return REGION_HOUSE[currentRegionTier()].down;
+}
+
+/** 职业期房贷月供（随地区档位），季度结算时消费。 */
+export function houseMonthly(): number {
+  return REGION_HOUSE[currentRegionTier()].monthly;
+}
+
 export function getQuarterEconomy(stage: string): QuarterEconomy {
   const spec = STAGE_ECON[stage] ?? { income: 0, cost: 0, label: stage };
-  const prem = cityPremiumPct();
+  // 城市生活成本溢价只作用于上学/规培阶段（职业阶段由地区档位单独体现，见 currentRegionTier）
+  const prem = SCHOOL_STAGES.has(stage) || stage === 'jobhunt' ? cityPremiumPct() : 0;
   let cost = Math.round(spec.cost * (1 + prem));
   let income = spec.income;
 
@@ -94,7 +138,9 @@ export function getQuarterEconomy(stage: string): QuarterEconomy {
     else if (s.flags.has('passed_fugao')) income += 8000;
     else if (s.flags.has('passed_zhuzhi')) income += 5000;
     income += Math.round((s.stats.reputation ?? 0) / 10) * 500; // 绩效随声望
-    if (s.flags.has('bought_house')) cost += 2500;              // 房贷月供折算
+    // 医院/地区系数：三甲/私立上浮、基层/县城下调（求职选择真正影响收入）
+    income = Math.round(income * REGION_INCOME[currentRegionTier()]);
+    if (s.flags.has('bought_house')) cost += houseMonthly();      // 房贷月供按地区档位
   }
 
   // —— 人生状态对收支的持续影响 ——
@@ -178,6 +224,9 @@ export function describeStageEconomy(stage: string): string | null {
     `每季度净收支：${e.net >= 0 ? '+' : ''}¥${e.net}`,
     `理财策略：${FINANCE_LABEL[s.financeStrategy] ?? '稳健生活'}（R 菜单可调）`,
   ];
+  if (stage === 'career') {
+    lines.splice(1, 0, `工作单位：${REGION_LABEL[currentRegionTier()]}`);
+  }
   if (familyLine) lines.splice(2, 0, familyLine);
   if (mentorLine) lines.splice(2, 0, mentorLine);
   if (spec.entryCost) lines.push(`入学 / 入职一次性支出：¥${spec.entryCost}`);
