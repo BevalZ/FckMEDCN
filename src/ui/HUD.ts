@@ -169,8 +169,9 @@ export class HUD {
     const wealthWord = { rich: '殷实', middle: '普通', tight: '拮据' }[s.familyWealth] ?? '';
     const finWord = { thrifty: '节流', stable: '稳健', invest: '投资' }[s.financeStrategy] ?? '稳健';
     const loanMark = s.flags.has('student_loan') ? '贷' : '';
+    const assetStr = (s.assets ?? 0) > 0 ? ` · 资产¥${(s.assets ?? 0).toLocaleString()}` : '';
     this.attrsLabel.setText(
-      `家境${a.family}/${wealthWord} · 成绩${a.academic} · 运气${a.luck} · 外貌${a.looks}${loanMark ? ` · 助学${loanMark}` : ''} ｜ 理财:${finWord}`,
+      `家境${a.family}/${wealthWord} · 成绩${a.academic} · 运气${a.luck} · 外貌${a.looks}${loanMark ? ` · 助学${loanMark}` : ''}${assetStr} ｜ 理财:${finWord}`,
     );
   }
 

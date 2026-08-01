@@ -1,4 +1,4 @@
-import { getState, updateStats, hasFlag, setFlag } from './gameState';
+import { getState, updateStats, hasFlag, setFlag, patchState } from './gameState';
 import type { StatDelta } from './stats';
 
 // —— 各阶段经济模型（类星露谷：每月/每季的固定收支 + 入学入职一次性费用）——
@@ -44,6 +44,7 @@ export interface QuarterEconomy {
   net: number;
   cityPremiumPct: number;
   financeNote: string;
+  assets?: number;
 }
 
 // 一线城市（顶尖/强校）生活成本更高：依据就读院校档次加收房租伙食溢价。
@@ -91,27 +92,43 @@ export function getQuarterEconomy(stage: string): QuarterEconomy {
 }
 
 // 每个季度固定结算一次（无论该回合是否有事件触发），并按理财策略分配结余。
+// 资产账户：节流把正结余的 30% 转入储蓄并计息；投资把正结余的 50% 投入资产并随季波动。
 export function applyStageEconomy(stage: string): QuarterEconomy {
   const e = getQuarterEconomy(stage);
   const st = getState();
   let net = e.net;
   let financeNote = '';
+  let assets = st.assets ?? 0;
 
   if (st.financeStrategy === 'thrifty') {
-    // 节流：支出减一成，正结余按年化 2%（每季约 0.5%）计息
+    // 节流：支出减一成；正结余的 30% 转储蓄，储蓄每季 0.5% 计息
     const saved = Math.round(e.cost * 0.1);
     net = e.net + saved;
-    if (e.net > 0) net += Math.max(0, Math.round(e.net * 0.005));
-    financeNote = `（节流 +${saved}，利息计息）`;
-  } else if (st.financeStrategy === 'invest' && e.net !== 0) {
-    // 投资：结余 ±15% 随机波动
-    const swing = Math.round(e.net * (Math.random() * 0.3 - 0.15));
-    net = e.net + swing;
-    financeNote = swing >= 0 ? `（投资 +${swing}）` : `（投资 ${swing}）`;
+    let deposit = 0;
+    if (net > 0) {
+      deposit = Math.round(net * 0.3);
+      net -= deposit;
+      assets += deposit;
+    }
+    const interest = Math.max(0, Math.round(assets * 0.005));
+    assets += interest;
+    financeNote = `（节流 +${saved}，转储蓄 ${deposit}，利息 +${interest}）`;
+  } else if (st.financeStrategy === 'invest') {
+    // 投资：正结余的 50% 投入资产；资产每季 ±8% 波动
+    let invested = 0;
+    if (net > 0) {
+      invested = Math.round(net * 0.5);
+      net -= invested;
+      assets += invested;
+    }
+    const swing = Math.round(assets * (Math.random() * 0.16 - 0.08));
+    assets += swing;
+    financeNote = `（投入 ${invested}，资产 ${swing >= 0 ? '+' : ''}${swing}）`;
   }
 
   if (net !== 0) updateStats({ money: net } as StatDelta);
-  return { ...e, net, financeNote };
+  if (assets !== (st.assets ?? 0)) patchState({ assets });
+  return { ...e, net, financeNote, assets };
 }
 
 // 进入阶段时的一次性收支（如学费押金 / 安家费）。用 flag 守护，避免读档重入重复扣费。

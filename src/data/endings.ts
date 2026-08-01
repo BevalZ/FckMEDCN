@@ -244,8 +244,8 @@ export function determineEnding(state: GameState): Ending {
   // 6. 早期职业倦怠（未崩但濒临）
   if (age < 35 && stats.sanity < 30) return ENDINGS_BY_ID['burnout_early'];
 
-  // 7. 深陷负债（真实经济后果：收支长期为负）
-  if (money < -30000) return ENDINGS_BY_ID['exhausted_attending'];
+  // 7. 深陷负债（真实经济后果：现金+资产 长期为负才算真破产）
+  if (money + (state.assets ?? 0) < -30000) return ENDINGS_BY_ID['exhausted_attending'];
 
   // 8. 稳定晋升路（成家者门槛略低，体现家庭支撑这一真实变量）
   // 正高已评上：直接进主任医师结局—— exhausted_attending 的"主治编外"叙事与正高矛盾。

@@ -38,6 +38,8 @@ export interface GameState {
   familyWealth: FamilyWealth;
   // —— 理财策略（R 菜单可调，每季自动按此分配收入/支出/结余）——
   financeStrategy: FinanceStrategy;
+  // —— 资产账户（节流转储蓄 / 投资本金，随季计息或波动）——
+  assets: number;
   // —— 真实人生状态（恋爱/婚姻/家庭），会影响事件触发与经济 ——
   marital: 'single' | 'dating' | 'married';
   spouse: string | null;
@@ -62,6 +64,7 @@ export function createInitialState(): GameState {
     attrs: { ...attrs },
     familyWealth: wealthFromFamily(attrs.family),
     financeStrategy: 'stable',
+    assets: 0,
     marital: 'single', spouse: null, hasChild: false, familyAlive: 4,
     affinity: {},
   };

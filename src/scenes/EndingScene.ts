@@ -49,10 +49,11 @@ export class EndingScene extends Phaser.Scene {
     const verdictColor: Record<string, number> = { low: 0xff8a95, mid: 0x4fc3f7, high: 0xffc107 };
 
     const compareRows = compareEnding(ending.id, state);
+    const totalWealth = (state.stats.money ?? 0) + (state.assets ?? 0);
     const infoRows: [string, string][] = [
       ['感情', maritalLabel[state.marital]],
       ['家人/子女', `${state.familyAlive}/4 在世 · ${state.hasChild ? '有娃' : '无娃'}`],
-      ['状态', state.flags.has('grieving') ? '丧亲之痛' : '——'],
+      ['总资产', `¥${totalWealth.toLocaleString()}（现金¥${state.stats.money.toLocaleString()}＋资产¥${(state.assets ?? 0).toLocaleString()}）`],
     ];
 
     this.add.text(60, 210, '你的数据', { fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#ffc107', fontStyle: 'bold' });

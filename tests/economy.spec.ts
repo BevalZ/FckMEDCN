@@ -140,3 +140,34 @@ test('助学贷款：上学补贴、工作后还贷', async ({ page }) => {
   expect(r.tightLoan, '贷款应显著改善拮据本科净结余').toBe(r.tightNoLoan + 1500);
   expect(r.careerLoan, '工作后应还贷 1500/季').toBe(r.careerNoLoan - 1500);
 });
+
+test('资产账户：节流转储蓄计息、投资投入波动', async ({ page }) => {
+  await boot(page);
+  const r = await page.evaluate(() => {
+    const { gs, tf } = (window as any).__mod;
+    const run = (strategy: string) => {
+      gs.resetGame();
+      gs.patchState({
+        stage: 'career', familyWealth: 'middle', financeStrategy: strategy,
+        attrs: { family: 2, academic: 3, luck: 2, looks: 3 },
+      });
+      const m = gs.getState().stats.money;
+      const econ = tf.advanceQuarter('career');
+      return {
+        moneyDelta: gs.getState().stats.money - m,
+        assets: gs.getState().assets,
+        note: econ.econ?.financeNote ?? '',
+      };
+    };
+    return { thrifty: run('thrifty'), invest: run('invest') };
+  });
+  console.log('  资产账户(节流/投资):', JSON.stringify(r));
+  // 节流：净 16100 → 转储蓄 30%（4830）+ 利息 24 → 现金 11270，资产 4854
+  expect(r.thrifty.assets, '节流应累积储蓄').toBeGreaterThan(0);
+  expect(r.thrifty.moneyDelta, '节流现金应低于投入前').toBeLessThan(14500);
+  expect(r.thrifty.note.includes('转储蓄'), '节流注记应含转储蓄').toBe(true);
+  // 投资：净 14500 → 投入 50%（7250）→ 现金 7250，资产 7250±8%
+  expect(r.invest.assets, '投资应累积本金').toBeGreaterThan(0);
+  expect(r.invest.moneyDelta, '投资现金应低于投入前').toBeLessThan(14500);
+  expect(r.invest.note.includes('投入'), '投资注记应含投入').toBe(true);
+});

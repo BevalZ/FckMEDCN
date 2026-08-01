@@ -69,6 +69,7 @@ export function applySave(blob: SaveBlob): string {
     attrs: (rest as { attrs?: unknown }).attrs ?? { family: 2, academic: 5, luck: 1, looks: 2 },
     familyWealth: (rest as { familyWealth?: string }).familyWealth ?? 'middle',
     financeStrategy: (rest as { financeStrategy?: string }).financeStrategy ?? 'stable',
+    assets: (rest as { assets?: number }).assets ?? 0,
   } as GameState);
   pendingFired = { firedEvents: blob.firedEvents ?? [], firedNews: blob.firedNews ?? [] };
   return blob.sceneKey;

@@ -20,7 +20,7 @@ async function toAttrPhase(page: Page) {
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
   await page.keyboard.press('Enter'); // 选男生
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(1000);
 }
 
 const phaseTexts = (page: Page) => page.evaluate(() => {
@@ -42,7 +42,7 @@ test('属性分配：默认值、确认后写入 attrs 与起始属性', async (
 
   // 回车确认（默认 家境2 成绩5 运气1 外貌2）
   await page.keyboard.press('Enter');
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(1000);
   const state = await page.evaluate(() => {
     const { gs } = (window as any).__mod;
     const s = gs.getState();
@@ -64,15 +64,16 @@ test('属性分配：默认值、确认后写入 attrs 与起始属性', async (
 test('属性分配：可调整；成绩低时高分数档不可选', async ({ page }) => {
   await toAttrPhase(page);
 
-  // ↓ 到"成绩"行，← 减 3 点（5→2），剩余 3 点
+  // ↓ 到"成绩"行，← 减 3 点（5→2），剩余 3 点（分步按压防丢键）
   await page.keyboard.press('ArrowDown');
-  for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowLeft');
+  await page.waitForTimeout(200);
+  for (let i = 0; i < 3; i++) { await page.keyboard.press('ArrowLeft'); await page.waitForTimeout(200); }
   const mid = await phaseTexts(page);
   expect(mid.some((t: string) => t.includes('剩余点数：3 / 10')), '减 3 点后应剩 3 点').toBe(true);
 
   // 回车确认 → 估分阶段应按成绩划档（成绩 2 → 最高 560-609 档，685 不可选）
   await page.keyboard.press('Enter');
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(1000);
   const texts = await phaseTexts(page);
   expect(texts.some((t: string) => t.includes('你的高考成绩是多少')), '应进入估分阶段').toBe(true);
   expect(texts.some((t: string) => t.includes('以你的成绩底子（2/5）')), '应显示成绩档提示').toBe(true);
@@ -83,17 +84,17 @@ test('属性分配：可调整；成绩低时高分数档不可选', async ({ pa
 test('助学贷款开关：在属性分配阶段可选并写入 student_loan', async ({ page }) => {
   await toAttrPhase(page);
 
-  // ↓ 到"助学贷款"行（第 5 行），→ 开启，回车确认
-  for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowDown');
+  // ↓ 到"助学贷款"行（第 5 行），→ 开启，回车确认（分步按压防丢键）
+  for (let i = 0; i < 4; i++) { await page.keyboard.press('ArrowDown'); await page.waitForTimeout(200); }
   const before = await phaseTexts(page);
   expect(before.some((t: string) => t.includes('助学贷款')), '应有助学贷款行').toBe(true);
   await page.keyboard.press('ArrowRight');
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(500);
   const toggled = await phaseTexts(page);
   expect(toggled.some((t: string) => t.includes('开')), '贷款应显示为开').toBe(true);
 
   await page.keyboard.press('Enter');
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(1000);
   const state = await page.evaluate(() => {
     const { gs } = (window as any).__mod;
     return { hasLoan: gs.getState().flags.has('student_loan'), wealth: gs.getState().familyWealth };
