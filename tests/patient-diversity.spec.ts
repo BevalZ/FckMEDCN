@@ -149,3 +149,22 @@ test('动态：每个患者档案都出现在生成事件标题，且特质选�
   expect(report.missingTrait, '患者具备的特质应随该患者出现在事件选项中').toEqual([]);
   expect(report.echoGaps, '每个患者档案的 met_ flag 都应有病房互访 setter 与回声 consumer').toEqual([]);
 });
+
+// 本科段真实性红线（深挖第五部分 R39）：本科是"观察/上课"，不得直接接触临床病人。
+// 若未来新增生成事件模板误把 clinical 放进本科池，这里立刻失败。
+test('本科池无 clinical 生成事件（不接触病人红线）', async ({ page }) => {
+  await page.goto(BASE, { waitUntil: 'load' });
+  await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 60000 });
+  const r = await page.evaluate(() => {
+    const { ev, stats: st } = (window as any).__mod;
+    const base = st.createDefaultStats();
+    const pool = ev.getAvailableEvents('undergrad', new Set(), { ...base }, new Set(), 5, 'single');
+    return {
+      clinicalGen: pool.filter((e: any) => e.id.startsWith('gen_') && e.category === 'clinical').map((e: any) => e.id),
+      clinicalHand: pool.filter((e: any) => !e.id.startsWith('gen_') && e.category === 'clinical').map((e: any) => e.id),
+    };
+  });
+  console.log('  本科 clinical 生成事件:', JSON.stringify(r.clinicalGen));
+  console.log('  本科 clinical 手写事件:', JSON.stringify(r.clinicalHand));
+  expect(r.clinicalGen, '本科不应有 clinical 生成事件（程序化患者接触）').toEqual([]);
+});

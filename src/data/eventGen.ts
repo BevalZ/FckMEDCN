@@ -181,10 +181,17 @@ function wardVisitEvent(stage: string | string[], i: number): GameEvent {
   const primary = Array.isArray(stage) ? stage[stage.length - 1] : stage;
   const stageTune = primary === 'career' ? 1.4 : primary === 'guipei' ? 1.1 : 0.85;
   const id = `gen_${stageKey}_ward_${i}`;
+  // 病房互访场景变体（深挖第五部分 R36 落地）：晨间大查房 / 深夜巡视 / 家属在旁，轮换取用。
+  const sceneIdx = ((i % 3) + 3) % 3;
+  const body = sceneIdx === 0
+    ? `晨间大查房，轮到${arch.name}的床位。你推门进去，${arch.followUp}`
+    : sceneIdx === 1
+      ? `深夜巡视病房，走廊的灯都暗了。${arch.name}的床位还亮着床头灯，${arch.followUp}`
+      : `${arch.name}的家属在床边陪护，你走进去时${arch.followUp}`;
   return {
     id, stage,
     title: `病房互访：${arch.name}的床位`,
-    body: `你推门走进病房，${arch.name}正靠在床头。${arch.followUp}`,
+    body,
     category: 'clinical' as EventCategory,
     weight: 22,
     choices: [
