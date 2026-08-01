@@ -79,3 +79,25 @@ test('属性分配：可调整；成绩低时高分数档不可选', async ({ pa
   expect(texts.some((t: string) => t.includes('更高的分数档需提升')), '应有划档提示').toBe(true);
   expect(texts.some((t: string) => t.includes('685分以上')), '成绩不足时不应出现 685 档').toBe(false);
 });
+
+test('助学贷款开关：在属性分配阶段可选并写入 student_loan', async ({ page }) => {
+  await toAttrPhase(page);
+
+  // ↓ 到"助学贷款"行（第 5 行），→ 开启，回车确认
+  for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowDown');
+  const before = await phaseTexts(page);
+  expect(before.some((t: string) => t.includes('助学贷款')), '应有助学贷款行').toBe(true);
+  await page.keyboard.press('ArrowRight');
+  await page.waitForTimeout(200);
+  const toggled = await phaseTexts(page);
+  expect(toggled.some((t: string) => t.includes('开')), '贷款应显示为开').toBe(true);
+
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(600);
+  const state = await page.evaluate(() => {
+    const { gs } = (window as any).__mod;
+    return { hasLoan: gs.getState().flags.has('student_loan'), wealth: gs.getState().familyWealth };
+  });
+  expect(state.hasLoan, '开启后应写入 student_loan').toBe(true);
+  expect(state.wealth, '默认家境 2 → 普通，可贷款').toBe('middle');
+});

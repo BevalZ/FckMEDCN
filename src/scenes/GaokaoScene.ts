@@ -45,6 +45,10 @@ export class GaokaoScene extends Phaser.Scene {
   private attrValues: AttrAlloc = { family: 2, academic: 5, luck: 1, looks: 2 };
   private attrFocus = 0;
   private readonly ATTR_BUDGET = 10;
+  // 助学贷款开关（非富裕家庭可选：上学 +1500/季、工作后还 -1500/季）
+  private loanOn = false;
+  private loanToggleText!: Phaser.GameObjects.Text;
+  private loanBarText!: Phaser.GameObjects.Text;
 
   constructor() { super({ key: 'GaokaoScene' }); }
 
@@ -164,26 +168,53 @@ export class GaokaoScene extends Phaser.Scene {
       return { key: d.key, label: d.label, desc: d.desc, valueText, barText };
     });
 
-    const foot = this.add.text(480, 460, '↑↓ 选择 · ←/→ 调整 · 空格 确认', {
+    // 助学贷款行（第 5 行，家境 0-3 才生效；家境 4-5 殷实则无需）
+    const ly = 162 + 4 * 56;
+    const loanLabel = this.add.text(200, ly, '助学贷款', {
+      fontFamily: '"Courier New", monospace', fontSize: '15px', color: '#ffffff', fontStyle: 'bold',
+    });
+    this.container.add(loanLabel);
+    const loanDesc = this.add.text(200, ly + 24, '上学期间每季 +1500 生活费，工作后每季还 1500（家境拮据/普通可用）', {
+      fontFamily: '"Courier New", monospace', fontSize: '11px', color: '#888899',
+    });
+    this.container.add(loanDesc);
+    this.loanToggleText = this.add.text(560, ly + 4, '', {
+      fontFamily: '"Courier New", monospace', fontSize: '15px', color: '#ffc107',
+    }).setOrigin(0.5);
+    this.container.add(this.loanToggleText);
+    this.loanBarText = this.add.text(620, ly + 4, '', {
+      fontFamily: '"Courier New", monospace', fontSize: '15px', color: '#4fc3f7',
+    }).setOrigin(0, 0.5);
+    this.container.add(this.loanBarText);
+
+    this.attrFocus = 0;
+    this.loanOn = getState().flags.has('student_loan');
+    this.refreshAttrUI();
+
+    const foot = this.add.text(480, 466, '↑↓ 选择 · ←/→ 调整 · 空格 确认', {
       fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#888899',
     }).setOrigin(0.5);
     this.container.add(foot);
 
-    this.attrFocus = 0;
-    this.refreshAttrUI();
-
     this.keyHandler = (e: KeyboardEvent) => {
       const keys = this.attrRows.map(r => r.key);
-      if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+      const ROWS = 5;
+      if (e.key === 'ArrowUp') {
         e.preventDefault();
-        if (e.key === 'ArrowUp') { this.attrFocus = (this.attrFocus + 3) % 4; this.refreshAttrUI(); return; }
-        // ArrowLeft = 减
-        this.adjustAttr(keys[this.attrFocus], -1);
-      } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        this.attrFocus = (this.attrFocus + ROWS - 1) % ROWS;
+        this.refreshAttrUI();
+      } else if (e.key === 'ArrowDown') {
         e.preventDefault();
-        if (e.key === 'ArrowDown') { this.attrFocus = (this.attrFocus + 1) % 4; this.refreshAttrUI(); return; }
-        // ArrowRight = 加
-        this.adjustAttr(keys[this.attrFocus], 1);
+        this.attrFocus = (this.attrFocus + 1) % ROWS;
+        this.refreshAttrUI();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        if (this.attrFocus === 4) {
+          this.loanOn = !this.loanOn; // 助学贷款开关
+          this.refreshAttrUI();
+        } else {
+          this.adjustAttr(keys[this.attrFocus], e.key === 'ArrowRight' ? 1 : -1);
+        }
       } else if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         this.commitAttrs();
@@ -214,15 +245,25 @@ export class GaokaoScene extends Phaser.Scene {
       r.valueText.setColor(i === this.attrFocus ? '#ffc107' : '#ffffff');
       r.barText.setText('●'.repeat(v) + '○'.repeat(5 - v));
     });
+    // 助学贷款行
+    this.loanToggleText.setText(this.loanOn ? '开' : '关');
+    this.loanToggleText.setColor(this.attrFocus === 4 ? '#ffc107' : this.loanOn ? '#69f0ae' : '#ffffff');
+    this.loanBarText.setText(this.loanOn ? '[贷]' : '[ ]');
   }
 
   private commitAttrs() {
     // 写入属性、推导家庭条件、应用起始加成（成绩→知识、外貌→人际/声望、运气→心理）
     const a = { ...this.attrValues };
     const s = getState();
+    const wealth = wealthFromFamily(a.family);
+    const flags = new Set(s.flags);
+    // 助学贷款：仅非殷实家庭可选（家境 0-3），写入 student_loan
+    if (this.loanOn && wealth !== 'rich') flags.add('student_loan');
+    else flags.delete('student_loan');
     patchState({
       attrs: a,
-      familyWealth: wealthFromFamily(a.family),
+      familyWealth: wealth,
+      flags,
       stats: {
         ...s.stats,
         knowledge: s.stats.knowledge + a.academic * 5,

@@ -114,3 +114,29 @@ test('R 菜单可调整理财策略并持久化', async ({ page }) => {
   expect(state.strategy, 'R 菜单应把策略改为 thrifty').toBe('thrifty');
   expect(state.saved, '存档应同步 thrifty').toBe('thrifty');
 });
+
+test('助学贷款：上学补贴、工作后还贷', async ({ page }) => {
+  await boot(page);
+  const r = await page.evaluate(() => {
+    const { gs, tf } = (window as any).__mod;
+    const net = (familyWealth: string, loan: boolean, stage: string) => {
+      gs.resetGame();
+      gs.patchState({
+        familyWealth, financeStrategy: 'stable',
+        flags: loan ? new Set(['student_loan']) : new Set(),
+      });
+      const m = gs.getState().stats.money;
+      tf.advanceQuarter(stage);
+      return gs.getState().stats.money - m;
+    };
+    return {
+      tightNoLoan: net('tight', false, 'undergrad'), // 1800-3800 = -2000
+      tightLoan: net('tight', true, 'undergrad'),    // 3300-3800 = -500
+      careerNoLoan: net('middle', false, 'career'),  // 30500-16000 = 14500
+      careerLoan: net('middle', true, 'career'),     // 30500-17500 = 13000
+    };
+  });
+  console.log('  助学贷款:', JSON.stringify(r));
+  expect(r.tightLoan, '贷款应显著改善拮据本科净结余').toBe(r.tightNoLoan + 1500);
+  expect(r.careerLoan, '工作后应还贷 1500/季').toBe(r.careerNoLoan - 1500);
+});

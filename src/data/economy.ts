@@ -66,6 +66,12 @@ export function getQuarterEconomy(stage: string): QuarterEconomy {
     income = Math.round(income * factor);
   }
 
+  // —— 助学贷款（属性分配阶段可选）：上学期间 +1500/季 生活费，工作后 -1500/季 还贷 ——
+  if (getState().flags.has('student_loan')) {
+    if (stage === 'undergrad' || stage === 'internship') income += 1500;
+    if (stage === 'career') cost += 1500;
+  }
+
   // —— 职业阶段：底薪 + 职称档差 + 绩效（声望），支出含房贷/育儿 ——
   if (stage === 'career') {
     const s = getState();
