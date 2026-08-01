@@ -26,7 +26,7 @@ async function enterCampus(page: Page) {
 
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 7; i++) {
     await page.keyboard.press('Enter');
     await page.waitForTimeout(700);
   }

@@ -5,7 +5,7 @@
 - **路线图 ①②③④ 全部完成**。
 - **known-issues 全部清零**：A1/A2/A3、B2/B3/B4/B6/B7 已修已验，B1/B5 设计如此/已验证，
   D1-D4 为设计记录。
-- 全量 **66 用例绿**（exit=0；balance-sim/冷启动首跑 flaky 是 Windows 环境成本，见 D4）。
+- 全量 **74 用例绿**（exit=0；balance-sim/冷启动首跑 flaky 是 Windows 环境成本，见 D4）。
 - `npm run build` 通过；git 仓库健康，工作区干净。
 - **唯一剩余**：A2 文字渲染的实际观感（各字号扫一眼），纯人工目视项，无代码待办。
 
@@ -46,13 +46,15 @@ gender-selection 回归守两性路径）。
 留级"学长/学姐"、规培"师兄/师姐"，其余"师兄/学姐"均为 NPC 指称不动；实现 src/data/gender.ts
 的 renderGendered() 占位符系统，EventCard/ConsequencePopup 渲染时统一按 gender 替换
 {son}/{senior}/{seniorFellow} 等，gender-selection 补占位符渲染断言[女生路径后果="我女儿拿了国奖"]）。
-**性别修改入口**（用户建议存档界面可改性别）：①标题页当有存档时显示"[修改性别]"按钮 → 弹出
-男生/女生/取消 → 改后写回存档[保留 firedEvents/firedNews 防 once 丢失]，Phaser 文字闪烁反馈；
-②游戏内 R 菜单新增第 3 项"修改性别"→ 子菜单 男生/女生 → 即时生效并持久化（loadSave+saveGame
-保留 fired 集合）。注意：R 菜单项增加后"重新开档"移到第 4 项，restart 测试按 4。gender-edit
-回归覆盖两处入口。**称谓一致性验证**（用户要求改性别后所有称谓渲染一致——renderGendered 在
-渲染时读 getState().gender，故中途改性别后事件卡/后果即时用新称谓；gender-edit 补"中途改性别
-前后"断言：male 国奖"儿子"+留级卡"学长" → R 菜单改女生 → 国奖"女儿"+留级卡"学姐"）。
+**开局点数分配**（用户建议：除性别外可分配点数——家境/成绩/运气/外貌，作为后续随机事件、
+家庭支持参考与分数划档依据）：GameState 增 attrs{family,academic,luck,looks}（各 0-5，预算 10），
+familyWealth 由 attrs.family 推导（0-1 拮据/2-3 普通/4-5 殷实，旧档默认 middle）；GaokaoScene 性别后
+新增"分配你的初始属性"阶段（↑↓ 选行、←/→ 加减、空格确认），确认后写入 attrs + 家庭条件 + 起始加成
+（成绩×5 知识、外貌×4 人际+1 声望、运气×2 心理）；成绩决定**分数线划档**（academic≥5 全档、4→684、
+3→649、2→609、≤1→540，不足档隐藏并提示"更高的分数档需提升成绩"）；默认分配 家境2成绩5运气1外貌2
+（保证测试 685+ 可选）。坑：DEFAULT_ATTRS 须在 createInitialState 前声明否则 TDZ 崩溃。高考流程
+gender→attrs→score→reveal→school→track→confirm 共 7 步，导航测试回车 6→7、女生路径 5→6。
+attr-allocation 回归守默认值/调整/划档。
 剩余可选项（与用户确认后再动）：
 1. **用户试玩**：回归清单的 5 条试玩路径（known-issues 末尾），顺手确认 A2 文字观感与图鉴/传承手感。
 2. **移动端**：评估结论——底子比预想的好，但**不建议现在做**（详见下节）。

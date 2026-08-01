@@ -3,6 +3,8 @@ import { SCHOOLS, TRACKS } from '../data/constants';
 import type { School, Track } from '../data/constants';
 import { getState, setState, setFlag, patchState } from '../data/gameState';
 import type { DegreeType } from '../data/constants';
+import type { AttrAlloc } from '../data/gameState';
+import { wealthFromFamily } from '../data/gameState';
 import { getPalette, createBgTexture, createStageDecor } from '../ui/pixelArt';
 import { CharacterSprite } from '../ui/CharacterSprite';
 import { sound } from '../audio/sound';
@@ -38,6 +40,11 @@ export class GaokaoScene extends Phaser.Scene {
   private schoolPage = 0;
   private readonly schoolPageSize = 6;
   private inSchoolPhase = false;
+
+  // 点数分配状态（家境/成绩/运气/外貌）
+  private attrValues: AttrAlloc = { family: 2, academic: 5, luck: 1, looks: 2 };
+  private attrFocus = 0;
+  private readonly ATTR_BUDGET = 10;
 
   constructor() { super({ key: 'GaokaoScene' }); }
 
@@ -88,20 +95,13 @@ export class GaokaoScene extends Phaser.Scene {
       fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#888899',
     }).setOrigin(0.5));
 
-    // 家庭条件（开局随机，决定上学期间父母补贴/生活费水平）
-    const fam = getState().familyWealth;
-    const famLabel: Record<string, string> = { rich: '家境殷实（父母补贴充足）', middle: '家境普通', tight: '家境拮据（得多靠自己）' };
-    this.container.add(this.add.text(480, 162, `你的家庭：${famLabel[fam] ?? '家境普通'}`, {
-      fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#ffd54f',
-    }).setOrigin(0.5));
-
     const specs: OptionSpec[] = [
       {
         x: 240, y: 190, w: 480, h: 64,
         label: '男生', sub: '叙述里会以"学长 / 儿子"等称谓称呼你',
         action: () => {
           patchState({ gender: 'male' });
-          this.time.delayedCall(150, () => this.showScorePhase());
+          this.time.delayedCall(150, () => this.showAttrPhase());
         },
       },
       {
@@ -109,11 +109,129 @@ export class GaokaoScene extends Phaser.Scene {
         label: '女生', sub: '叙述里会以"学姐 / 女儿"等称谓称呼你',
         action: () => {
           patchState({ gender: 'female' });
-          this.time.delayedCall(150, () => this.showScorePhase());
+          this.time.delayedCall(150, () => this.showAttrPhase());
         },
       },
     ];
     this.renderOptions(specs);
+  }
+
+  // —— 点数分配：家境 / 成绩 / 运气 / 外貌（总预算 10 点）——
+  private attrRows: Array<{ key: keyof AttrAlloc; label: string; desc: string; valueText: Phaser.GameObjects.Text; barText: Phaser.GameObjects.Text }> = [];
+  private attrRemainText!: Phaser.GameObjects.Text;
+
+  private showAttrPhase() {
+    this.clearContainer();
+    const pal = getPalette('gaokao');
+
+    const panel = this.add.graphics();
+    panel.fillStyle(pal.panel, 0.9);
+    panel.fillRoundedRect(160, 70, 640, 420, 10);
+    this.container.add(panel);
+
+    this.container.add(this.add.text(480, 90, '分配你的初始属性', {
+      fontFamily: '"Courier New", monospace', fontSize: '20px', color: '#ffffff', fontStyle: 'bold',
+    }).setOrigin(0.5));
+    this.attrRemainText = this.add.text(480, 122, '', {
+      fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#ffd54f',
+    }).setOrigin(0.5);
+    this.container.add(this.attrRemainText);
+
+    const defs: Array<{ key: keyof AttrAlloc; label: string; desc: string }> = [
+      { key: 'family', label: '家境', desc: '父母补贴 / 生活费水平（影响上学期间收入）' },
+      { key: 'academic', label: '成绩', desc: '高考分数线档 + 起始学识（知识）' },
+      { key: 'luck', label: '运气', desc: '起始心态（心理）' },
+      { key: 'looks', label: '外貌', desc: '起始人际与声望' },
+    ];
+    this.attrRows = defs.map((d, i) => {
+      const y = 162 + i * 56;
+      const labelText = this.add.text(200, y, `${d.label} ${i === 0 ? '(←/→ 调整)' : ''}`, {
+        fontFamily: '"Courier New", monospace', fontSize: '15px', color: '#ffffff', fontStyle: 'bold',
+      });
+      this.container.add(labelText);
+      const descText = this.add.text(200, y + 24, d.desc, {
+        fontFamily: '"Courier New", monospace', fontSize: '11px', color: '#888899',
+      });
+      this.container.add(descText);
+      const valueText = this.add.text(560, y + 4, '', {
+        fontFamily: '"Courier New", monospace', fontSize: '15px', color: '#ffc107',
+      }).setOrigin(0.5);
+      this.container.add(valueText);
+      const barText = this.add.text(620, y + 4, '', {
+        fontFamily: '"Courier New", monospace', fontSize: '15px', color: '#4fc3f7',
+      }).setOrigin(0, 0.5);
+      this.container.add(barText);
+      return { key: d.key, label: d.label, desc: d.desc, valueText, barText };
+    });
+
+    const foot = this.add.text(480, 460, '↑↓ 选择 · ←/→ 调整 · 空格 确认', {
+      fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#888899',
+    }).setOrigin(0.5);
+    this.container.add(foot);
+
+    this.attrFocus = 0;
+    this.refreshAttrUI();
+
+    this.keyHandler = (e: KeyboardEvent) => {
+      const keys = this.attrRows.map(r => r.key);
+      if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        if (e.key === 'ArrowUp') { this.attrFocus = (this.attrFocus + 3) % 4; this.refreshAttrUI(); return; }
+        // ArrowLeft = 减
+        this.adjustAttr(keys[this.attrFocus], -1);
+      } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        if (e.key === 'ArrowDown') { this.attrFocus = (this.attrFocus + 1) % 4; this.refreshAttrUI(); return; }
+        // ArrowRight = 加
+        this.adjustAttr(keys[this.attrFocus], 1);
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        this.commitAttrs();
+      }
+    };
+    this.input.keyboard?.on('keydown', this.keyHandler);
+  }
+
+  private adjustAttr(key: keyof AttrAlloc, dir: number) {
+    const cur = this.attrValues[key];
+    const total = this.attrValues.family + this.attrValues.academic + this.attrValues.luck + this.attrValues.looks;
+    if (dir > 0) {
+      if (cur >= 5 || total >= this.ATTR_BUDGET) return;
+      this.attrValues[key] = cur + 1;
+    } else {
+      if (cur <= 0) return;
+      this.attrValues[key] = cur - 1;
+    }
+    this.refreshAttrUI();
+  }
+
+  private refreshAttrUI() {
+    const total = this.attrValues.family + this.attrValues.academic + this.attrValues.luck + this.attrValues.looks;
+    this.attrRemainText.setText(`剩余点数：${this.ATTR_BUDGET - total} / ${this.ATTR_BUDGET}`);
+    this.attrRows.forEach((r, i) => {
+      const v = this.attrValues[r.key];
+      r.valueText.setText(`${v}`);
+      r.valueText.setColor(i === this.attrFocus ? '#ffc107' : '#ffffff');
+      r.barText.setText('●'.repeat(v) + '○'.repeat(5 - v));
+    });
+  }
+
+  private commitAttrs() {
+    // 写入属性、推导家庭条件、应用起始加成（成绩→知识、外貌→人际/声望、运气→心理）
+    const a = { ...this.attrValues };
+    const s = getState();
+    patchState({
+      attrs: a,
+      familyWealth: wealthFromFamily(a.family),
+      stats: {
+        ...s.stats,
+        knowledge: s.stats.knowledge + a.academic * 5,
+        relations: s.stats.relations + a.looks * 4,
+        reputation: s.stats.reputation + a.looks * 1,
+        sanity: s.stats.sanity + a.luck * 2,
+      },
+    });
+    this.time.delayedCall(200, () => this.showScorePhase());
   }
 
   private clearContainer() {
@@ -260,7 +378,16 @@ export class GaokaoScene extends Phaser.Scene {
         reaction: '屋里安静了很久。父亲最后说："要不……复读一年？"\n你看着自己的分数，心里两个声音打架：再拼一次，还是认了这条路。' },
     ];
 
-    const specs: OptionSpec[] = scoreOptions.map((opt, i) => ({
+    // 成绩属性决定分数线划档：成绩越高，能申报的分数档越高
+    const academic = getState().attrs?.academic ?? 5;
+    const maxScore = academic >= 5 ? 999 : academic === 4 ? 684 : academic === 3 ? 649 : academic === 2 ? 609 : 540;
+    const eligible = scoreOptions.filter(o => o.score <= maxScore);
+    const maxLabel = eligible.length ? eligible[0].label : '540分及以下';
+    this.container.add(this.add.text(480, 112, `以你的成绩底子（${academic}/5），最高能到：${maxLabel}`, {
+      fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#ffd54f',
+    }).setOrigin(0.5));
+
+    const specs: OptionSpec[] = eligible.map((opt, i) => ({
       x: 200, y: 150 + i * 64, w: 560, h: 52,
       label: opt.label, sub: opt.desc,
       action: () => {
@@ -269,6 +396,11 @@ export class GaokaoScene extends Phaser.Scene {
         this.time.delayedCall(200, () => this.showScoreReveal(opt.reaction));
       },
     }));
+    if (eligible.length < scoreOptions.length) {
+      this.container.add(this.add.text(480, 150 + eligible.length * 64 + 8, '（更高的分数档需提升"成绩"属性）', {
+        fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#666688',
+      }).setOrigin(0.5));
+    }
     this.renderOptions(specs);
   }
 

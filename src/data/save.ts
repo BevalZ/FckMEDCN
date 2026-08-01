@@ -63,9 +63,10 @@ export function applySave(blob: SaveBlob): string {
     flags: new Set(blob.state.flags),
     // 旧档没有 clinical/research/fakeRisk，补默认值，否则运算得 NaN
     stats: migrateStats(rest.stats),
-    // 旧档没有 affinity / gender / familyWealth / financeStrategy，补默认值
+    // 旧档没有 affinity / gender / attrs / familyWealth / financeStrategy，补默认值
     affinity: rest.affinity ?? {},
     gender: (rest as { gender?: string }).gender === 'female' ? 'female' : 'male',
+    attrs: (rest as { attrs?: unknown }).attrs ?? { family: 2, academic: 5, luck: 1, looks: 2 },
     familyWealth: (rest as { familyWealth?: string }).familyWealth ?? 'middle',
     financeStrategy: (rest as { financeStrategy?: string }).financeStrategy ?? 'stable',
   } as GameState);

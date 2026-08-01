@@ -18,7 +18,7 @@ async function waitForScene(page: Page, key: string, timeout = 20000) {
 
 /** 空格连打直到场景就绪（入口经济简报/季度账单等弹窗可能叠多层） */
 async function dismissPopups(page: Page, sceneKey: string) {
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 7; i++) {
     const busy = await page.evaluate(
       (k) => (window as any).game.scene.getScene(k)?.busy,
       sceneKey,
@@ -50,7 +50,7 @@ test('B7 规培链：同岗同酬选项即时续接教学部回复', async ({ pa
   await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 20000 });
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  for (let i = 0; i < 7; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
   await waitForScene(page, 'CampusScene');
   await dismissPopups(page, 'CampusScene');
 

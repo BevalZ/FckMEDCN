@@ -10,6 +10,21 @@ export type PlayerGender = 'male' | 'female';
 export type FamilyWealth = 'rich' | 'middle' | 'tight';
 export type FinanceStrategy = 'thrifty' | 'stable' | 'invest';
 
+// 开局点数分配：家境 / 成绩 / 运气 / 外貌（各 0-5，总预算 10）
+export interface AttrAlloc {
+  family: number;
+  academic: number;
+  luck: number;
+  looks: number;
+}
+
+// 家境点数 → 家庭条件：0-1 拮据 / 2-3 普通 / 4-5 殷实
+export function wealthFromFamily(f: number): FamilyWealth {
+  if (f <= 1) return 'tight';
+  if (f <= 3) return 'middle';
+  return 'rich';
+}
+
 export interface GameState {
   stats: Stats; stage: LifeStage; school: School | null; track: TrackType | null;
   degree: DegreeType; score: number; year: number; quarter: number;
@@ -17,7 +32,9 @@ export interface GameState {
   flags: Set<string>; endingId: string | null;
   // —— 玩家性别（开局选择，仅影响少量称谓/叙述文案）——
   gender: PlayerGender;
-  // —— 家庭条件（开局随机，决定上学期间父母补贴/生活费水平）——
+  // —— 开局点数分配（家境/成绩/运气/外貌），家境决定家庭条件 ——
+  attrs: AttrAlloc;
+  // —— 家庭条件（由 attrs.family 决定，旧档兼容）——
   familyWealth: FamilyWealth;
   // —— 理财策略（R 菜单可调，每季自动按此分配收入/支出/结余）——
   financeStrategy: FinanceStrategy;
@@ -30,23 +47,20 @@ export interface GameState {
   affinity: Record<string, number>;
 }
 
+// 默认分配：成绩点满（保证 685+ 分数线可选），家境普通
+const DEFAULT_ATTRS: AttrAlloc = { family: 2, academic: 5, luck: 1, looks: 2 };
+
 let _state: GameState = createInitialState();
 
-// 随机家庭条件：约 1/5 富裕、1/4 拮据，其余普通
-function rollFamilyWealth(): FamilyWealth {
-  const r = Math.random();
-  if (r < 0.2) return 'rich';
-  if (r < 0.75) return 'middle';
-  return 'tight';
-}
-
 export function createInitialState(): GameState {
+  const attrs = DEFAULT_ATTRS;
   return {
     stats: createDefaultStats(), stage: 'gaokao', school: null, track: null,
     degree: 'bachelor', score: 0, year: 2024, quarter: 3, turnsInStage: 0,
     guipeiCity: '', newsLog: [], flags: new Set(), endingId: null,
     gender: 'male',
-    familyWealth: rollFamilyWealth(),
+    attrs: { ...attrs },
+    familyWealth: wealthFromFamily(attrs.family),
     financeStrategy: 'stable',
     marital: 'single', spouse: null, hasChild: false, familyAlive: 4,
     affinity: {},
