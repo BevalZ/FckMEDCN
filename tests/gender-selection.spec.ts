@@ -68,3 +68,32 @@ test('选女生：性别写入状态，放榜夜称"女儿"', async ({ page }) =
   expect(texts.some((t: string) => t.includes('女儿')), '放榜夜应称女儿').toBe(true);
   expect(texts.some((t: string) => t.includes('儿子')), '放榜夜不应再出现"儿子"').toBe(false);
 });
+
+test('女生路径的事件后果按性别渲染占位符', async ({ page }) => {
+  await toGaokao(page);
+
+  // 选女生 → 走完高考（score→reveal→school→track→confirm）进入校园
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(600);
+  for (let i = 0; i < 5; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  await waitForScene(page, 'CampusScene');
+  await page.keyboard.press('Enter'); // 关简报
+  await page.waitForTimeout(400);
+
+  // 强制打开国奖公示并选"名字在上面"，后果应渲染为"我女儿拿了国奖"
+  await page.evaluate(() => {
+    const s: any = (window as any).game.scene.getScene('CampusScene');
+    const ev = (window as any).__mod.ev.ALL_EVENTS.find((e: any) => e.id === 'ug_guojiang_result');
+    if (ev) s.openEvent(ev);
+  });
+  await page.keyboard.press('1');
+  await page.waitForTimeout(500);
+  const texts = await page.evaluate(() => {
+    const scene = (window as any).game.scene.getScene('CampusScene');
+    const list = (scene.children.list ?? []).concat(scene.consequence?.container?.list ?? []);
+    return list.filter((o: any) => o.type === 'Text').map((o: any) => o.text as string);
+  });
+  expect(texts.some((t: string) => t.includes('我女儿拿了国奖')), '后果应渲染为"我女儿拿了国奖"').toBe(true);
+  expect(texts.some((t: string) => t.includes('{son}')), '占位符不应残留').toBe(false);
+});

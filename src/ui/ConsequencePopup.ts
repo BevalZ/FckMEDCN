@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { getPalette } from './pixelArt';
 import type { StatDelta } from '../data/stats';
 import { takePendingBadges } from '../data/badges';
+import { renderGendered } from '../data/gender';
 
 // M5 文字完整性：弹窗高度随正文自动调整，过长则整体等比缩小，保证不裁切。
 const POP_W = 600;
@@ -51,7 +52,7 @@ export class ConsequencePopup {
     const badgeTitles = takePendingBadges();
     const badgeLine = badgeTitles.length > 0 ? '★ 达成里程碑：' + badgeTitles.join(' · ') : '';
 
-    const body = scene.add.text(0, 0, text, {
+    const body = scene.add.text(0, 0, renderGendered(text), {
       fontFamily: '"Courier New", monospace', fontSize: '14px', color: '#eeeeee',
       wordWrap: { width: POP_W - 40 }, lineSpacing: 4, align: 'center',
     }).setOrigin(0.5, 0);

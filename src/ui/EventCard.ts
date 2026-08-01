@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import type { GameEvent, EventChoice, EventCategory } from '../data/events';
 import { hasFlag } from '../data/gameState';
+import { renderGendered } from '../data/gender';
 import { getPalette } from './pixelArt';
 
 export type ChoiceCallback = (choice: EventChoice, index: number) => void;
@@ -64,19 +65,19 @@ export class EventCard {
     );
     const visibleChoices = gated.length > 0 ? gated : event.choices;
 
-    // —— 先创建并测量所有文本，计算所需高度 ——
-    const title = scene.add.text(0, 0, event.title, {
+    // —— 先创建并测量所有文本，计算所需高度（性别占位符在此统一渲染）——
+    const title = scene.add.text(0, 0, renderGendered(event.title), {
       fontFamily: '"Courier New", monospace', fontSize: '18px', color: '#ffffff', fontStyle: 'bold',
       wordWrap: { width: CARD_W - 40 }, align: 'center', lineSpacing: 4,
     }).setOrigin(0.5, 0);
 
-    const body = scene.add.text(0, 0, event.body, {
+    const body = scene.add.text(0, 0, renderGendered(event.body), {
       fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#dddddd',
       wordWrap: { width: CARD_W - 40 }, lineSpacing: 5,
     }).setOrigin(0, 0);
 
     const labels = visibleChoices.map((choice, i) =>
-      scene.add.text(0, 0, `${String.fromCharCode(65 + i)}. ${choice.text}`, {
+      scene.add.text(0, 0, `${String.fromCharCode(65 + i)}. ${renderGendered(choice.text)}`, {
         fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#f0f0f0',
         wordWrap: { width: CARD_W - 64 }, lineSpacing: 3,
       }).setOrigin(0, 0)

@@ -331,7 +331,7 @@ export const ECHO_EVENTS: GameEvent[] = [
     id: 'echo_holdback',
     stage: ['internship', 'guipei'],
     title: '比同届晚一年',
-    body: '同期规培的人里，有你本科时的学弟。他叫你"师兄/师姐"，你笑着应了，心里过了一下那一年。',
+    body: '同期规培的人里，有你本科时的学弟。他叫你"{seniorFellow}"，你笑着应了，心里过了一下那一年。',
     category: 'mental', weight: 45, once: true, requireFlag: 'ug_holdback', minTurn: 1, maxTurn: 8,
     choices: [
       { text: '晚一年也是走到了', delta: { sanity: 10, knowledge: 3 }, consequence: '你想：留级那年补的课，现在全用上了。' },

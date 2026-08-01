@@ -5,7 +5,7 @@
 - **路线图 ①②③④ 全部完成**。
 - **known-issues 全部清零**：A1/A2/A3、B2/B3/B4/B6/B7 已修已验，B1/B5 设计如此/已验证，
   D1-D4 为设计记录。
-- 全量 **62 用例绿**（exit=0；balance-sim/冷启动首跑 flaky 是 Windows 环境成本，见 D4）。
+- 全量 **63 用例绿**（exit=0；balance-sim/冷启动首跑 flaky 是 Windows 环境成本，见 D4）。
 - `npm run build` 通过；git 仓库健康，工作区干净。
 - **唯一剩余**：A2 文字渲染的实际观感（各字号扫一眼），纯人工目视项，无代码待办。
 
@@ -42,6 +42,10 @@ news-echo-toast 行为回归守 log/横幅/优先显示，覆盖校园/医院/�
 字段[旧档 applySave 兼容默认 male]，GaokaoScene 开头先选 男生/女生，放榜夜用 sonWord() 按性别生成
 "儿子/女儿"；其余玩家指向称谓改中性/斜杠[学长/学姐、儿子/女儿]；高考导航测试回车次数 5→6；
 gender-selection 回归守两性路径）。
+**性别称谓全覆盖**（用户要求覆盖全部文案——核查后玩家本人指向词仅 3 处：国奖"儿子/女儿"、
+留级"学长/学姐"、规培"师兄/师姐"，其余"师兄/学姐"均为 NPC 指称不动；实现 src/data/gender.ts
+的 renderGendered() 占位符系统，EventCard/ConsequencePopup 渲染时统一按 gender 替换
+{son}/{senior}/{seniorFellow} 等，gender-selection 补占位符渲染断言[女生路径后果="我女儿拿了国奖"]）。
 剩余可选项（与用户确认后再动）：
 1. **用户试玩**：回归清单的 5 条试玩路径（known-issues 末尾），顺手确认 A2 文字观感与图鉴/传承手感。
 2. **移动端**：评估结论——底子比预想的好，但**不建议现在做**（详见下节）。

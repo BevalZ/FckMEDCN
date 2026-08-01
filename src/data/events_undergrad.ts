@@ -538,7 +538,7 @@ export const UNDERGRAD_EVENTS: GameEvent[] = [
     requireFlag: 'ug_guojiang_honest',
     newsTickerAfter: '【教育部公示本年度国家奖学金名单，获奖学生超十万人】',
     choices: [
-      { text: '名字在上面', delta: { money: 8000, reputation: 6, sanity: 8 }, flagSet: 'ug_guojiang_done', consequence: '你给家里打了电话，第一次听见父亲对别人说"我儿子/女儿拿了国奖"。' },
+      { text: '名字在上面', delta: { money: 8000, reputation: 6, sanity: 8 }, flagSet: 'ug_guojiang_done', consequence: '你给家里打了电话，第一次听见父亲对别人说"我{son}拿了国奖"。' },
       { text: '差了零点几分', delta: { reputation: 2, sanity: -6, knowledge: 2 }, flagSet: 'ug_guojiang_done', consequence: '你盯着第一名的名字看了很久，然后回图书馆了。' },
     ],
   },
@@ -731,7 +731,7 @@ export const UNDERGRAD_EVENTS: GameEvent[] = [
     id: 'ug_holdback_life',
     stage: 'undergrad',
     title: '重修的日子',
-    body: '你坐在比你小一届的教室里。老师点名时会多看你一眼，同学不知道该叫你同学还是学长/学姐。',
+    body: '你坐在比你小一届的教室里。老师点名时会多看你一眼，同学不知道该叫你同学还是{senior}。',
     category: 'mental', weight: 55, once: true, requireFlag: 'ug_holdback',
     choices: [
       { text: '把这一年当成重来一次的机会', delta: { knowledge: 8, sanity: 4, stamina: -8 }, flagSet: 'ug_holdback_recovered', consequence: '这次你听懂了。原来当初不是笨，是没喘过气。' },
