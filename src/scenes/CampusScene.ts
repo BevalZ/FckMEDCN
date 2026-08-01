@@ -686,11 +686,11 @@ export class CampusScene extends Phaser.Scene {
     });
   }
 
-  private showQuarterBill(e: { income: number; cost: number; net: number }) {
+  private showQuarterBill(e: { income: number; cost: number; net: number; financeNote?: string }) {
     if (e.income === 0 && e.cost === 0) return;
     const netStr = `${e.net >= 0 ? '+' : ''}¥${e.net}`;
     this.floatMessage(
-      `季度结算 ▸ 收¥${e.income} 支¥${e.cost} = 净 ${netStr}`,
+      `季度结算 ▸ 收¥${e.income} 支¥${e.cost} = 净 ${netStr}${e.financeNote ?? ""}`,
       e.net >= 0 ? '#69f0ae' : '#ff8a80', 110, 13,
     );
   }

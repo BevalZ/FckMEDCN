@@ -88,6 +88,13 @@ export class GaokaoScene extends Phaser.Scene {
       fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#888899',
     }).setOrigin(0.5));
 
+    // 家庭条件（开局随机，决定上学期间父母补贴/生活费水平）
+    const fam = getState().familyWealth;
+    const famLabel: Record<string, string> = { rich: '家境殷实（父母补贴充足）', middle: '家境普通', tight: '家境拮据（得多靠自己）' };
+    this.container.add(this.add.text(480, 162, `你的家庭：${famLabel[fam] ?? '家境普通'}`, {
+      fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#ffd54f',
+    }).setOrigin(0.5));
+
     const specs: OptionSpec[] = [
       {
         x: 240, y: 190, w: 480, h: 64,

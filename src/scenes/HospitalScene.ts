@@ -546,10 +546,10 @@ export class HospitalScene extends Phaser.Scene {
     });
   }
 
-  private showQuarterBill(e: { income: number; cost: number; net: number }) {
+  private showQuarterBill(e: { income: number; cost: number; net: number; financeNote?: string }) {
     if (e.income === 0 && e.cost === 0) return;
     const netStr = `${e.net >= 0 ? '+' : ''}¥${e.net}`;
-    const text = `季度结算 ▸ 收¥${e.income} 支¥${e.cost} = 净 ${netStr}`;
+    const text = `季度结算 ▸ 收¥${e.income} 支¥${e.cost} = 净 ${netStr}${e.financeNote ?? ""}`;
     const color = e.net >= 0 ? '#69f0ae' : '#ff8a80';
     const t = this.add.text(480, 128, text, {
       fontFamily: '"Courier New", monospace', fontSize: '13px', color, fontStyle: 'bold',

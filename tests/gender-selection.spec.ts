@@ -100,3 +100,74 @@ test('女生路径的事件后果按性别渲染占位符', async ({ page }) => 
   expect(texts.some((t: string) => t.includes('我女儿拿了国奖')), '后果应渲染为"我女儿拿了国奖"').toBe(true);
   expect(texts.some((t: string) => t.includes('{son}')), '占位符不应残留').toBe(false);
 });
+
+// —— 三种占位符（{son}/{senior}/{seniorFellow}）× 两性 的完整场景矩阵 ——
+async function enterCampusDefault(page: Page) {
+  await page.goto(BASE, { waitUntil: 'load' });
+  await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 60000 });
+  await waitForScene(page, 'TitleScene');
+  await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
+  await waitForScene(page, 'GaokaoScene');
+  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  await waitForScene(page, 'CampusScene');
+  await page.keyboard.press('Enter'); // 关简报
+  await page.waitForTimeout(400);
+}
+
+/** 验证三种占位符在 CampusScene 强制事件里按期望称谓渲染 */
+async function verifyThreePlaceholders(page: Page, expectTexts: { son: string; senior: string; fellow: string }) {
+  const forceOpen = (id: string) => page.evaluate((evId) => {
+    const s: any = (window as any).game.scene.getScene('CampusScene');
+    const ev = (window as any).__mod.ev.ALL_EVENTS.find((e: any) => e.id === evId);
+    if (ev) s.openEvent(ev);
+  }, id);
+  const cardBody = () => page.evaluate(() => {
+    const scene: any = (window as any).game.scene.getScene('CampusScene');
+    return (scene.eventCard?.container?.list ?? [])
+      .filter((o: any) => o.type === 'Text').map((o: any) => o.text as string).join('|');
+  });
+  const consequenceText = () => page.evaluate(() => {
+    const scene: any = (window as any).game.scene.getScene('CampusScene');
+    return (scene.consequence?.container?.list ?? [])
+      .filter((o: any) => o.type === 'Text').map((o: any) => o.text as string).join('|');
+  });
+
+  // {son}：国奖后果
+  await forceOpen('ug_guojiang_result');
+  await page.keyboard.press('1');
+  await page.waitForTimeout(500);
+  expect(await consequenceText(), `国奖后果应含"${expectTexts.son}"`).toContain(expectTexts.son);
+  await page.keyboard.press('Escape'); // 关后果弹窗
+  await page.waitForTimeout(300);
+
+  // {senior}：留级卡正文
+  await forceOpen('ug_holdback_life');
+  await page.waitForTimeout(400);
+  expect(await cardBody(), `留级卡正文应含"${expectTexts.senior}"`).toContain(expectTexts.senior);
+  await page.keyboard.press('Escape'); // 关事件卡
+  await page.waitForTimeout(300);
+
+  // {seniorFellow}：规培回声卡正文
+  await forceOpen('echo_holdback');
+  await page.waitForTimeout(400);
+  expect(await cardBody(), `规培回声卡正文应含"${expectTexts.fellow}"`).toContain(expectTexts.fellow);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+}
+
+test('男生：三种占位符全部渲染为阳性称谓', async ({ page }) => {
+  await enterCampusDefault(page);
+  await verifyThreePlaceholders(page, { son: '我儿子拿了国奖', senior: '还是学长', fellow: '师兄' });
+});
+
+test('女生：三种占位符全部渲染为阴性称谓', async ({ page }) => {
+  await toGaokao(page);
+  await page.keyboard.press('ArrowDown'); // 选女生
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(600);
+  for (let i = 0; i < 5; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  await waitForScene(page, 'CampusScene');
+  await page.keyboard.press('Enter'); // 关简报
+  await page.waitForTimeout(400);
+  await verifyThreePlaceholders(page, { son: '我女儿拿了国奖', senior: '还是学姐', fellow: '师姐' });
+});

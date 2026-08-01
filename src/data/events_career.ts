@@ -443,7 +443,7 @@ export const CAREER_EVENTS: GameEvent[] = [
     body: '同事都在聊月供。你算了算自己的存款，犹豫要不要在这个城市"上车"。',
     category: 'financial', weight: 50, once: true, minTurn: 4,
     choices: [
-      { text: '咬牙买了，扎根', delta: { money: -3000, sanity: -3, relations: 2 }, consequence: '钥匙到手那晚，你却有点慌。' },
+      { text: '咬牙买了，扎根', delta: { money: -3000, sanity: -3, relations: 2 }, flagSet: 'bought_house', consequence: '钥匙到手那晚，你却有点慌。' },
       { text: '继续租房，自由些', delta: { money: 500, sanity: 4 }, consequence: '你把首付留在了账户里。' },
     ],
   },
