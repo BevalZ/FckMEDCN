@@ -26,13 +26,18 @@ const RARE_WEIGHT = 20;
 //
 // 故每次抽取先以此概率在**手写池**内抽，抽不到再回落到全池。
 // 这样既保留生成事件的日常质感，又保证叙事主线真的能被玩家看到。
-const HANDWRITTEN_PRIORITY = 0.65;
-
 const isGenerated = (e: GameEvent) => e.id.startsWith('gen_');
+
+// 运气影响手写主线事件的出现率：运气越高，越容易遇到精心编排的主线事件。
+// 运气 0 → 0.45，运气 5 → 0.75（默认 0.65 对应运气约 3）。
+function handPriority(): number {
+  const luck = getState().attrs?.luck ?? 3;
+  return Math.min(0.8, Math.max(0.4, 0.45 + luck * 0.06));
+}
 
 function pickWithPriority(pool: GameEvent[]): GameEvent | null {
   const hand = pool.filter(e => !isGenerated(e));
-  if (hand.length > 0 && Math.random() < HANDWRITTEN_PRIORITY) {
+  if (hand.length > 0 && Math.random() < handPriority()) {
     const picked = weightedRandom(hand);
     if (picked) return picked;
   }

@@ -5,7 +5,7 @@
 - **路线图 ①②③④ 全部完成**。
 - **known-issues 全部清零**：A1/A2/A3、B2/B3/B4/B6/B7 已修已验，B1/B5 设计如此/已验证，
   D1-D4 为设计记录。
-- 全量 **74 用例绿**（exit=0；balance-sim/冷启动首跑 flaky 是 Windows 环境成本，见 D4）。
+- 全量 **76 用例绿**（exit=0；balance-sim/冷启动首跑 flaky 是 Windows 环境成本，见 D4）。
 - `npm run build` 通过；git 仓库健康，工作区干净。
 - **唯一剩余**：A2 文字渲染的实际观感（各字号扫一眼），纯人工目视项，无代码待办。
 
@@ -55,6 +55,10 @@ familyWealth 由 attrs.family 推导（0-1 拮据/2-3 普通/4-5 殷实，旧档
 （保证测试 685+ 可选）。坑：DEFAULT_ATTRS 须在 createInitialState 前声明否则 TDZ 崩溃。高考流程
 gender→attrs→score→reveal→school→track→confirm 共 7 步，导航测试回车 6→7、女生路径 5→6。
 attr-allocation 回归守默认值/调整/划档。
+**属性→随机事件影响验证**（用户要求继续测试）：①成绩→起始知识→知识门槛事件可用性
+（academic5 解锁考研保研[需知≥55]、成绩0 触发学业警示[知≤45]，双向验证）；②运气→手写主线
+事件出现率（drawStorylet 的 handPriority 改为随运气 0.45→0.75，luck0 手写率0.46 vs luck5 0.76，
+统计验证）；attr-event-influence 回归守这两条。
 剩余可选项（与用户确认后再动）：
 1. **用户试玩**：回归清单的 5 条试玩路径（known-issues 末尾），顺手确认 A2 文字观感与图鉴/传承手感。
 2. **移动端**：评估结论——底子比预想的好，但**不建议现在做**（详见下节）。
