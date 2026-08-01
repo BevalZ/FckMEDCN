@@ -193,69 +193,82 @@ export function determineEnding(state: GameState): Ending {
   const clinical = stats.clinical ?? 0;
   const research = stats.research ?? 0;
 
+  let ending: Ending;
   // 0. 真正退出了医疗行业
-  if (flags.has('left_undergrad')) return ENDINGS_BY_ID['left_undergrad']; // 本科期间退学
-  if (flags.has('left_med')) return ENDINGS_BY_ID['quit_guipei'];
-  if (flags.has('considering_quit_guipei') && stats.sanity < 25 && state.stage !== 'career') return ENDINGS_BY_ID['quit_guipei'];
+  if (flags.has('left_undergrad')) ending = ENDINGS_BY_ID['left_undergrad']; // 本科期间退学
+  else if (flags.has('left_med')) ending = ENDINGS_BY_ID['quit_guipei'];
+  else if (flags.has('considering_quit_guipei') && stats.sanity < 25 && state.stage !== 'career') ending = ENDINGS_BY_ID['quit_guipei'];
 
   // 0.5 学术不端：被查与侥幸
   // 身败名裂优先于一切"成功"结局——论文再多，通报盖住了。
-  if (flags.has('exposed_ruin')) return ENDINGS_BY_ID['disgraced'];
+  else if (flags.has('exposed_ruin')) ending = ENDINGS_BY_ID['disgraced'];
   // 侥幸：造过假、没被重度处理、靠造假红利评上了职称。
   // 比"稳定晋升"更讽刺，也更真实——很多被撤稿的人其实已经评过了。
-  if (flags.has('has_faked')
+  else if (flags.has('has_faked')
       && !flags.has('exposed_retraction')
       && !flags.has('exposed_ruin')
       && (flags.has('passed_fugao') || flags.has('dt_relocated_on_fake') || stats.papers >= 5)) {
-    return ENDINGS_BY_ID['lucky_fraud'];
+    ending = ENDINGS_BY_ID['lucky_fraud'];
   }
 
   // 1. 出国行医
-  if (flags.has('abroad') && stats.knowledge > 60) return ENDINGS_BY_ID['overseas_doctor'];
+  else if (flags.has('abroad') && stats.knowledge > 60) ending = ENDINGS_BY_ID['overseas_doctor'];
 
   // 2. 转行医疗产业
-  if (flags.has('industry_intern') || flags.has('took_private')) return ENDINGS_BY_ID['medical_affairs'];
+  else if (flags.has('industry_intern') || flags.has('took_private')) ending = ENDINGS_BY_ID['medical_affairs'];
 
   // 3. 学术/外科顶流
   // 注意：top_surgeon 与 academic_star 的判定顺序是有意的——
   // 高论文+高声望优先外科主任（临床资源更多），否则走学术明星。
   // 用户此前明确暂不调整此顺序。
-  if (stats.papers >= 8 && stats.reputation >= 70) return ENDINGS_BY_ID['top_surgeon'];
+  else if (stats.papers >= 8 && stats.reputation >= 70) ending = ENDINGS_BY_ID['top_surgeon'];
   // 科研型学者：用 research 轴替代原先的 knowledge 门槛，
   // 让"真做科研"的人能走到这条结局，而不是只靠 knowledge 泛读。
-  if (stats.papers >= 6 && (research >= 55 || stats.knowledge >= 70)) {
-    return ENDINGS_BY_ID['academic_star'];
+  else if (stats.papers >= 6 && (research >= 55 || stats.knowledge >= 70)) {
+    ending = ENDINGS_BY_ID['academic_star'];
   }
 
   // 3.5 临床型专家：临床力高、论文不多——晋升吃亏但病人认你。
   // 必须在基层路线之前判定，否则"临床强但没去基层"的人会掉进默认结局。
-  if (clinical >= 60 && stats.papers <= 3 && stats.reputation >= 40) {
-    return ENDINGS_BY_ID['master_clinician'];
+  else if (clinical >= 60 && stats.papers <= 3 && stats.reputation >= 40) {
+    ending = ENDINGS_BY_ID['master_clinician'];
   }
 
   // 4. 基层路线（真实选择：家乡基地 / 县城 / 基层编制）
-  if (flags.has('offer_grass') || flags.has('base_home') || flags.has('city_home') || flags.has('chose_grassroots')) {
-    return stats.relations >= 60 ? ENDINGS_BY_ID['grassroots_hero'] : ENDINGS_BY_ID['community_doctor'];
+  else if (flags.has('offer_grass') || flags.has('base_home') || flags.has('city_home') || flags.has('chose_grassroots')) {
+    ending = stats.relations >= 60 ? ENDINGS_BY_ID['grassroots_hero'] : ENDINGS_BY_ID['community_doctor'];
   }
 
   // 5. 丧亲重创：家人尽失且心理创伤未愈
-  if (flags.has('kin_all_gone') && stats.sanity < 35) return ENDINGS_BY_ID['burnout_early'];
+  else if (flags.has('kin_all_gone') && stats.sanity < 35) ending = ENDINGS_BY_ID['burnout_early'];
 
   // 6. 早期职业倦怠（未崩但濒临）
-  if (age < 35 && stats.sanity < 30) return ENDINGS_BY_ID['burnout_early'];
+  else if (age < 35 && stats.sanity < 30) ending = ENDINGS_BY_ID['burnout_early'];
 
   // 7. 深陷负债（真实经济后果：现金+资产 长期为负才算真破产）
-  if (money + (state.assets ?? 0) < -30000) return ENDINGS_BY_ID['exhausted_attending'];
+  else if (money + (state.assets ?? 0) < -30000) ending = ENDINGS_BY_ID['exhausted_attending'];
 
   // 8. 稳定晋升路（成家者门槛略低，体现家庭支撑这一真实变量）
   // 正高已评上：直接进主任医师结局—— exhausted_attending 的"主治编外"叙事与正高矛盾。
   // 位置在 lucky_fraud(0.5) 之后：造假者即便评上正高，仍先被"侥幸"截住。
-  if (flags.has('passed_zhenggao')) return ENDINGS_BY_ID['chief_at_45'];
-  if (flags.has('passed_fugao') || flags.has('passed_zhuzhi')) {
+  else if (flags.has('passed_zhenggao')) ending = ENDINGS_BY_ID['chief_at_45'];
+  else if (flags.has('passed_fugao') || flags.has('passed_zhuzhi')) {
     const repThreshold = married ? 35 : 50;
-    return stats.reputation > repThreshold ? ENDINGS_BY_ID['stable_at_45'] : ENDINGS_BY_ID['exhausted_attending'];
+    ending = stats.reputation > repThreshold ? ENDINGS_BY_ID['stable_at_45'] : ENDINGS_BY_ID['exhausted_attending'];
   }
 
   // 默认：精疲力竭的主治
-  return ENDINGS_BY_ID['exhausted_attending'];
+  else ending = ENDINGS_BY_ID['exhausted_attending'];
+
+  // 动态化叙事年龄：结局 title/subtitle/desc 里的固定年龄（"45岁的稳定"等）按玩家真实年龄改写，
+  // 与 EndingScene 左侧真实年龄（state.stats.age，38 岁收尾）保持一致，消除"左 38 右 45"矛盾。
+  if (!ending) ending = ENDINGS_BY_ID['exhausted_attending'];
+  const withRealAge = (t: string) => t.replace(/\d+岁/g, `${age}岁`);
+  return {
+    ...ending,
+    title: withRealAge(ending.title),
+    subtitle: withRealAge(ending.subtitle),
+    desc: withRealAge(ending.desc),
+    stats: { ...ending.stats, finalAge: age, totalYears: age - 18 },
+  };
 }

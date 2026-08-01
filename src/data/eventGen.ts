@@ -173,6 +173,8 @@ function clinicEvent(stage: string | string[], i: number, kind: 'routine' | 'dif
 }
 
 // 病房互访模板：查房 / 探视型事件。患者由真实档案驱动，按特质出选项。
+// 关键：查体/调整方案的选择会设 met_${arch.id}——"你认真管过这位病人"被记录，
+// 后续 patientEchoEvent（复诊/感谢/投诉）要求该 flag，让患者真的会回来。
 function wardVisitEvent(stage: string | string[], i: number): GameEvent {
   const arch = patientAt(i, 5);
   const stageKey = Array.isArray(stage) ? stage.join('+') : stage;
@@ -186,8 +188,63 @@ function wardVisitEvent(stage: string | string[], i: number): GameEvent {
     category: 'clinical' as EventCategory,
     weight: 22,
     choices: [
-      { text: '仔细查体，逐条核对用药', delta: { clinical: 4, knowledge: 3, stamina: -Math.round(6 * stageTune) }, consequence: '你把每条医嘱都对了一遍。' },
-      { text: '聊聊恢复情况，调整方案', delta: { knowledge: 3, relations: 1, stamina: -Math.round(5 * stageTune) }, consequence: '他用力点了点头，说好多了。' },
+      { text: '仔细查体，逐条核对用药', delta: { clinical: 4, knowledge: 3, stamina: -Math.round(6 * stageTune) }, flagSet: `met_${arch.id}`, consequence: '你把每条医嘱都对了一遍。' },
+      { text: '聊聊恢复情况，调整方案', delta: { knowledge: 3, relations: 1, stamina: -Math.round(5 * stageTune) }, flagSet: `met_${arch.id}`, consequence: '他用力点了点头，说好多了。' },
+      ...traitChoices(arch, stageTune),
+    ],
+  };
+}
+
+// 患者回声：你认真管过的患者（met_${arch.id}）在之后回来复查 / 感谢 / 投诉。
+// 让"你关照过的独居老人、好诉的家属"真的会再次出现——患者线有了跨事件回响。
+const ECHO_TEMPLATES: Array<{ scene: (a: PatientArchetype) => string; title: (a: PatientArchetype) => string; text: string; delta: any; consequence: string }> = [
+  {
+    scene: a => `门诊日，${a.name}又来了——这次是复查。${a.profile}气色比上次好，主动跟你打招呼。`,
+    title: a => `${a.name}来复查`,
+    text: '仔细复查，按他的经济状况调整后续方案',
+    delta: { clinical: 3, relations: 3, knowledge: 2, stamina: -6 },
+    consequence: '他复查指标好转，走时连声道谢。',
+  },
+  {
+    scene: a => `你刚下夜班，${a.name}的家属等在办公室门口，手里提着一袋水果，说是"上次多亏你"。`,
+    title: () => `患者家属来道谢`,
+    text: '收下心意，叮嘱别再破费',
+    delta: { relations: 4, sanity: 3, reputation: 2 },
+    consequence: '家属点头说"以后就认你了"。',
+  },
+  {
+    scene: a => `投诉科转来一封信——是${a.name}写的。不是投诉，是表扬："上次那位年轻医生，问得很细。"`,
+    title: a => `${a.name}的表扬信`,
+    text: '把表扬信收进自己的档案夹',
+    delta: { reputation: 4, sanity: 3 },
+    consequence: '医务科在例会上念了这封信。',
+  },
+  {
+    scene: a => `${a.name}出院后没按医嘱来复查。你翻出病历拨了电话，对面支支吾吾："忙……忘了。"`,
+    title: a => `随访电话：${a.name}`,
+    text: '耐着性子约好复查时间，把注意事项再说一遍',
+    delta: { relations: 3, knowledge: 1, stamina: -4 },
+    consequence: '他答应下周一定来。',
+  },
+];
+
+function patientEchoEvent(stage: string | string[], i: number): GameEvent {
+  const arch = patientAt(i, 23); // 不同 salt：回声患者与首诊患者不同索引，避免一一绑定
+  const tpl = pick(ECHO_TEMPLATES, i, 41);
+  const stageKey = Array.isArray(stage) ? stage.join('+') : stage;
+  const id = `gen_${stageKey}_echo_${i}`;
+  const primary = Array.isArray(stage) ? stage[stage.length - 1] : stage;
+  const stageTune = primary === 'career' ? 1.4 : primary === 'guipei' ? 1.1 : 0.85;
+  return {
+    id, stage,
+    title: tpl.title(arch),
+    body: tpl.scene(arch),
+    category: 'clinical' as EventCategory,
+    weight: 24,
+    requireFlag: `met_${arch.id}`,
+    choices: [
+      { text: tpl.text, delta: tpl.delta, consequence: tpl.consequence },
+      { text: '客气回应两句，没往心里去', delta: { relations: 0, sanity: 0 }, consequence: '你礼貌笑了笑，继续忙手头的活。' },
       ...traitChoices(arch, stageTune),
     ],
   };
@@ -277,7 +334,7 @@ function jobEvent(stage: string | string[], i: number): GameEvent {
 // ============================================================
 // 生成调度
 // ============================================================
-function buildStage(stage: string | string[], plan: { routine: number; difficult: number; emergency: number; night: number; ward: number; study: number; job: number; social: number }): GameEvent[] {
+function buildStage(stage: string | string[], plan: { routine: number; difficult: number; emergency: number; night: number; ward: number; echo: number; study: number; job: number; social: number }): GameEvent[] {
   const out: GameEvent[] = [];
   let k = 0;
   for (let i = 0; i < plan.routine; i++) out.push(clinicEvent(stage, k++, 'routine'));
@@ -285,6 +342,7 @@ function buildStage(stage: string | string[], plan: { routine: number; difficult
   for (let i = 0; i < plan.emergency; i++) out.push(clinicEvent(stage, k++, 'emergency'));
   for (let i = 0; i < plan.night; i++) out.push(nightShiftEvent(stage, i));
   for (let i = 0; i < plan.ward; i++) out.push(wardVisitEvent(stage, i));
+  for (let i = 0; i < plan.echo; i++) out.push(patientEchoEvent(stage, i));
   for (let i = 0; i < plan.study; i++) out.push(studyEvent(stage, i));
   for (let i = 0; i < plan.job; i++) out.push(jobEvent(stage, i));
   for (let i = 0; i < plan.social; i++) out.push(socialEncounterEvent(stage, k++));
@@ -342,18 +400,18 @@ function socialEncounterEvent(stage: string | string[], i: number): GameEvent {
 
 export const GENERATED_EVENTS: GameEvent[] = [
   // 本科：仅课堂/实验/见习（观察），不接触病人、不抢救。
-  ...buildStage('undergrad', { routine: 0, difficult: 0, emergency: 0, night: 0, ward: 0, study: 500, job: 0, social: 60 }),
+  ...buildStage('undergrad', { routine: 0, difficult: 0, emergency: 0, night: 0, ward: 0, echo: 0, study: 500, job: 0, social: 60 }),
   // 实习：在带教监督下接触病人、可参与抢救，但非主导。
-  ...buildStage('internship', { routine: 450, difficult: 150, emergency: 100, night: 80, ward: 80, study: 0, job: 0, social: 20 }),
+  ...buildStage('internship', { routine: 450, difficult: 150, emergency: 100, night: 80, ward: 80, echo: 40, study: 0, job: 0, social: 20 }),
   // 规培：临床一线，独立管理病人、参与抢救。
-  ...buildStage('guipei', { routine: 550, difficult: 200, emergency: 100, night: 120, ward: 120, study: 0, job: 0, social: 40 }),
+  ...buildStage('guipei', { routine: 550, difficult: 200, emergency: 100, night: 120, ward: 120, echo: 60, study: 0, job: 0, social: 40 }),
   // 硕博：按学制分两条线（临床型/科研型由 track_clinical / track_research 标记区分）。
   // 注意：阶段名用 ['master','phd'] 数组，使两个场景都能取到（原 'master_phd' 不会被匹配）。
-  ...buildStage(['master', 'phd'], { routine: 400, difficult: 150, emergency: 80, night: 100, ward: 80, study: 0, job: 0, social: 20 })
+  ...buildStage(['master', 'phd'], { routine: 400, difficult: 150, emergency: 80, night: 100, ward: 80, echo: 40, study: 0, job: 0, social: 20 })
     .map(e => ({ ...e, excludeFlag: 'track_research' })),
-  ...buildStage(['master', 'phd'], { routine: 0, difficult: 0, emergency: 0, night: 0, ward: 0, study: 600, job: 0, social: 10 })
+  ...buildStage(['master', 'phd'], { routine: 0, difficult: 0, emergency: 0, night: 0, ward: 0, echo: 0, study: 600, job: 0, social: 10 })
     .map(e => ({ ...e, excludeFlag: 'track_clinical' })),
-  ...buildStage('jobhunt', { routine: 0, difficult: 0, emergency: 0, night: 0, ward: 0, study: 0, job: 500, social: 0 }),
+  ...buildStage('jobhunt', { routine: 0, difficult: 0, emergency: 0, night: 0, ward: 0, echo: 0, study: 0, job: 500, social: 0 }),
   // 职业：临床一线，抢救常态化。
-  ...buildStage('career', { routine: 550, difficult: 200, emergency: 100, night: 120, ward: 120, study: 0, job: 0, social: 60 }),
+  ...buildStage('career', { routine: 550, difficult: 200, emergency: 100, night: 120, ward: 120, echo: 60, study: 0, job: 0, social: 60 }),
 ];

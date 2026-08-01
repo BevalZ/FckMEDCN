@@ -74,14 +74,32 @@ test('新结局分支：身败名裂 / 侥幸 / 临床专家 / 科研明星', as
       },
     ];
 
-    return cases.map(c => {
-      const got = en.determineEnding(c.state).id;
-      return { name: c.name, expect: c.expect, got, ok: got === c.expect };
-    });
+    // 结局年龄动态化：title/subtitle/desc 的固定年龄按玩家真实年龄改写，
+    // 消除"结局页左侧真实年龄 38 vs 标题 45"的矛盾（深挖第五部分 R26）。
+    const dyn = en.determineEnding(make({
+      flags: ['passed_fugao'], stats: { clinical: 50, reputation: 60, age: 38 },
+    }));
+    const ageDynamic = {
+      titleHasRealAge: dyn.title.includes('38岁'),
+      titleNoStatic45: !dyn.title.includes('45岁'),
+      finalAgeMatches: dyn.stats.finalAge === 38,
+    };
+
+    return {
+      cases: cases.map(c => {
+        const got = en.determineEnding(c.state).id;
+        return { name: c.name, expect: c.expect, got, ok: got === c.expect };
+      }),
+      ageDynamic,
+    };
   });
 
-  for (const r of results) {
+  for (const r of results.cases) {
     console.log(`  ${r.ok ? '✓' : '✗'} ${r.name}: 期望 ${r.expect} → 得到 ${r.got}`);
     expect(r.got, r.name).toBe(r.expect);
   }
+  console.log('  结局年龄动态化:', JSON.stringify(results.ageDynamic));
+  expect(results.ageDynamic.titleHasRealAge, '结局标题应含真实年龄（38岁）').toBe(true);
+  expect(results.ageDynamic.titleNoStatic45, '结局标题不应再写死 45岁').toBe(true);
+  expect(results.ageDynamic.finalAgeMatches, '结局 stats.finalAge 应等于玩家真实年龄').toBe(true);
 });

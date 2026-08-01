@@ -672,6 +672,48 @@ export const CAREER_EVENTS: GameEvent[] = [
     ],
   },
 
+  // —— 知情同意 / 术前谈话（医疗最核心的法律伦理流程，深挖第五部分 R31）——
+  // 手术/高风险操作前与家属谈话签字：谈得好 → 纠纷少一分；谈得糊 → 埋下诉讼隐患。
+  // 与 career_lawsuit_1 联动：有 informed_consent_ok 的玩家，诉讼更被动时仍有转圜。
+  {
+    id: 'career_informed_consent',
+    stage: 'career',
+    title: '术前谈话',
+    body: '明天一台手术，患者家属坐在谈话室里，面前摊着一叠知情同意书。你刚下门诊，白大褂还没换。家属问："大夫，这手术有风险吗？"',
+    category: 'clinical', weight: 1, once: true, minTurn: 1, maxTurn: 2,
+    choices: [
+      { text: '把并发症、替代方案、不做的后果都讲透，让家属签明白字', delta: { knowledge: 4, reputation: 3, stamina: -8, sanity: -2 }, flagSet: 'informed_consent_ok', consequence: '家属听完沉默了一会儿，郑重签了字。你多花了二十分钟，但心里踏实。' },
+      { text: '按惯例快速过一遍流程，让他们签字', delta: { stamina: -3, reputation: -1 }, flagSet: 'informed_consent_hasty', consequence: '谈话十分钟搞定。家属签了字，但你没敢细看他们的表情。' },
+      { text: '让护士代签，自己去准备手术', delta: { stamina: -2, relations: -2, reputation: -2 }, consequence: '护士喊了你好几次，家属最后签字时有点犹豫。' },
+    ],
+  },
+  // 知情同意的回响：谈得好的人，术后纠纷来临时有底气
+  {
+    id: 'career_consent_echo_ok',
+    stage: 'career',
+    title: '那场谈话起了作用',
+    body: '术后出现并发症，家属情绪激动地找到你。但话说到一半，对方想起了术前那晚你坐下来的二十分钟，语气缓和了些。',
+    category: 'clinical', weight: 1, once: true, minTurn: 4,
+    requireFlag: 'informed_consent_ok',
+    choices: [
+      { text: '坦诚复盘，把术后处理讲清楚', delta: { relations: 4, reputation: 3, sanity: -3 }, consequence: '家属最后说："你们尽力了。"纠纷没有升级成诉讼。' },
+      { text: '强调术前已签字，责任不在己', delta: { relations: -2, sanity: -2, reputation: 1 }, consequence: '家属没再多说，但医务科收到了一封投诉信。' },
+    ],
+  },
+  // 谈话糊弄的人：同样的事故，直接滑向诉讼
+  {
+    id: 'career_consent_echo_hasty',
+    stage: 'career',
+    title: '签字单救不了你',
+    body: '术后并发症，家属把一叠东西拍在桌上——术前谈话记录上，"风险"一栏几乎是空白的。医务科的人看了你一眼。',
+    category: 'clinical', weight: 1, once: true, minTurn: 4,
+    requireFlag: 'informed_consent_hasty',
+    choices: [
+      { text: '承认谈话不充分，配合补记录', delta: { money: -5000, reputation: -2, sanity: -6 }, flagSet: 'lawsuit_done_1', consequence: '你补了记录，但还是被列为被告之一。那晚你复盘了很久。' },
+      { text: '咬定流程走了，签字为证', delta: { reputation: -4, sanity: -10 }, flagSet: 'lawsuit_done_1', consequence: '仲裁时你被问到"当时讲清楚了吗"，你答不上来。' },
+    ],
+  },
+
   // —— 开局选亚专科（第 0 季强制）：内科/外科/妇产科/儿科，劳累程度不同 ——
   {
     id: 'career_specialty_choice',

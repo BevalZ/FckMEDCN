@@ -111,22 +111,41 @@ test('动态：每个患者档案都出现在生成事件标题，且特质选�
       }
     }
 
+    // 患者回响：每个档案的 met_${id} flag 应有 setter（病房互访）与 consumer（患者回声）
+    const setBy: Record<string, string[]> = {};
+    const requiredBy: Record<string, string[]> = {};
+    for (const e of all) {
+      if (e.requireFlag) (requiredBy[e.requireFlag] ??= []).push(e.id);
+      for (const c of e.choices) if (c.flagSet) (setBy[c.flagSet] ??= []).push(e.id);
+    }
+    const echoGaps: string[] = [];
+    for (const a of archs) {
+      const f = `met_${a.id}`;
+      const hasSetter = (setBy[f] ?? []).some(id => id.includes('_ward_'));
+      const hasConsumer = (requiredBy[f] ?? []).some(id => id.includes('_echo_'));
+      if (!hasSetter) echoGaps.push(`${a.id}:无ward setter`);
+      if (!hasConsumer) echoGaps.push(`${a.id}:无echo consumer`);
+    }
+
     return {
       totalArch: archs.length,
       genCount: gen.length,
       wardCount: wardGen.length,
       noTitle,
       missingTrait,
+      echoGaps,
     };
   });
 
   console.log(`患者档案 ${report.totalArch} 种；生成事件 ${report.genCount} 个；病房互访事件 ${report.wardCount} 个`);
   console.log('未出现在任何生成事件标题的患者：', report.noTitle.length ? report.noTitle.join(', ') : '（无）');
   console.log('特质未随患者出现：', report.missingTrait.length ? report.missingTrait.join(', ') : '（无）');
+  console.log('患者回响缺口（met_ 无 setter/consumer）：', report.echoGaps.length ? report.echoGaps.join(', ') : '（无）');
 
   expect(report.totalArch, '患者档案数').toBeGreaterThanOrEqual(25);
   expect(report.genCount, '生成事件池').toBeGreaterThan(3000);
   expect(report.wardCount, '病房互访事件应存在').toBeGreaterThan(200);
   expect(report.noTitle, '每个患者档案都应出现在生成事件标题中').toEqual([]);
   expect(report.missingTrait, '患者具备的特质应随该患者出现在事件选项中').toEqual([]);
+  expect(report.echoGaps, '每个患者档案的 met_ flag 都应有病房互访 setter 与回声 consumer').toEqual([]);
 });
