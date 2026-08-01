@@ -37,6 +37,7 @@ export class TitleScene extends Phaser.Scene {
     const startBtn = document.getElementById('title-start') as HTMLButtonElement | null;
     const contBtn = document.getElementById('title-continue') as HTMLButtonElement | null;
     const galleryBtn = document.getElementById('title-gallery') as HTMLButtonElement | null;
+    const genderHint = document.getElementById('title-gender-hint');
 
     const fadeIn = (el: Element | null, delay: number) => {
       if (!el) return;
@@ -106,6 +107,9 @@ export class TitleScene extends Phaser.Scene {
     galleryBtn?.addEventListener('click', openGallery);
     fadeIn(galleryBtn, 1900);
     this.input.keyboard?.once('keydown-G', openGallery);
+
+    // 性别选择入口提示（新开局时可选性别）
+    fadeIn(genderHint, 2100);
 
     this.input.keyboard?.on('keydown-M', () => sound.toggleMute());
 

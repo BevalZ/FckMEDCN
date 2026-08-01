@@ -17,6 +17,9 @@ async function toGaokao(page: Page) {
   await page.goto(BASE, { waitUntil: 'load' });
   await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 60000 });
   await waitForScene(page, 'TitleScene');
+  // 标题页应有性别选择入口提示
+  const hint = await page.evaluate(() => document.getElementById('title-gender-hint')?.textContent ?? '');
+  expect(hint.includes('性别'), '标题页应有性别选择入口提示').toBe(true);
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
 }
@@ -32,7 +35,7 @@ test('开局默认选男生：性别写入状态，放榜夜称"儿子"', async 
 
   // 性别选择阶段应出现
   const texts0 = await phaseTexts(page);
-  expect(texts0.some((t: string) => t.includes('先介绍一下自己')), '应有性别选择阶段').toBe(true);
+  expect(texts0.some((t: string) => t.includes('选择你的性别')), '应有性别选择阶段').toBe(true);
   expect(texts0.some((t: string) => t.includes('男生')), '应有男生选项').toBe(true);
   expect(texts0.some((t: string) => t.includes('女生')), '应有女生选项').toBe(true);
 

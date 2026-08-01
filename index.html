@@ -100,6 +100,16 @@
       #title-continue { top: 448px; font-size: 18px; color: #ffc107; font-weight: bold; display: none; }
       #title-continue.show { display: block; }
       #title-gallery { top: 492px; font-size: 16px; color: #4fc3f7; }
+      #title-gender-hint {
+        position: absolute;
+        left: 480px; top: 526px;
+        transform: translateX(-50%);
+        font-size: 11px;
+        color: #556;
+        margin: 0;
+        white-space: nowrap;
+        opacity: 0;
+      }
     </style>
   </head>
   <body>
@@ -111,6 +121,7 @@
       <button id="title-start" class="title-btn">[ 开始游戏 ]</button>
       <button id="title-continue" class="title-btn">[ 继续游戏 ]</button>
       <button id="title-gallery" class="title-btn">[ 人生图鉴 (G) ]</button>
+      <div id="title-gender-hint">新开一局时可选择性别，学长/学姐、儿子/女儿等称谓会随之变化</div>
     </div>
     <script>
       // 同步 title-overlay 的位置/尺寸到 Phaser canvas 的真实屏幕矩形

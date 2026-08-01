@@ -81,11 +81,11 @@ export class GaokaoScene extends Phaser.Scene {
     panel.fillRoundedRect(160, 70, 640, 420, 10);
     this.container.add(panel);
 
-    this.container.add(this.add.text(480, 96, '先介绍一下自己', {
+    this.container.add(this.add.text(480, 96, '选择你的性别', {
       fontFamily: '"Courier New", monospace', fontSize: '20px', color: '#ffffff', fontStyle: 'bold',
     }).setOrigin(0.5));
-    this.container.add(this.add.text(480, 132, '这段人生里，你是——', {
-      fontFamily: '"Courier New", monospace', fontSize: '15px', color: '#bbbbbb',
+    this.container.add(this.add.text(480, 132, '只影响叙述里的称谓（学长/学姐、儿子/女儿等），此后可重新开档修改', {
+      fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#888899',
     }).setOrigin(0.5));
 
     const specs: OptionSpec[] = [
