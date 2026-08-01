@@ -77,6 +77,8 @@ const NARRATIVE_ONLY = new Set([
   'gp_vented', 'gp_tonggang_no', 'gp_suicide_seen', 'gp_health_aware', 'gp_ignore_health',
   // 职业暴露/飞检链的终端结果标记（flycheck_ok/needlestick_cleared 由徽章消费，不放这）
   'needlestick_anxious', 'flycheck_fined', 'flycheck_reformed', 'flycheck_resisted', 'flycheck_mentor',
+  // 病历质量链的终端标记
+  'record_fixed', 'record_owned', 'record_sloppy_exposed',
   // 导师/关系
   'got_advisor_letter', 'considering_switch_advisor', 'advisor_career_boost',
   // 个人经历标记

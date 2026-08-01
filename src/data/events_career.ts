@@ -640,8 +640,8 @@ export const CAREER_EVENTS: GameEvent[] = [
     body: '病历质控抽查，你三份病历的书写有缺陷——病程记录缺一段、签字时间对不上。医院按制度扣钱。',
     category: 'career', weight: 50, rankScaled: true,
     choices: [
-      { text: '连夜整改补写', delta: { money: -800, stamina: -8, knowledge: 2 }, consequence: '凌晨的办公室里，你把每一份病历重新顺了一遍。' },
-      { text: '申诉"是系统bug"', delta: { money: -1500, relations: -2, sanity: -2 }, consequence: '最后按"书写不规范"定性，扣得更多。' },
+      { text: '连夜整改补写', delta: { money: -800, stamina: -8, knowledge: 2 }, flagSet: 'record_fixed', consequence: '凌晨的办公室里，你把每一份病历重新顺了一遍。' },
+      { text: '申诉"是系统bug"', delta: { money: -1500, relations: -2, sanity: -2 }, flagSet: 'record_sloppy', consequence: '最后按"书写不规范"定性，扣得更多。' },
     ],
   },
 
@@ -694,6 +694,20 @@ export const CAREER_EVENTS: GameEvent[] = [
       { text: '请律师团队 + 补充鉴定', delta: { money: -12000, stamina: -14, sanity: -8, reputation: 3 }, flagSet: 'lawsuit_done_2', consequence: '新的鉴定意见对你不利，但流程上你保住了执业记录。' },
       { text: '主动调解，赔钱了事', delta: { money: -20000, sanity: 4, relations: -4 }, flagSet: 'lawsuit_done_2', consequence: '赔钱消灾。你第一次认真考虑，要不要换条路。' },
       { text: '医院出面，你配合', delta: { money: -6000, reputation: 2, relations: -2 }, flagSet: 'lawsuit_done_2', consequence: '医院承担了主要责任，你写了检讨，但没有被处分。' },
+    ],
+  },
+  // 病历质量反哺诉讼（深挖第五部分 R5 落地）：病历书写差（record_sloppy）的人，
+  // 在仲裁/诉讼里举证被动——即使流程上没输，职业声誉也受损。
+  {
+    id: 'career_record_sloppy_lawsuit',
+    stage: 'career',
+    title: '病历成了把柄',
+    body: '仲裁庭上，对方律师翻出你几份有缺陷的病历："病程记录缺一段、签字时间对不上——连记录都不规范，谈何规范诊疗？"',
+    category: 'clinical', weight: 1, once: true, minTurn: 4,
+    requireFlag: 'record_sloppy',
+    choices: [
+      { text: '当场承认疏漏，把当时的诊疗过程讲清楚', delta: { reputation: -2, sanity: -8, stamina: -6 }, flagSet: 'record_owned', consequence: '你诚实陈述，鉴定结果判医院次要责任，但你"病历不规范"进了通报。' },
+      { text: '辩称病历是事后补录', delta: { reputation: -6, sanity: -12 }, flagSet: 'record_sloppy_exposed', consequence: '补录的说法反而坐实了流程漏洞。医务科让你做了书面检讨。' },
     ],
   },
 
