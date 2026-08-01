@@ -82,3 +82,61 @@ test('游戏内 R 菜单修改性别：即时生效并持久化', async ({ page 
   expect(state.gender, '游戏内 gender 应改为 female').toBe('female');
   expect(state.savedGender, '存档应同步 female').toBe('female');
 });
+
+test('中途修改性别后所有称谓渲染一致', async ({ page }) => {
+  await enterCampus(page);
+
+  const forceOpen = (id: string) => page.evaluate((evId) => {
+    const s: any = (window as any).game.scene.getScene('CampusScene');
+    const ev = (window as any).__mod.ev.ALL_EVENTS.find((e: any) => e.id === evId);
+    if (ev) s.openEvent(ev);
+  }, id);
+  const cardBody = () => page.evaluate(() => {
+    const scene: any = (window as any).game.scene.getScene('CampusScene');
+    return (scene.eventCard?.container?.list ?? [])
+      .filter((o: any) => o.type === 'Text').map((o: any) => o.text as string).join('|');
+  });
+  const consequenceText = () => page.evaluate(() => {
+    const scene: any = (window as any).game.scene.getScene('CampusScene');
+    return (scene.consequence?.container?.list ?? [])
+      .filter((o: any) => o.type === 'Text').map((o: any) => o.text as string).join('|');
+  });
+
+  // ① 初始 male：国奖后果称"儿子"
+  await forceOpen('ug_guojiang_result');
+  await page.keyboard.press('1');
+  await page.waitForTimeout(500);
+  expect(await consequenceText(), 'male 国奖后果应称儿子').toContain('我儿子拿了国奖');
+
+  // ② 留级卡正文称"学长"
+  await page.keyboard.press('Escape'); // 关后果弹窗
+  await page.waitForTimeout(300);
+  await forceOpen('ug_holdback_life');
+  await page.waitForTimeout(400);
+  expect(await cardBody(), 'male 留级卡正文应称学长').toContain('学长');
+  await page.keyboard.press('Escape'); // 关事件卡
+  await page.waitForTimeout(300);
+
+  // ③ 中途改性别为女生
+  await page.keyboard.press('r');
+  await page.waitForTimeout(400);
+  await page.keyboard.press('3'); // 修改性别
+  await page.waitForTimeout(300);
+  await page.keyboard.press('ArrowDown'); // 男生 → 女生
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(400);
+  expect(await page.evaluate(() => ((window as any).__mod.gs.getState().gender)), '应改为 female').toBe('female');
+
+  // ④ 改后国奖后果称"女儿"
+  await forceOpen('ug_guojiang_result');
+  await page.keyboard.press('1');
+  await page.waitForTimeout(500);
+  expect(await consequenceText(), 'female 国奖后果应称女儿').toContain('我女儿拿了国奖');
+
+  // ⑤ 留级卡正文称"学姐"
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+  await forceOpen('ug_holdback_life');
+  await page.waitForTimeout(400);
+  expect(await cardBody(), 'female 留级卡正文应称学姐').toContain('学姐');
+});
