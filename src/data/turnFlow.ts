@@ -102,11 +102,20 @@ export function hasStorylet(
 
 // 提交一个选项的全部副作用：置 flag、执行声明式 effect、结算属性变化。
 // 同时评估生涯里程碑（徽章），新达成的进入待展示队列，由 ConsequencePopup 消费。
+// rankScaled 事件：职业赔付/扣罚按职级差异化（住院医轻、主任重），比例更真实。
 // 注意：不含 UI 反馈（飘字 / 音效 / 后果弹窗），由调用方负责。
-export function commitChoice(choice: EventChoice) {
+export function commitChoice(choice: EventChoice, event?: GameEvent) {
+  let delta = choice.delta;
+  if (event?.rankScaled && (choice.delta?.money ?? 0) < 0) {
+    const st = getState();
+    const factor = st.flags.has('passed_zhenggao') ? 1.5
+      : st.flags.has('passed_fugao') ? 1.3
+      : st.flags.has('passed_zhuzhi') ? 1.0 : 0.7;
+    delta = { ...choice.delta, money: Math.round(choice.delta!.money! * factor) };
+  }
   if (choice.flagSet) setFlag(choice.flagSet);
   if (choice.effect) applyChoiceEffect(choice.effect);
-  updateStats(choice.delta as StatDelta);
+  updateStats(delta as StatDelta);
   checkBadges();
 }
 

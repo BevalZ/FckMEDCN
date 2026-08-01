@@ -51,6 +51,8 @@ export interface GameEvent {
   choices: EventChoice[]; newsTickerAfter?: string;
   /** M4：若设置，打开事件前先跑对应小游戏，用其结果替换默认选项结算 */
   minigame?: 'suture' | 'cpr' | 'exam' | 'nightshift';
+  /** 职业赔付/扣罚事件：金钱损失按职级差异化（住院医轻、主任重） */
+  rankScaled?: boolean;
 }
 
 // 合并各阶段事件池。按阶段拆分文件便于维护，最终统一展开到 ALL_EVENTS。

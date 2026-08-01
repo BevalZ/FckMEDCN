@@ -601,7 +601,7 @@ export const CAREER_EVENTS: GameEvent[] = [
     stage: 'career',
     title: '医保拒付',
     body: '一个昂贵治疗方案被医保拒付了——材料没问题，流程挑得出毛病。科室要自担这笔钱，主任把名单放到了你桌上。',
-    category: 'clinical', weight: 55,
+    category: 'clinical', weight: 55, rankScaled: true,
     choices: [
       { text: '整理证据去申诉', delta: { money: -1500, stamina: -10, reputation: 2, knowledge: 2 }, flagSet: 'fin_appealed', consequence: '流程跑了三周，追回来一半。另一半，科室认了。' },
       { text: '认了，从绩效里扣', delta: { money: -3000, sanity: -3 }, consequence: '那个月你看着工资条，沉默了。' },
@@ -613,10 +613,92 @@ export const CAREER_EVENTS: GameEvent[] = [
     stage: 'career',
     title: '病历扣费',
     body: '病历质控抽查，你三份病历的书写有缺陷——病程记录缺一段、签字时间对不上。医院按制度扣钱。',
-    category: 'career', weight: 50,
+    category: 'career', weight: 50, rankScaled: true,
     choices: [
       { text: '连夜整改补写', delta: { money: -800, stamina: -8, knowledge: 2 }, consequence: '凌晨的办公室里，你把每一份病历重新顺了一遍。' },
       { text: '申诉"是系统bug"', delta: { money: -1500, relations: -2, sanity: -2 }, consequence: '最后按"书写不规范"定性，扣得更多。' },
+    ],
+  },
+
+  // —— 人际高光（关系门槛，外貌→起始人际解锁）——
+  {
+    id: 'career_patient_follow',
+    stage: 'career',
+    title: '病人认你',
+    body: '一位出院的老病人，逢人就推荐你，还特意带亲戚来挂你的号。走廊里有人喊你"X大夫"——是你。',
+    category: 'social', weight: 45, once: true, minTurn: 3,
+    requireStat: { relations: [60, 100] },
+    choices: [
+      { text: '把口碑接住，更较真', delta: { reputation: 5, relations: 4, stamina: -6, sanity: 2 }, consequence: '你多了一群"回头客"，也多了份沉甸甸的信任。' },
+      { text: '受宠若惊，也更谨慎', delta: { sanity: 3, reputation: 2 }, consequence: '你把每个字都写得更仔细了。' },
+    ],
+  },
+  {
+    id: 'career_leader_pick',
+    stage: 'career',
+    title: '领导点名',
+    body: '院里一个新项目缺个牵头人，领导第一个想到你——因为你人缘好，大家愿意跟你干。',
+    category: 'career', weight: 40, once: true, minTurn: 5,
+    requireStat: { relations: [65, 100] },
+    choices: [
+      { text: '接，把队伍带起来', delta: { reputation: 6, relations: 4, stamina: -10, sanity: -2 }, flagSet: 'led_project', consequence: '项目磕磕绊绊成了，你在科里的分量不一样了。' },
+      { text: '让贤，甘当副手', delta: { relations: 2, sanity: 2 }, consequence: '你把风头让了出去，落个人情。' },
+    ],
+  },
+
+  // —— 人生必经：被患者告上法庭 / 申请仲裁（第 3 季、第 9 季强制触发一次）——
+  {
+    id: 'career_lawsuit_1',
+    stage: 'career',
+    title: '一纸诉状',
+    body: '你主管的一位患者术后出现并发症，家属请了律师，一纸诉状把医院和你一起告上法庭。医务科让你准备应诉材料。',
+    category: 'clinical', weight: 1, once: true, minTurn: 3,
+    choices: [
+      { text: '请专业律师，正面应诉', delta: { money: -8000, stamina: -12, sanity: -6, reputation: 4 }, flagSet: 'lawsuit_done_1', consequence: '庭上你陈述清晰，判决医院承担次要责任，你的执业记录保住了。' },
+      { text: '和家属私了，赔钱撤诉', delta: { money: -15000, sanity: 2, relations: -3 }, flagSet: 'lawsuit_done_1', consequence: '签了调解书，钱打了过去。你心里清楚，这件事不会就这么过去。' },
+      { text: '硬扛，自己答辩', delta: { money: -3000, sanity: -12, reputation: -4 }, flagSet: 'lawsuit_done_1', consequence: '庭上你被问得语塞，判决结果很被动。你在办公室坐了很久。' },
+    ],
+  },
+  {
+    id: 'career_lawsuit_2',
+    stage: 'career',
+    title: '仲裁程序',
+    body: '又一位患者家属申请医疗损害鉴定，走了仲裁程序。医务科说：这次对方证据准备得很充分，躲不过去。',
+    category: 'clinical', weight: 1, once: true, minTurn: 9,
+    choices: [
+      { text: '请律师团队 + 补充鉴定', delta: { money: -12000, stamina: -14, sanity: -8, reputation: 3 }, flagSet: 'lawsuit_done_2', consequence: '新的鉴定意见对你不利，但流程上你保住了执业记录。' },
+      { text: '主动调解，赔钱了事', delta: { money: -20000, sanity: 4, relations: -4 }, flagSet: 'lawsuit_done_2', consequence: '赔钱消灾。你第一次认真考虑，要不要换条路。' },
+      { text: '医院出面，你配合', delta: { money: -6000, reputation: 2, relations: -2 }, flagSet: 'lawsuit_done_2', consequence: '医院承担了主要责任，你写了检讨，但没有被处分。' },
+    ],
+  },
+
+  // —— 开局选亚专科（第 0 季强制）：内科/外科/妇产科/儿科，劳累程度不同 ——
+  {
+    id: 'career_specialty_choice',
+    stage: 'career',
+    title: '选择亚专科',
+    body: '执业方向定了。内科平稳，外科最累但手术有成就感，妇产科节奏紧，儿科心理消耗大。选一个吧。',
+    category: 'career', weight: 1, once: true, minTurn: 0,
+    choices: [
+      { text: '内科：动脑多，动身少', delta: { knowledge: 3 }, flagSet: 'sub_internal', consequence: '你在内科扎下根，节奏稳，细水长流。' },
+      { text: '外科：站台久，最累', delta: { stamina: -4, clinical: 3 }, flagSet: 'sub_surgery', consequence: '外科的手术台，把你练成了"站神"。' },
+      { text: '妇产科：节奏紧，急诊多', delta: { stamina: -2, clinical: 2, sanity: -1 }, flagSet: 'sub_obgyn', consequence: '产科急诊的铃一响，你比谁都快。' },
+      { text: '儿科：压力大，心理消耗高', delta: { relations: 2, sanity: -2 }, flagSet: 'sub_pediatrics', consequence: '儿科难，难在家长比孩子更难哄。' },
+    ],
+  },
+
+  // —— 管理层带下属：培训还是训诫，影响下属去留（临床决策）——
+  {
+    id: 'career_admin_manage',
+    stage: 'career',
+    title: '手下的住院医出岔子了',
+    body: '你带的一名住院医在值班时犯了错，被护士长告到医务科。作为带组上级，怎么处理？',
+    category: 'career', weight: 45, once: true, minTurn: 6,
+    requireFlag: 'took_admin',
+    choices: [
+      { text: '私下培训，陪他把流程练熟', delta: { relations: 5, stamina: -8, sanity: 2 }, flagSet: 'admin_trained', consequence: '他后来成了科里最稳的住院医，逢人说是你带出来的。' },
+      { text: '当众训诫，立规矩', delta: { reputation: 4, relations: -5, stamina: -2 }, flagSet: 'admin_drilled', consequence: '规矩立住了，但他递交了转组申请——你少了一员干将。' },
+      { text: '替他兜底，各打五十大板', delta: { relations: 2, sanity: -4, stamina: -3 }, flagSet: 'admin_covered', consequence: '事情压下去了，但你知道这样管不长久。' },
     ],
   },
 ];

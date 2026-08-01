@@ -245,4 +245,17 @@ export const GUIPEI_EVENTS: GameEvent[] = [
       { text: '觉得是自己该做的', delta: { sanity: 4, relations: 1 }, consequence: '你继续蹲下来听下一个病人。' },
     ],
   },
+  {
+    // 人际高光（关系门槛，外貌→起始人际解锁）：护士长把你当自己人
+    id: 'gp_nurse_ally',
+    stage: 'guipei',
+    title: '护士长的照拂',
+    body: '护士长私下教你医院里的人情世故，值班时也愿意帮你搭把手——她信得过你。',
+    category: 'social', weight: 45, once: true,
+    requireStat: { relations: [55, 100] },
+    choices: [
+      { text: '把这份交情处好', delta: { relations: 5, stamina: -4, sanity: 2 }, flagSet: 'gp_nurse_ally', consequence: '夜班难熬时，总有个人愿意替你盯一会儿。' },
+      { text: '保持距离', delta: { sanity: 2, relations: -2 }, consequence: '你不想欠人情，也少了个靠山。' },
+    ],
+  },
 ];

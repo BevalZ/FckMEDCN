@@ -266,4 +266,17 @@ export const MASTER_PHD_EVENTS: GameEvent[] = [
       { text: '郑重收下这份情谊', delta: { reputation: 4, relations: 5, knowledge: 2 }, consequence: '你回了他当年那句"后来熬过来了"。' },
     ],
   },
+  {
+    // 人际高光（关系门槛，外貌→起始人际解锁）：科研圈子带你玩
+    id: 'ms_senior_network',
+    stage: ['master', 'phd'],
+    title: '被带进圈子',
+    body: '同门师兄师姐跟你关系铁，组会、报账、文献共享都带着你。别组都在猜你哪来这么大面子。',
+    category: 'social', weight: 40, once: true, minTurn: 2,
+    requireStat: { relations: [55, 100] },
+    choices: [
+      { text: '融入圈子，投桃报李', delta: { research: 4, relations: 4, stamina: -4, sanity: 2 }, consequence: '你帮他们改过摘要，他们也带你看门道。' },
+      { text: '独来独往，省心', delta: { knowledge: 2, sanity: 2, relations: -2 }, consequence: '你不想欠人情，圈子也就淡了。' },
+    ],
+  },
 ];

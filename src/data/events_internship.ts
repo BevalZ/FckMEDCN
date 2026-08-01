@@ -168,4 +168,17 @@ export const INTERNSHIP_EVENTS: GameEvent[] = [
       { text: '有一站慌了神', delta: { knowledge: 2, stamina: -8, sanity: -6 }, consequence: '你卡在换药那站，丢了分。' },
     ],
   },
+  {
+    // 人际高光（关系门槛，外貌→起始人际解锁）：带教老师看好你
+    id: 'in_teacher_favors',
+    stage: 'internship',
+    title: '老师给你开小灶',
+    body: '带教老师对你印象好，主动让你跟一台难得的手术，还把疑难病例的讨论留给你。',
+    category: 'social', weight: 45, once: true, minTurn: 2,
+    requireStat: { relations: [55, 100] },
+    choices: [
+      { text: '跟着学，厚着脸皮问', delta: { knowledge: 5, clinical: 3, stamina: -8, relations: 2 }, consequence: '手术台上你紧张到耳鸣，但收获比过去三周都多。' },
+      { text: '谢绝，怕出错', delta: { relations: -2, sanity: 2 }, consequence: '老师没说什么，但下次没再叫你。' },
+    ],
+  },
 ];

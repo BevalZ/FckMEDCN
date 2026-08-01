@@ -375,7 +375,7 @@ export class HospitalScene extends Phaser.Scene {
       this.talkChoices = [];
     }
 
-    commitChoice(choice);
+    commitChoice(choice, this.currentEvent ?? undefined);
     this.playDeltaSound(choice.delta as StatDelta);
     this.showDeltaFloaters(choice.delta as StatDelta);
     this.hud.update(getState().stats, STAGE);

@@ -45,7 +45,7 @@ export abstract class BaseStageScene extends Phaser.Scene {
   protected isEventShowing = false;
   protected news!: NewsTicker;
   protected currentEvent: GameEvent | null = null;
-  private forcedEventId: string | null = null;
+  protected forcedEventId: string | null = null;
   protected character!: CharacterSprite;
   private firedNews: Set<string> = new Set();
   // —— 跨阶段导师（卡片模式）——
@@ -391,7 +391,7 @@ export abstract class BaseStageScene extends Phaser.Scene {
       this.advisorChoices = [];
     }
 
-    commitChoice(choice);
+    commitChoice(choice, this.currentEvent ?? undefined);
     // 导师对话不推进季度、不占用 storylet——只是一次社交行动
     const isAdvisorTalk = this.currentEvent?.id === 'npc_talk_advisor';
     if (!isAdvisorTalk && choice.nextEventId) this.forcedEventId = choice.nextEventId;

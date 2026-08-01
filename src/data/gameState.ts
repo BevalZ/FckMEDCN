@@ -9,6 +9,8 @@ export interface NewsItem { year: number; quarter: number; headline: string; typ
 export type PlayerGender = 'male' | 'female';
 export type FamilyWealth = 'rich' | 'middle' | 'tight';
 export type FinanceStrategy = 'thrifty' | 'stable' | 'invest';
+// 硕博阶段带组导师的绩效分配风格（随机，决定研究生补助/绩效收入）
+export type MentorStyle = 'equal' | 'pyramid' | 'generous' | 'tight';
 
 // 开局点数分配：家境 / 成绩 / 运气 / 外貌（各 0-5，总预算 10）
 export interface AttrAlloc {
@@ -40,6 +42,8 @@ export interface GameState {
   financeStrategy: FinanceStrategy;
   // —— 资产账户（节流转储蓄 / 投资本金，随季计息或波动）——
   assets: number;
+  // —— 硕博带组导师绩效分配风格（随机）——
+  mentorStyle: MentorStyle;
   // —— 真实人生状态（恋爱/婚姻/家庭），会影响事件触发与经济 ——
   marital: 'single' | 'dating' | 'married';
   spouse: string | null;
@@ -51,6 +55,15 @@ export interface GameState {
 
 // 默认分配：成绩点满（保证 685+ 分数线可选），家境普通
 const DEFAULT_ATTRS: AttrAlloc = { family: 2, academic: 5, luck: 1, looks: 2 };
+
+// 硕博导师绩效风格随机：平均 / 金字塔 / 慷慨 / 抠门
+function rollMentorStyle(): MentorStyle {
+  const r = Math.random();
+  if (r < 0.3) return 'equal';
+  if (r < 0.6) return 'pyramid';
+  if (r < 0.85) return 'generous';
+  return 'tight';
+}
 
 let _state: GameState = createInitialState();
 
@@ -65,6 +78,7 @@ export function createInitialState(): GameState {
     familyWealth: wealthFromFamily(attrs.family),
     financeStrategy: 'stable',
     assets: 0,
+    mentorStyle: rollMentorStyle(),
     marital: 'single', spouse: null, hasChild: false, familyAlive: 4,
     affinity: {},
   };

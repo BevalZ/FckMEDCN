@@ -763,4 +763,17 @@ export const UNDERGRAD_EVENTS: GameEvent[] = [
       },
     ],
   },
+  {
+    // 人际高光（关系门槛，外貌→起始人际解锁）：人缘好，班委改选被推举
+    id: 'ug_class_rep',
+    stage: 'undergrad',
+    title: '班委改选',
+    body: '班委改选，几个同学起哄让你当班长。你平时人缘好，大家都知道你靠得住——就是事多。',
+    category: 'social', weight: 50, once: true, minTurn: 3,
+    requireStat: { relations: [60, 100] },
+    choices: [
+      { text: '接下，组织活动', delta: { relations: 4, reputation: 4, stamina: -10, sanity: -3 }, flagSet: 'ug_class_rep', consequence: '运动会、班会、评奖，你忙得脚不沾地，但大家念你的好。' },
+      { text: '推给别人', delta: { relations: 2, sanity: 2 }, consequence: '你把这份差事让了出去，落个清闲。' },
+    ],
+  },
 ];

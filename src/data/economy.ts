@@ -29,6 +29,14 @@ export const STAGE_ECON: Record<string, StageEconSpec> = {
 // 上学阶段：收入来自父母补贴，随随机家庭条件浮动
 const SCHOOL_STAGES = new Set(['undergrad', 'internship', 'guipei', 'master', 'phd']);
 
+// 硕博阶段：研究生补助/绩效按带组导师的分配风格浮动（随机），并带小幅随机波动
+const RESEARCH_STAGES = new Set(['master', 'phd']);
+const MENTOR_FACTOR: Record<string, number> = { equal: 1.0, pyramid: 0.65, generous: 1.25, tight: 0.5 };
+export const MENTOR_LABEL: Record<string, string> = {
+  equal: '导师按人头平均分', pyramid: '导师金字塔式分配（你拿小头）',
+  generous: '导师出手大方', tight: '导师能扣则扣',
+};
+
 const FAMILY_FACTOR: Record<string, number> = { rich: 1.5, middle: 1.0, tight: 0.6 };
 export const FAMILY_LABEL: Record<string, string> = { rich: '家境殷实', middle: '家境普通', tight: '家境拮据' };
 
@@ -65,6 +73,12 @@ export function getQuarterEconomy(stage: string): QuarterEconomy {
   if (SCHOOL_STAGES.has(stage)) {
     const factor = FAMILY_FACTOR[getState().familyWealth] ?? 1.0;
     income = Math.round(income * factor);
+  }
+
+  // —— 硕博：研究生补助/绩效按带组导师分配风格浮动，带小幅随机波动 ——
+  if (RESEARCH_STAGES.has(stage)) {
+    const mf = MENTOR_FACTOR[getState().mentorStyle] ?? 1.0;
+    income = Math.round(income * mf * (0.9 + Math.random() * 0.2));
   }
 
   // —— 助学贷款（属性分配阶段可选）：上学期间 +1500/季 生活费，工作后 -1500/季 还贷 ——
@@ -154,6 +168,9 @@ export function describeStageEconomy(stage: string): string | null {
   const familyLine = SCHOOL_STAGES.has(stage)
     ? `\n家庭条件：${FAMILY_LABEL[s.familyWealth] ?? '家境普通'}（父母每季补贴 ¥${e.income}）`
     : '';
+  const mentorLine = RESEARCH_STAGES.has(stage)
+    ? `\n带组导师绩效风格：${MENTOR_LABEL[s.mentorStyle] ?? '按人头平均'}`
+    : '';
   const lines = [
     `【${spec.label}阶段 · 经济简报】`,
     `每季度固定收入：¥${e.income}`,
@@ -162,6 +179,7 @@ export function describeStageEconomy(stage: string): string | null {
     `理财策略：${FINANCE_LABEL[s.financeStrategy] ?? '稳健生活'}（R 菜单可调）`,
   ];
   if (familyLine) lines.splice(2, 0, familyLine);
+  if (mentorLine) lines.splice(2, 0, mentorLine);
   if (spec.entryCost) lines.push(`入学 / 入职一次性支出：¥${spec.entryCost}`);
   if (spec.entryIncome) lines.push(`入职一次性收入：¥${spec.entryIncome}`);
   lines.push('（具体数额会因你的选择而浮动）');
