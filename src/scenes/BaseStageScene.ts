@@ -11,7 +11,7 @@ import { HelpPanel } from '../ui/HelpPanel';
 import { showNewsToast } from '../ui/newsToast';
 import { NEWS_TICKER } from '../data/news';
 import { STAT_LABELS, STAT_ICONS, HUD_STATS } from '../data/constants';
-import { applyStageEntry, describeStageEconomy, getQuarterEconomy } from '../data/economy';
+import { applyStageEntry, describeStageEconomy, getQuarterEconomy, houseMonthly } from '../data/economy';
 import { getPalette, createBgTexture, createStageDecor, addScanlineOverlay, addVignette, stageAmbientTint } from '../ui/pixelArt';
 import type { PaletteName } from '../ui/pixelArt';
 import { CharacterSprite } from '../ui/CharacterSprite';
@@ -242,16 +242,27 @@ export abstract class BaseStageScene extends Phaser.Scene {
 
   private showQuarterBill(e: { income: number; cost: number; net: number; financeNote?: string }) {
     if (e.income === 0 && e.cost === 0) return;
-    const netStr = `${e.net >= 0 ? '+' : ''}¥${e.net}`;
-    const text = `季度结算 ▸ 收¥${e.income} 支¥${e.cost} = 净 ${netStr}${e.financeNote ?? ""}`;
+    const s = getState();
+    // 结构化小账单（深挖第五部分 R38 / REVIEW-PLAYABILITY R15 落地）：
+    // 收入 / 支出（含房贷、育儿的拆分行）/ 净额 / 资产。
+    const rows: string[] = [];
+    rows.push(`季度结算 ▸ 收入 ¥${e.income.toLocaleString()}`);
+    if (s.flags.has('bought_house')) {
+      rows.push(`  其中 房贷 ¥-${houseMonthly().toLocaleString()}`);
+    }
+    if (s.hasChild) rows.push(`  其中 育儿 ¥-1,200`);
+    rows.push(`  支出 ¥${e.cost.toLocaleString()} = 净 ${e.net >= 0 ? '+' : ''}¥${e.net.toLocaleString()}`);
+    if ((s.assets ?? 0) > 0) rows.push(`  资产 ¥${(s.assets ?? 0).toLocaleString()}${e.financeNote ?? ''}`);
+    const text = rows.join('\n');
     const color = e.net >= 0 ? '#69f0ae' : '#ff8a80';
-    const t = this.add.text(480, 128, text, {
-      fontFamily: '"Courier New", monospace', fontSize: '13px', color, fontStyle: 'bold',
+    const t = this.add.text(480, 122, text, {
+      fontFamily: '"Courier New", monospace', fontSize: '12px', color, fontStyle: 'bold',
+      align: 'center', lineSpacing: 3,
     }).setOrigin(0.5, 0).setDepth(120).setAlpha(0);
     this.tweens.add({
       targets: t, alpha: 1, duration: 240, ease: 'Cubic.easeOut',
       onComplete: () => {
-        this.tweens.add({ targets: t, alpha: 0, y: 112, duration: 900, delay: 500, onComplete: () => t.destroy() });
+        this.tweens.add({ targets: t, alpha: 0, y: 104, duration: 900, delay: 500, onComplete: () => t.destroy() });
       },
     });
   }

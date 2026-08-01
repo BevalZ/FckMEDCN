@@ -170,8 +170,16 @@ export class HUD {
     const finWord = { thrifty: '节流', stable: '稳健', invest: '投资' }[s.financeStrategy] ?? '稳健';
     const loanMark = s.flags.has('student_loan') ? '贷' : '';
     const assetStr = (s.assets ?? 0) > 0 ? ` · 资产¥${(s.assets ?? 0).toLocaleString()}` : '';
+    // 职业阶段显示科室（亚专科 flag），让玩家知道自己"在什么科"（深挖第五部分 R38 落地）
+    let subLabel = '';
+    if (s.stage === 'career') {
+      const subMap: Record<string, string> = { sub_internal: '内科', sub_surgery: '外科', sub_obgyn: '妇产科', sub_pediatrics: '儿科' };
+      for (const [f, l] of Object.entries(subMap)) {
+        if (s.flags.has(f)) { subLabel = ` ｜ 科室:${l}`; break; }
+      }
+    }
     this.attrsLabel.setText(
-      `家境${a.family}/${wealthWord} · 成绩${a.academic} · 运气${a.luck} · 外貌${a.looks}${loanMark ? ` · 助学${loanMark}` : ''}${assetStr} ｜ 理财:${finWord}`,
+      `${subLabel}家境${a.family}/${wealthWord} · 成绩${a.academic} · 运气${a.luck} · 外貌${a.looks}${loanMark ? ` · 助学${loanMark}` : ''}${assetStr} ｜ 理财:${finWord}`,
     );
   }
 

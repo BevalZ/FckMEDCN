@@ -177,6 +177,31 @@ export const PATIENT_ARCHETYPES: PatientArchetype[] = [
     personality: ['多疑，反复检查'], traits: { demanding: true, litigious: true, costSensitive: true },
     followUp: '安排必要检查后明确告知无异常，建议心理科疏导',
   },
+  // —— 儿童/青少年患者扩充（深挖第五部分 R35 落地）：此前儿童/少年仅 4 条 ——
+  {
+    id: 'toddler_fever_family', name: '幼儿·高热惊厥', profile: '两岁多的孩子烧到抽搐，年轻的父母吓坏了，抱着孩子冲进来', ageGroup: '儿童', income: '双职工', insurance: '居民医保',
+    personality: ['父母声音发颤', '孩子昏昏沉沉', '一屋子人手足无措'],
+    traits: { familyInvolved: true, costSensitive: true, demanding: true },
+    followUp: '教家长退热与惊厥应急处理，约复查，叮嘱"别慌，你们做得对"',
+  },
+  {
+    id: 'kid_appendicitis', name: '小学生·急性阑尾炎', profile: '体育课捂着肚子蹲下，老师送来时说"孩子一直喊右下腹痛"', ageGroup: '儿童', income: '双职工', insurance: '居民医保',
+    personality: ['疼得缩成一团', '眼泪汪汪', '又怕打针'],
+    traits: { familyInvolved: true, demanding: true },
+    followUp: '安排超声与急诊手术评估，术后叮嘱饮食过渡，约拆线',
+  },
+  {
+    id: 'teen_anxiety_school', name: '初中生·考前焦虑', profile: '一考试就拉肚子、手抖，妈妈带着来，说"一让上学就喊不舒服"', ageGroup: '少年', income: '工薪家庭', insurance: '居民医保',
+    personality: ['低头玩手指', '说话声音很小', '回避妈妈的目光'],
+    traits: { lonely: true, familyInvolved: true, communicationBarrier: true },
+    followUp: '建议心理疏导与作息调整，叮嘱家长别只盯着成绩，约复诊',
+  },
+  {
+    id: 'teen_asthma', name: '少年·哮喘急性发作', profile: '体育课跑完八百米，喘得像拉风箱，被同学架着进来，书包里翻出半瓶沙丁胺醇', ageGroup: '少年', income: '工薪家庭', insurance: '居民医保',
+    personality: ['喘不上气', '攥着药瓶', '努力挤出"没事"'],
+    traits: { nonCompliant: true, familyInvolved: true },
+    followUp: '雾化平喘后教育规范用药，教正确吸入姿势，约肺功能复查',
+  },
 ];
 
 /** 确定性取患者档案（与 eventGen 取数方式一致，可复现） */
