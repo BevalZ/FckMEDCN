@@ -184,3 +184,150 @@
 | P3 | 亚专科第 5 项(急诊)/时间轴重构 | 3/6 | 结构改造，风险大 | ⬜ 待做 |
 
 > 验收基线沿用：`npx tsc --noEmit` + `npm run build` + `npx playwright test`（全量）。
+
+---
+
+## Round 11 · 事业编竞争比（写实化旧 flavor 事件）
+
+**实据**（联网）：2024 全国事业编平均报录比 21:1、录取率 4.8%；热门医疗岗 >100:1；广东统考 50.74:1；笔试进面率不足 15%。
+**结论**：旧 `bianzhi_result` 50/50 双选严重失真——"死磕编制"不该是抛硬币。
+**改动**：`events_jobhunt.ts` 的 `bianzhi_result` 改为 `rollOutcome`（base 0.05）置 `jh_bianzhi_in/out`，并新增"边考边找退路"安全选项。录取率≈4.8% 贴近现实。
+
+## Round 12 · 三方违约金额度
+
+**实据**：法律无统一标准，超实际损失 30% 可请求减少；常见 5000–10000+；公立安家费倒追案例（返还 60 万 + 利息 45 万）。
+**结论**：3k–5w 区间合理，私立安家费另算。
+**改动**：`jobhunt_units.ts` 维持 `breachPenalty` 30k/20k/15k/8k/5k/20k；私立补"安家费可倒追"注释。`BETTER_OFFER_EVENT` 违约金随 `breachPenalty` 走、且 `rankScaled` 缩放。
+
+## Round 13 · 本校附属医院留院率
+
+**实据**：安医大 69.20% 留安徽、省内 85% 三甲临床岗优先本校；大医二院本校博士 48.15%；本院规培生笔试 +10 分。
+**结论**：`affiliateBonus` 取 0.15–0.25 合理。
+**改动**：维持 `affiliateBonus: 0.18`；`huaxi_h` 注释补"本院规培笔试 +10 分"。面试 `affiliateFlag:'jh_affil_<u>'` 仅在母校匹配时计入。
+
+## Round 14 · 导师/内推成功率
+
+**实据**：导师一句话顶十份简历是行业共识；内推显著提进面率（人情黑箱真实存在）。
+**结论**：`referralBonus` 面试 0.22、backdoor 0.45+0.3 合理。
+**改动**：维持；文档记录"推荐信加分但看硬实力与缘分"的口径（`referralFlag` 默认 `got_recommend`）。
+
+## Round 15 · 笔试/面试淘汰率
+
+**实据**：市直三甲热门岗报录比 20–50:1、进面率 <15%、笔试 60% + 面试 40%；顶尖 100:1。
+**结论**：base 是"已满足学历/硬门槛的合格考生"口径，应低于全社会报录比但顶尖档仍要压低。
+**改动**：`events_jobhunt_real.ts` `EXAM_BASE`：sanjiajia 0.35→0.3、sanjiayi 0.5→0.42；`IV_BASE`：0.3→0.28、0.45→0.4。erjia/community 基本不动。
+
+## Round 16 · 学历门槛趋势
+
+**实据**：三甲临床岗 90% 硬性博士；2023 县域近 1/4 岗硕博、本科留院率 <5%；东部县医院开始与三甲抢人。
+**结论**：学历通胀严重，门槛必须真生效。
+**改动**：phd 岗硬卡 `requireFlag:'phd_graduated'`；市级三甲（`took_hospital_a`）/公立三乙（`took_public`）加 `has_gp_cert` 硬门槛；master 岗以 `requireStat` 阈值代理（项目无独立 `master_graduated` flag，避免误伤硕士玩家）。`APPLY_EVENT` `maxTurn` 1→2 体现秋招+春招窗口。
+
+## Round 17 · 地区薪资差
+
+**实据**：全国均值 18.5 万；一线 25.3 万 / 二三线 19 万 / 四线 12.8 万，一线≈县城 2 倍；职称差 30–50%。
+**结论**：旧 `REGION_INCOME` top1.35:county0.85 倍差不足。
+**改动**：`economy.ts` `REGION_INCOME` 调为 `{ top:1.45, city:1.15, county:0.75, private:1.25 }`，top:county≈1.9×，更贴近真实但仍保平衡。
+
+## Round 18 · 规培证硬门槛
+
+**实据**：规培是临床上岗硬门槛；无规培证独立值班致一级甲等事故；"两个同等对待"政策保障规培合格本科按应届对待。
+**结论**：无规培证不能独立值班/入职。
+**改动**：`applyChoice` 对 `took_hospital_a`/`took_public` 单位加 `requireFlag:'has_gp_cert'`；县/社区（`offer_grass`）不卡以保本科路径。
+
+## Round 19 · 招聘时间窗口
+
+**实据**：秋招 9–11 月黄金窗口、春招 3–5 月补录、事业编统考 6–8 月；规培合格当年按应届同等对待。
+**结论**：求职窗口应有弹性，不能一回合锁死。
+**改动**：`APPLY_EVENT` `maxTurn` 1→2（秋招+春招），笔试/面试 `minTurn:1 / maxTurn:2-3` 已覆盖窗口。
+
+## Round 20 · 违约后果（档案/信用）
+
+**实据**：三方违约记入就业诚信档案，影响未来求职与派遣；学校可记入档案；毁约需担责。
+**结论**：违约不只是赔钱，留记录。
+**改动**：`BETTER_OFFER_EVENT` 声誉罚 -8→-10；`breachUnit` 仍置 `jh_breached`；新增 career 阶段 `jh_real_breach_echo`（requireFlag `jh_breached`）作为回响事件，"选择要回响"原则落地。
+
+## Round 21 · 民营医院坑
+
+**实据**：私立"流水不足 7000 开除医生"；提成写进合同常落空；安家费倒追；离职纠纷高发。
+**结论**：高薪合同有陷阱。
+**改动**：`sili_h.salaryNote` 补"流水不足 7000 开除 / 安家费倒追 / 离职纠纷高发"；维持 `breachPenalty:20k`。
+
+## Round 22 · 规培留院
+
+**实据**：专硕四证合一留本院概率最大，社会人留院 <10–20%；本院规培生笔试 +10 分；急诊/儿科等紧缺科室留用多。
+**结论**：本院规培是留院捷径。
+**改动**：`huaxi_h.salaryNote` 补"本院规培笔试 +10 分"；不做独立规培基地追踪以控复杂度（留待职业期轮次）。
+
+## Round 23 · 定向/委培
+
+**实据**：单位委培有编制/人事关系，须回原单位且有服务年限、违约赔多；"县管乡用"新招医师 5 年内须下乡镇。
+**改动**：`xianyi_h.salaryNote` 补"县管乡用：新招医师 5 年内须下乡镇"；文档记录。
+
+## Round 24 · 博士后过渡
+
+**实据**：医学博士进站做博后年薪 21–36 万，出站 86% 进三甲；海归博士常先博后。
+**结论**：博后是进顶尖三甲的常见跳板。
+**改动**：引擎加 `postdocBonus`/`postdocFlag`（`events.ts` 联合 + `effects.ts`）；`APPLY_EVENT` 加"进博士后"选项（`setFlag:'did_postdoc'`，`flagRequire:'phd_graduated'`）；`interviewEvent` 对 phd 岗加 `postdocFlag:'did_postdoc', postdocBonus:0.12`。另加通用 `setFlag` effect kind（避免污染死 flag 白名单）。
+
+## Round 25 · 非升即走
+
+**实据**：预聘-长聘向三甲蔓延，>80% 双一流高校已实施；6 年内未达标解聘/转岗；45 岁上不了副高被优化。
+**结论**：顶尖科研岗不是铁饭碗。
+**改动**：`xiehe_h.salaryNote` 已含"非升即走"；文档记录（职业期后续轮可加非升即走事件）。
+
+## Round 26 · 县管乡用 / 编制备案制
+
+**实据**：卫健委推广"县管乡用/乡聘村用"；编制备案制无传统铁饭碗但进编易。
+**改动**：`xianyi_h`/`wangtian_h.salaryNote` 补"县管乡用 / 编制备案制"注释。
+
+## Round 27 · 规培与考研冲突
+
+**实据**：规培期间考研/退培冲突，退培需赔违约金且影响诚信。
+**改动**：文档记录（叙事层，求职阶段不易直接模拟；与 R20 违约记录呼应）。
+
+## Round 28 · 35 岁年龄门槛
+
+**实据**：本科/初级岗常限 35 岁以下，硕士 28–30，博士 35–38 可放宽；顶尖三甲临床岗 35 岁。
+**结论**：年龄是隐性硬门槛。
+**改动**：文档记录（本作无年龄 stat，留待后续轮；现有 `phd_graduated` 已隐含年龄优势）。
+
+## Round 29 · 性别因素
+
+**实据**：某些科室（妇产/护理）招聘存在隐性偏好，但属敏感且应避免刻板印象。
+**改动**：仅文档记录，不落具体门槛，维持中立、避免强化偏见。
+
+## Round 30 · 海归认可度
+
+**实据**：海归医学博士是一线三甲争夺焦点，但需学历认证 + 常再规培 2–3 年；真正红利在人才引进/博后。
+**结论**：海归在科研岗有优势。
+**改动**：引擎加 `overseasBonus`/`overseasFlag`（`events.ts` + `effects.ts`）；`interviewEvent` 对 `xiehe_h` 加 `overseasFlag:'abroad', overseasBonus:0.12`（需 `abroad` flag，由硕博公派联培置）。
+
+---
+
+### R11–R30 改动总览
+
+| 轮 | 文件 | 关键改动 |
+|---|---|---|
+| R11 | events_jobhunt.ts | `bianzhi_result` → rollOutcome base 0.05 |
+| R12 | jobhunt_units.ts | 维持 breachPenalty，私立补安家费注释 |
+| R13 | jobhunt_units.ts | 维持 affiliateBonus 0.18，huaxi 补规培+10分 |
+| R14 | events_jobhunt_real.ts | 维持 referralBonus |
+| R15 | events_jobhunt_real.ts | EXAM_BASE/IV_BASE 顶尖档下调 |
+| R16 | events_jobhunt_real.ts | phd 硬卡、市级/公立加 has_gp_cert、maxTurn→2 |
+| R17 | economy.ts | REGION_INCOME 放大 top:county 倍差 |
+| R18 | events_jobhunt_real.ts | applyChoice 加 has_gp_cert 门槛 |
+| R19 | events_jobhunt_real.ts | APPLY_EVENT maxTurn 1→2 |
+| R20 | events_jobhunt_real.ts | 声誉 -8→-10 + 新增 jh_real_breach_echo |
+| R21 | jobhunt_units.ts | sili_h 补民营坑注释 |
+| R22 | jobhunt_units.ts | huaxi_h 补规培留院 |
+| R23 | jobhunt_units.ts | xianyi_h 补县管乡用 |
+| R24 | events.ts / effects.ts / events_jobhunt_real.ts | postdocBonus + 博后选项 + setFlag effect |
+| R25 | jobhunt_units.ts | xiehe_h 非升即走（已注） |
+| R26 | jobhunt_units.ts | 县管乡用/编制备案制注释 |
+| R27 | （文档） | 规培考研冲突 |
+| R28 | （文档） | 35 岁门槛（无 age stat） |
+| R29 | （文档） | 性别因素（中立，不落门槛） |
+| R30 | events.ts / effects.ts / events_jobhunt_real.ts | overseasBonus + 海归加成 |
+
+> 引擎扩展均以"单位无关、数值由事件作者按单位写好"为原则：`rollOutcome` 仅新增 `overseasBonus/overseasFlag`、`postdocBonus/postdocFlag` 两个可选加成 + 通用 `setFlag` effect kind，全部局部、可逆。

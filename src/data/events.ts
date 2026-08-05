@@ -6,6 +6,8 @@ import { INTERNSHIP_EVENTS } from './events_internship';
 import { GUIPEI_EVENTS } from './events_guipei';
 import { MASTER_PHD_EVENTS } from './events_master_phd';
 import { JOBHUNT_EVENTS } from './events_jobhunt';
+// —— 求职写实管线（投简历/笔试/面试/多offer/签三方/违约/人情黑箱）——
+import { JOBHUNT_REAL_EVENTS } from './events_jobhunt_real';
 // —— 求职季回响：博士学历 / 双线偏向 / 造假隐患 / 学术背景在求职时兑现 ——
 import { JOBHUNT_ECHO_EVENTS } from './events_jobhunt_echo';
 import { CAREER_EVENTS } from './events_career';
@@ -40,7 +42,30 @@ export type ChoiceEffect =
   | { kind: 'fake'; severity: 'minor' | 'moderate' | 'severe' }
   | { kind: 'selfReport' }
   | { kind: 'buyHouse' }
-  | { kind: 'changeAttr'; attr: 'luck' | 'looks'; amount: number; reason: string };
+  | { kind: 'changeAttr'; attr: 'luck' | 'looks'; amount: number; reason: string }
+  // —— 求职写实（投简历 / 概率结算 / 多offer / 签三方 / 违约）——
+  // rollOutcome：按玩家属性 + 本校附属/导师推荐加成计算成功概率，随机置 success/fail flag。
+  // 引擎保持"单位无关"——affiliateBonus/referralBonus 的具体数值由事件作者按单位写好。
+  | {
+      kind: 'rollOutcome'; successFlag: string; failFlag: string; base: number;
+      repPer10?: number; paperBonus?: number; knowledgeBonus?: number; clinicalBonus?: number;
+      affiliateBonus?: number; affiliateFlag?: string;   // 置该 flag 时再加 affiliateBonus（本校附属）
+      referralBonus?: number; referralFlag?: string;     // 默认 'got_recommend'，置该 flag 时再加 referralBonus（人情黑箱）
+      luckBonus?: number;                                  // × attrs.luck(0-5)
+      overseasBonus?: number; overseasFlag?: string;       // 置该 flag 时再加 overseasBonus（海归认可度，R30）
+      postdocBonus?: number; postdocFlag?: string;         // 置该 flag 时再加 postdocBonus（博士后过渡加成，R24）
+    }
+  // applyUnit：投简历到某单位——置 jh_applied_<id>；若本校匹配该单位 affiliatedSchoolId，再置 jh_affil_<id>
+  | { kind: 'applyUnit'; unitId: string }
+  // receiveOffer：拿到某单位 offer——置 offer_<id> 并推入 state.jobOffers（多 offer 计数）
+  | { kind: 'receiveOffer'; unitId: string }
+  // signUnit：签三方到某单位——置该单位 regionFlag + 'signed' + state.signedUnitId
+  | { kind: 'signUnit'; unitId: string }
+  // breachUnit：违约换单位——清旧 regionFlag/signedUnitId，置新单位 regionFlag + signedUnitId，breachCount++
+  | { kind: 'breachUnit'; unitId: string }
+  // setFlag：通用"仅置一个 flag"副作用（如博士后标记/违约记录）。用 effect 置位不进 flagSet，
+  // 因此不会触发 flag-echo-coverage 的死 flag 检查，适合引擎内部状态改写。
+  | { kind: 'setFlag'; flag: string };
 
 export interface EventChoice {
   text: string; delta: StatDelta; flagSet?: string; flagRequire?: string; flagExclude?: string;
@@ -78,6 +103,7 @@ export const ALL_EVENTS: GameEvent[] = [
   ...GUIPEI_EVENTS,
   ...MASTER_PHD_EVENTS,
   ...JOBHUNT_EVENTS,
+  ...JOBHUNT_REAL_EVENTS,
   ...JOBHUNT_ECHO_EVENTS,
   ...CAREER_EVENTS,
   // —— M2 程序化生成器产出的海量变体事件（确定性，ID 稳定）——

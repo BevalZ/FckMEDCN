@@ -43,7 +43,7 @@ function settableFlags(): Set<string> {
 
 test('每个结局判定 flag 都有事件/代码来源（无死结局）', () => {
   const referenced = endingFlags();
-  const settable = settableFlags();
+  const settable = new Set([...settableFlags(), ...RUNTIME_SET_FLAGS]);
 
   const orphans = referenced.filter(f => !settable.has(f));
 
@@ -76,9 +76,19 @@ function requiredFlags(): string[] {
 // 见 docs/known-issues.md B5：这类动态 flag 曾使字面量校验假阳性。
 const DYNAMIC_PREFIXES = ['trust_', 'distant_', 'school_tier_'];
 
+// 运行时经"变量" setFlag 置位的 flag（字面量正则扫不到，但实际可达），需并入可设置集合。
+//  - 求职写实管线 signUnit：setFlag(u.regionFlag)，按单位 regionFlag 动态置位以下 region flag；
+//  - WalkStageScene 留级：setFlag(holdbackFlag) 按阶段动态置位 ms_holdback / phd_holdback。
+// 这些 flag 有真实消费者（endings / currentRegionTier / 留级剧情链），并非死 flag。
+const RUNTIME_SET_FLAGS = new Set<string>([
+  'offer_sanjia', 'offer_grass', 'took_hospital_a', 'took_hospital_b',
+  'took_public', 'took_private', 'city_home', 'city_tier1', 'base_home',
+  'ms_holdback', 'phd_holdback',
+]);
+
 test('每个 requireFlag 都有来源（无死事件）', () => {
   const required = requiredFlags();
-  const settable = settableFlags();
+  const settable = new Set([...settableFlags(), ...RUNTIME_SET_FLAGS]);
 
   const orphans = required.filter(f =>
     !settable.has(f) && !DYNAMIC_PREFIXES.some(pre => f.startsWith(pre)),

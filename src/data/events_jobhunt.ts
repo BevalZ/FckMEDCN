@@ -11,8 +11,8 @@ export const JOBHUNT_EVENTS: GameEvent[] = [
     weight: 100,
     once: true,
     choices: [
-      { text: '冲三甲，拼前程', delta: { reputation: 5, stamina: -8, sanity: -4 }, flagSet: 'offer_sanjia', consequence: '你投出了十几份三甲简历。' },
-      { text: '去基层，求安稳', delta: { sanity: 6, reputation: -2, money: 500 }, flagSet: 'offer_grass', consequence: '县城医院当场给了你编制意向。' },
+      { text: '冲三甲，拼前程', delta: { reputation: 5, stamina: -8, sanity: -4 }, consequence: '你投出了十几份三甲简历。' },
+      { text: '去基层，求安稳', delta: { sanity: 6, reputation: -2, money: 500 }, consequence: '县城医院当场给了你编制意向。' },
     ],
   },
   {
@@ -39,8 +39,14 @@ export const JOBHUNT_EVENTS: GameEvent[] = [
     requireFlag: 'bianzhi',
     minTurn: 2,
     choices: [
-      { text: '上岸了，正式入编', delta: { reputation: 6, sanity: 8, stamina: -4 }, flagSet: 'jh_bianzhi_in', consequence: '公示名单里有你的名字。爸妈比你还高兴，你终于"有编制"了。' },
-      { text: '差一名，落榜', delta: { reputation: -3, sanity: -8, stamina: -4 }, flagSet: 'jh_bianzhi_out', consequence: '名单上你排在前一名之后。你关掉网页，想了很久下一步。' },
+      // R11：事业编录取率约 4.8%（平均报录比 21:1，热门医疗岗 >100:1），用 rollOutcome 体现"千军万马过独木桥"
+      {
+        text: '硬考，听天由命',
+        delta: { reputation: 2, stamina: -6, sanity: -4 },
+        effect: { kind: 'rollOutcome', base: 0.05, successFlag: 'jh_bianzhi_in', failFlag: 'jh_bianzhi_out' },
+        consequence: '1:40 的竞争比，笔试面试体检政审一路走完。你把自己交了出去。',
+      },
+      { text: '边考边找退路，不吊死', delta: { sanity: 2, reputation: -1 }, consequence: '你同时投了合同岗，心里踏实些。' },
     ],
   },
   {
@@ -64,8 +70,8 @@ export const JOBHUNT_EVENTS: GameEvent[] = [
     weight: 80,
     once: true,
     choices: [
-      { text: '留一线城市', delta: { reputation: 4, stamina: -6, sanity: -3 }, flagSet: 'city_tier1', consequence: '你租了间朝北的隔断房。' },
-      { text: '回老家', delta: { sanity: 8, relations: 5, money: 800 }, flagSet: 'city_home', consequence: '母亲早把客房收拾好了。' },
+      { text: '留一线城市', delta: { reputation: 4, stamina: -6, sanity: -3 }, consequence: '你租了间朝北的隔断房。' },
+      { text: '回老家', delta: { sanity: 8, relations: 5, money: 800 }, consequence: '母亲早把客房收拾好了。' },
     ],
   },
   {
@@ -113,8 +119,8 @@ export const JOBHUNT_EVENTS: GameEvent[] = [
     weight: 70,
     once: true,
     choices: [
-      { text: '选高薪私立', delta: { money: 5000, reputation: 1, sanity: -2 }, flagSet: 'took_private', consequence: '你签了私立，提成写进了合同。' },
-      { text: '选公立稳妥', delta: { reputation: 5, sanity: 2 }, flagSet: 'took_public', consequence: '你穿上了公立医院的工作服。' },
+      { text: '选高薪私立', delta: { money: 5000, reputation: 1, sanity: -2 }, consequence: '你签了私立，提成写进了合同。' },
+      { text: '选公立稳妥', delta: { reputation: 5, sanity: 2 }, consequence: '你穿上了公立医院的工作服。' },
     ],
   },
 ];

@@ -74,6 +74,9 @@ export interface GameState {
   affinity: Record<string, number>;
   // —— 数值计数器（长学制连续低分季数等需要累加的状态，flag 只能布尔）——
   counters: Record<string, number>;
+  // —— 求职写实：签三方的单位 id 与已拿到的 offer 列表（多 offer 抉择/违约用）——
+  signedUnitId: string | null;
+  jobOffers: string[];
 }
 
 // 默认分配：成绩点满（保证 685+ 分数线可选），家境普通
@@ -107,6 +110,8 @@ export function createInitialState(): GameState {
     marital: 'single', spouse: null, hasChild: false, familyAlive: 4,
     affinity: {},
     counters: {},
+    signedUnitId: null,
+    jobOffers: [],
   };
 }
 

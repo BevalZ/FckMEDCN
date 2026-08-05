@@ -331,7 +331,7 @@ export const CURATED_M2_EVENTS: GameEvent[] = [
     body: '网传北华医院招聘名单：连博士都是合同制，无编制。评论区炸了："读了这么久就这？"',
     category: 'news', newsTickerAfter: '【某顶级医院招聘：博士亦为合同制，引发热议】',
     choices: [
-      { text: '重新审视"编制"执念', delta: { sanity: 2 }, flagSet: 'jh_rethink', nextEventId: 'm2_jh_bianzhi', consequence: '你默默把"必须编制"从清单划掉。' },
+      { text: '重新审视"编制"执念', delta: { sanity: 2 }, flagSet: 'jh_rethink', consequence: '你默默把"必须编制"从清单划掉。' },
       { text: '"那我考公卫/疾控"', delta: { reputation: 1, sanity: 1 }, flagSet: 'jh_cdc', consequence: '你开始看事业单位招考。' },
     ],
   },
@@ -340,8 +340,8 @@ export const CURATED_M2_EVENTS: GameEvent[] = [
     body: '县医院、二甲也缩编。有帖子说"规培合格当年按应届同等对待"是少数窗口期。',
     category: 'career',
     choices: [
-      { text: '抓住应届窗口投编内', delta: { reputation: 3, stamina: -6 }, flagSet: 'jh_chase_bianzhi', nextEventId: 'm2_jh_offer', consequence: '你专挑带"编"的岗位投。' },
-      { text: '编制随缘，看平台', delta: { stamina: -3, sanity: 1 }, flagSet: 'jh_platform', nextEventId: 'm2_jh_offer', consequence: '你更在意能学到东西。' },
+      { text: '抓住应届窗口投编内', delta: { reputation: 3, stamina: -6 }, flagSet: 'jh_chase_bianzhi', consequence: '你专挑带"编"的岗位投。' },
+      { text: '编制随缘，看平台', delta: { stamina: -3, sanity: 1 }, flagSet: 'jh_platform', consequence: '你更在意能学到东西。' },
     ],
   },
   {
@@ -349,8 +349,8 @@ export const CURATED_M2_EVENTS: GameEvent[] = [
     body: 'A：市三甲合同制，平台好但累；B：县医院带编，稳定但病例单一。',
     category: 'career',
     choices: [
-      { text: '选A平台', delta: { reputation: 5, stamina: -3, sanity: -1 }, flagSet: 'took_hospital_a', nextEventId: 'm2_jh_sign', consequence: '你想：先学本事。' },
-      { text: '选B编制', delta: { reputation: 3, money: 1500, sanity: 4 }, flagSet: 'took_hospital_b', nextEventId: 'm2_jh_sign', consequence: '你想：先安居乐业。' },
+      { text: '选A平台', delta: { reputation: 5, stamina: -3, sanity: -1 }, consequence: '你想：先学本事。' },
+      { text: '选B编制', delta: { reputation: 3, money: 1500, sanity: 4 }, consequence: '你想：先安居乐业。' },
     ],
   },
   {
@@ -358,7 +358,7 @@ export const CURATED_M2_EVENTS: GameEvent[] = [
     body: '笔尖落在纸上。你想起八年前的录取通知书，那行"健康所系，性命相托"。',
     category: 'personal',
     choices: [
-      { text: '"我准备好了"', delta: { sanity: 5, relations: 2 }, flagSet: 'signed', consequence: '你拍了拍胸前的工牌位。' },
+      { text: '"我准备好了"', delta: { sanity: 5, relations: 2 }, consequence: '你拍了拍胸前的工牌位。' },
       { text: '"希望不后悔"', delta: { sanity: -2 }, consequence: '你还是签了字。' },
     ],
   },

@@ -262,8 +262,10 @@ export function determineEnding(state: GameState): Ending {
     ending = ENDINGS_BY_ID['master_clinician'];
   }
 
-  // 4. 基层路线（真实选择：家乡基地 / 县城 / 基层编制）
-  else if (flags.has('offer_grass') || flags.has('base_home') || flags.has('city_home') || flags.has('chose_grassroots')) {
+  // 4. 基层路线（真实选择：县城/社区单位 offer_grass / 家乡基地 base_home / 基层叙事 chose_grassroots）。
+  // 注：city_home 原由旧 city_choice 置位，写实重构后"回老家"统一由签约县城/社区单位(offer_grass)或
+  // 规培选家乡基地(base_home)承载，新管线独占 region flag，故此处不再单列 city_home。
+  else if (flags.has('offer_grass') || flags.has('base_home') || flags.has('chose_grassroots')) {
     ending = stats.relations >= 60 ? ENDINGS_BY_ID['grassroots_hero'] : ENDINGS_BY_ID['community_doctor'];
   }
 

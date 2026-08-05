@@ -212,8 +212,10 @@ export const REGION_LABEL: Record<RegionTier, string> = {
   top: '一线三甲', city: '市级医院', county: '基层/县城', private: '民营私立',
 };
 
-/** 职业收入系数：三甲最高、基层最低（现实 1.5-3 倍差，游戏内压缩为 1.35 倍差以保平衡）。 */
-const REGION_INCOME: Record<RegionTier, number> = { top: 1.35, city: 1.1, county: 0.85, private: 1.2 };
+/** 职业收入系数：三甲最高、基层最低。R17 据真实薪酬校准——全国均值 18.5 万，一线 25.3 万 / 二三线 19 万 / 四线 12.8 万，
+ * 一线约为县城 2 倍。游戏内保持 city 为参考基准（1.1），仅上调 top、下调 county、微上调 private，
+ * 使 top:county ≈ 1.45:0.75 ≈ 1.9 倍差（旧 1.35:0.85 ≈ 1.59 倍），更贴近真实但仍保平衡。 */
+const REGION_INCOME: Record<RegionTier, number> = { top: 1.45, city: 1.1, county: 0.75, private: 1.25 };
 
 /** 房价档位：三甲城市首付/月供重，基层县城轻（首付 4-5 倍差、月供 6 倍差）。 */
 export const REGION_HOUSE: Record<RegionTier, { down: number; monthly: number }> = {
