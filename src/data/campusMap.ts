@@ -85,6 +85,12 @@ export const CAMPUS_SPOTS: readonly Spot[] = [
     daily: { label: '睡觉（结束本季）', delta: {}, consequence: '一觉睡到自然醒。' },
     sleep: true,
   },
+  {
+    // 秘密地点：无分类（不显示 '!'），由 CampusScene.trySpecialEvent 拦截触发论文黑市。
+    id: 'secret_lab', label: '墙角', door: [1, 12],
+    categories: [],
+    daily: { label: '查看', delta: {}, consequence: '你凑近看了看。' },
+  },
 ];
 
 // 每季度睡觉时的基础恢复。

@@ -1,5 +1,6 @@
-import { getState, patchState, setFlag, hasFlag } from './gameState';
+import { changeAttr, getState, patchState, setFlag, hasFlag } from './gameState';
 import { addFakeRisk, selfReport } from './integrity';
+import { payHouseDownPayment } from './economy';
 import type { ChoiceEffect } from './events';
 
 // 选项副作用的集中实现。
@@ -45,6 +46,12 @@ export function applyChoiceEffect(effect: ChoiceEffect) {
       return;
     case 'selfReport':
       selfReport();
+      return;
+    case 'buyHouse':
+      payHouseDownPayment();
+      return;
+    case 'changeAttr':
+      changeAttr(effect.attr, effect.amount, effect.reason);
       return;
   }
 }

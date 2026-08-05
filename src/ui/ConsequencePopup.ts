@@ -13,6 +13,7 @@ export class ConsequencePopup {
   private container: Phaser.GameObjects.Container | null = null;
   private stage: string;
   private onDone: (() => void) | null = null;
+  private onCancel: (() => void) | null = null;
   private escapeMode: 'dismiss' | 'cancel' = 'dismiss';
 
   constructor(scene: Phaser.Scene, stage: string) {
@@ -41,9 +42,19 @@ export class ConsequencePopup {
   // opts.escape：
   //  - 'dismiss'（默认）：ESC 与 空格/回车 等价，继续（调用 onDone）
   //  - 'cancel'：ESC 仅关闭弹窗、不调用 onDone（用于"重新开档"等需要可反悔的确认）
-  show(text: string, _delta: StatDelta, onDone: () => void, opts?: { escape?: 'dismiss' | 'cancel' }) {
+  show(
+    text: string,
+    _delta: StatDelta,
+    onDone: () => void,
+    opts?: {
+      escape?: 'dismiss' | 'cancel';
+      actionLabel?: string;
+      onCancel?: () => void;
+    },
+  ) {
     if (this.container) this.container.destroy();
     this.onDone = onDone;
+    this.onCancel = opts?.onCancel ?? null;
     this.escapeMode = opts?.escape ?? 'dismiss';
     const pal = getPalette(this.stage);
     const scene = this.scene;
@@ -84,11 +95,12 @@ export class ConsequencePopup {
     }
     body.setPosition(0, y);
 
-    const btnText = scene.add.text(0, H / 2 - 20, '继续 [ 点击 / 空格 / 回车 ]', {
+    const actionLabel = opts?.actionLabel ?? '继续 [ 点击 / 空格 / 回车 ]';
+    const btnText = scene.add.text(0, H / 2 - 20, actionLabel, {
       fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#ffffff',
     }).setOrigin(0.5, 0.5);
 
-    const hitArea = scene.add.rectangle(0, H / 2 - 16, 160, 24, 0x000000, 0)
+    const hitArea = scene.add.rectangle(0, H / 2 - 16, Math.max(160, Math.min(320, actionLabel.length * 8 + 24)), 24, 0x000000, 0)
       .setInteractive({ cursor: 'pointer' });
     hitArea.on('pointerdown', () => this.dismiss(onDone));
 
@@ -105,6 +117,7 @@ export class ConsequencePopup {
     const c = this.container;
     this.container = null;
     this.onDone = null;
+    this.onCancel = null;
     this.scene.tweens.add({
       targets: c, alpha: 0, duration: 100,
       onComplete: () => { c.destroy(); onDone?.(); },
@@ -114,8 +127,12 @@ export class ConsequencePopup {
   /** 仅关闭弹窗、不执行 onDone（用于"重新开档"确认的 ESC 取消） */
   private cancel() {
     if (!this.container) return;
-    this.container.destroy();
+    const c = this.container;
+    const onCancel = this.onCancel;
     this.container = null;
     this.onDone = null;
+    this.onCancel = null;
+    c.destroy();
+    onCancel?.();
   }
 }

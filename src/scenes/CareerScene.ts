@@ -15,13 +15,17 @@ export function currentSubspecialty(): string {
   return 'sub_internal';
 }
 
+function lawsuitEventId(round: 1 | 2): string {
+  return `career_lawsuit_${round}_${currentSubspecialty().replace('sub_', '')}`;
+}
+
 export class CareerScene extends BaseStageScene {
   constructor() {
     super({ key: 'CareerScene' });
     this.stageName = 'career';
     this.paletteName = 'career';
     this.nextSceneKey = 'EndingScene';
-    this.maxTurns = 12;
+    this.maxTurns = 20;
   }
 
   protected getStageLabelText(): string {
@@ -37,9 +41,12 @@ export class CareerScene extends BaseStageScene {
     const turn = getState().turnsInStage;
     const flags = getState().flags;
     const hasSub = SUB_SPECIALTIES.some(s => flags.has(s.flag));
-    if (turn === 0 && !hasSub) this.forcedEventId = 'career_specialty_choice';
-    else if (turn >= 3 && !flags.has('lawsuit_done_1')) this.forcedEventId = 'career_lawsuit_1';
-    else if (turn >= 9 && !flags.has('lawsuit_done_2')) this.forcedEventId = 'career_lawsuit_2';
+    // 非医生线（no_college）不强制选亚专科 / 医患诉讼，走通用事件即可。
+    if (!flags.has('no_college')) {
+      if (turn === 0 && !hasSub) this.forcedEventId = 'career_specialty_choice';
+      else if (turn >= 3 && !flags.has('lawsuit_done_1')) this.forcedEventId = lawsuitEventId(1);
+      else if (turn >= 9 && !flags.has('lawsuit_done_2')) this.forcedEventId = lawsuitEventId(2);
+    }
     super.triggerNextEvent();
   }
 

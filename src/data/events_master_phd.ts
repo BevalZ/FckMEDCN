@@ -279,4 +279,103 @@ export const MASTER_PHD_EVENTS: GameEvent[] = [
       { text: '独来独往，省心', delta: { knowledge: 2, sanity: 2, relations: -2 }, consequence: '你不想欠人情，圈子也就淡了。' },
     ],
   },
+
+  // —— 论文黑市：秘密地点入口（paper_blackmarket）。NPC 随机 offer 见下方 *_paper_offer。
+  // 买/卖都走 effect:{kind:'fake'}，自然接入既有的每季 rollIntegrity 东窗事发机制。
+  {
+    id: 'paper_blackmarket',
+    stage: ['undergrad', 'master', 'phd', 'career'],
+    title: '墙后的论文黑市',
+    body: '那扇没锁的门后面是个加密群。群公告写着："代写/挂名/买卖已见刊SCI，明码标价，先款后货。"你盯着屏幕，光标在输入框闪。',
+    category: 'career', weight: 1, once: false, manualOnly: true,
+    choices: [
+      { text: '买一篇二作（¥2000）', delta: { money: -2000, papers: 1, research: 2 }, flagSet: 'knows_paper_dealer', effect: { kind: 'fake', severity: 'moderate' }, consequence: '见刊那天你截了图，却没敢发朋友圈。' },
+      { text: '买一篇一作（¥8000）', delta: { money: -8000, papers: 1, research: 4, reputation: 4 }, flagSet: 'knows_paper_dealer', effect: { kind: 'fake', severity: 'severe' }, consequence: '一作到手，但你知道它经不起任何复查。' },
+      { text: '卖掉自己名字（¥5000）', delta: { money: 5000 }, flagSet: 'knows_paper_dealer', effect: { kind: 'fake', severity: 'severe' }, consequence: '有人把你的名字挂在一篇你从没读过的文章上。' },
+      { text: '关掉群，当没来过', delta: { sanity: 3 }, consequence: '你退出了加密群，深吸一口气。' },
+    ],
+  },
+
+  // —— NPC 随机 offer：同学 / 同事 / 学长 / 编辑主动搭话，提供论文买卖 ——
+  {
+    id: 'ug_paper_offer',
+    stage: 'undergrad',
+    title: '"我帮你挂个名"',
+    body: '一位师兄发来消息："有个水刊，两千块挂二作，下周就能见刊，保研加分够用了。"聊天框光标闪了很久。',
+    category: 'career', weight: 45, minTurn: 6, once: false, excludeFlag: 'knows_paper_dealer',
+    choices: [
+      { text: '转账，挂名', delta: { money: -2000, papers: 1, reputation: 4, sanity: -10, research: 2 }, flagSet: 'knows_paper_dealer', effect: { kind: 'fake', severity: 'moderate' }, consequence: '见刊那天你截了图，却没敢发朋友圈。' },
+      { text: '拒绝，自己写一篇综述', delta: { knowledge: 4, sanity: 4 }, consequence: '你打开文档，从摘要开始一行一行写。' },
+    ],
+  },
+  {
+    id: 'ms_paper_offer',
+    stage: 'master',
+    title: '组里师兄的"资源"',
+    body: '实验室同门神神秘秘凑过来："我认识个编辑，能加急发，钱到位就行。你那篇卡在审稿也别硬等了。"',
+    category: 'career', weight: 45, minTurn: 2, once: false, excludeFlag: 'knows_paper_dealer',
+    choices: [
+      { text: '加急发一篇（¥5000）', delta: { money: -5000, papers: 1, research: 3, sanity: -8 }, flagSet: 'knows_paper_dealer', effect: { kind: 'fake', severity: 'severe' }, consequence: '录用通知来得快得可疑。' },
+      { text: '拒了，老老实实改稿', delta: { knowledge: 4, stamina: -6 }, consequence: '你把审稿意见一条条啃下来。' },
+    ],
+  },
+  {
+    id: 'phd_paper_offer',
+    stage: 'phd',
+    title: '合作者的"捷径"',
+    body: '一位"合作者"加你微信："我们这边能出一作，数据现成，挂你名毕业用，懂的都懂。"',
+    category: 'career', weight: 45, minTurn: 2, once: false, excludeFlag: 'knows_paper_dealer',
+    choices: [
+      { text: '买一作冲毕业（¥8000）', delta: { money: -8000, papers: 1, research: 4, reputation: 4, sanity: -12 }, flagSet: 'knows_paper_dealer', effect: { kind: 'fake', severity: 'severe' }, consequence: '毕业材料齐了，你却夜夜睡不踏实。' },
+      { text: '拒绝，靠自己那篇', delta: { knowledge: 5, stamina: -6, sanity: 4 }, consequence: '你把手头的数据又跑了一遍。' },
+    ],
+  },
+  {
+    id: 'career_paper_offer',
+    stage: 'career',
+    title: '职称路上的"帮忙"',
+    body: '一位同行大夫私下说："晋升缺一作？我这儿有现成的，挂个名就行，评完就撤。"',
+    category: 'career', weight: 40, minTurn: 3, once: false, excludeFlag: 'knows_paper_dealer',
+    choices: [
+      { text: '挂名冲职称（¥6000）', delta: { money: -6000, papers: 1, reputation: 5, sanity: -10 }, flagSet: 'knows_paper_dealer', effect: { kind: 'fake', severity: 'severe' }, consequence: '材料递上去那天，你手心全是汗。' },
+      { text: '拒绝，靠临床业绩', delta: { knowledge: 3, sanity: 4 }, consequence: '你把病例整理成综述，慢，但踏实。' },
+    ],
+  },
+
+  // —— 留级剧情链（与本科 ug_holdback_life 对齐）：硕士/博士留级后抽出，选"重来一次"解除每季心理负担 ——
+  {
+    id: 'ms_holdback_life',
+    stage: 'master',
+    title: '硕士重修的日子',
+    body: '你跟着下一届的师弟师妹上课。组会里你比他们年长一届，却坐回了一年级的位置。导师没多说，只是把文献又发了一遍给你。',
+    category: 'mental', weight: 55, once: true, requireFlag: 'ms_holdback',
+    choices: [
+      { text: '把这一年当成重来一次的机会', delta: { knowledge: 8, sanity: 4, stamina: -8 }, flagSet: 'ms_holdback_recovered', consequence: '这次你听懂了。原来当初不是笨，是没喘过气。' },
+      { text: '整天抬不起头', delta: { sanity: -12, knowledge: 2, relations: -5 }, consequence: '你坐最后一排，谁也不认识，谁也不想认识。' },
+    ],
+  },
+  {
+    id: 'phd_holdback_life',
+    stage: 'phd',
+    title: '博士重修的日子',
+    body: '开题被否之后你重读了一年。同窗已经发完两篇，你还在改第一版的框架。导师说："慢一点没关系，但这次要想清楚。"',
+    category: 'mental', weight: 55, once: true, requireFlag: 'phd_holdback',
+    choices: [
+      { text: '把这一年当成重来一次的机会', delta: { knowledge: 8, sanity: 4, stamina: -8 }, flagSet: 'phd_holdback_recovered', consequence: '这次你沉下心了。框架一层层立住，像终于踩到了实地。' },
+      { text: '整天抬不起头', delta: { sanity: -12, knowledge: 2, relations: -5 }, consequence: '你躲进工位，组会能不发言就不发言。' },
+    ],
+  },
+
+  // —— 长学制转普通班警告：连续 4 季知识 < 40 触发（long_sys_warn_ready 由 knowledge.ts 置位）——
+  {
+    id: 'long_sys_transfer_warn',
+    stage: ['undergrad', 'master', 'phd'],
+    title: '分流预警',
+    body: '教务老师把你叫去："你连续几个学期绩点都在红线以下。按长学制分流办法，再跟不上的话，建议你转入普通班——从头读，但压力小些。"',
+    category: 'study', weight: 50, once: true, requireFlag: 'long_sys_warn_ready',
+    choices: [
+      { text: '转入普通班，重新开始', delta: { sanity: 6 }, flagSet: 'long_sys_transferred', consequence: '你签了分流表。长学制的"连读"待遇到此为止，但呼吸顺畅了些。' },
+      { text: '再拼一学期', delta: { stamina: -10, knowledge: 4, sanity: -6 }, flagSet: 'long_sys_warned', consequence: '你咬牙留了下来，赌自己能追上来。' },
+    ],
+  },
 ];

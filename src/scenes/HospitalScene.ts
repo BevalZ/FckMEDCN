@@ -36,6 +36,7 @@ import {
 import type { NpcTalk } from '../data/npc';
 import { sound } from '../audio/sound';
 import { saveGame, consumePendingFired } from '../data/save';
+import { showQuarterAdvancePrompt } from '../ui/quarterAdvancePrompt';
 
 const STAGE = 'internship';
 const MAX_TURNS = 5;
@@ -118,7 +119,7 @@ export class HospitalScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-M', () => sound.toggleMute());
 
     // 重新开档（R 键）
-    bindGameMenu(this, this.consequence, () => this.minigame !== null || this.eventCard.busy);
+    bindGameMenu(this, this.consequence, () => this.minigame !== null || this.eventCard.busy || this.consequence.busy);
 
     // 操作帮助（H 键）
     new HelpPanel(this, [
@@ -126,7 +127,7 @@ export class HospitalScene extends Phaser.Scene {
       '任务清单 Q · 导师对话 T',
       '重新开档 R · 帮助 H · 静音 M',
       'ESC 取消当前交互',
-      '提示：行动点耗尽后，去值班室睡觉结束本季。',
+      '提示：行动点用完后可直接确认进入下一季度。',
       '练习 CPR / 值夜班 能完成实习任务。',
     ], () => this.minigame !== null || this.eventCard.busy || this.consequence.busy);
 
@@ -306,7 +307,7 @@ export class HospitalScene extends Phaser.Scene {
   private interact(spot: Spot) {
     if (this.actionsLeft <= 0) {
       if (spot.sleep) { this.sleep(); return; }
-      this.floatMessage('行动点用完了，去值班室睡一觉吧', '#ffcc80');
+      this.offerQuarterAdvance();
       return;
     }
     if (this.canDrawAt(spot)) {
@@ -403,7 +404,8 @@ export class HospitalScene extends Phaser.Scene {
       this.prompt.clearAllBangs();
       this.refreshInfoBar();
       this.autoSave();
-      this.setBusy(false);
+      if (this.actionsLeft <= 0) this.offerQuarterAdvance();
+      else this.setBusy(false);
     });
   }
 
@@ -429,7 +431,21 @@ export class HospitalScene extends Phaser.Scene {
     this.refreshInfoBar();
     this.floatMessage(spot.daily.consequence, '#cfe8ff');
     this.autoSave();
-    this.checkCrisis();
+    if (this.checkCrisis()) return;
+    if (this.actionsLeft <= 0) this.offerQuarterAdvance();
+  }
+
+  private offerQuarterAdvance() {
+    if (this.actionsLeft > 0 || this.leaving || this.consequence.busy) return;
+    this.setBusy(true);
+    showQuarterAdvancePrompt(
+      this.consequence,
+      () => this.sleep(),
+      () => {
+        this.refreshInfoBar();
+        this.setBusy(false);
+      },
+    );
   }
 
   private sleep() {

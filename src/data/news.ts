@@ -87,7 +87,7 @@ export const NEWS_TICKER: NewsTickerItem[] = [
   { id: 'n2035q1_1', year: 2035, quarter: 1, headline: '【医师法修订征求意见：规培待遇再被聚焦】', type: 'warning' },
   { id: 'n2035q2_1', year: 2035, quarter: 2, headline: '【银发医生返聘成趋势：经验被重新珍惜】', type: 'event' },
 
-  // —— 2036–2044（覆盖硕博/求职/职业阶段，管线终点约 2044Q3；此前 2036 起滚动条断粮）——
+  // —— 2036–2046（覆盖硕博/求职/职业阶段；职业期延长后终点约 2046Q3）——
   { id: 'n2036q1_1', year: 2036, quarter: 1, headline: '【DRG/DIP 支付改革全面铺开：科室开始学算账】', type: 'event' },
   { id: 'n2036q3_1', year: 2036, quarter: 3, headline: '【专硕与规培并轨十年评估：有人省时，有人喊累】', type: 'irony' },
   { id: 'n2037q2_1', year: 2037, quarter: 2, headline: '【延迟退休落地首批：老专家门诊排到了明年】', type: 'event' },
@@ -108,4 +108,9 @@ export const NEWS_TICKER: NewsTickerItem[] = [
   { id: 'n2044q2_1', year: 2044, quarter: 2, headline: '【又一年招聘季：大医院排队面试，县医院排队求人】', type: 'event' },
   { id: 'n2044q3_1', year: 2044, quarter: 3, headline: '【医保飞检常态化：今年已追回违规资金数十亿】', type: 'warning' },
   { id: 'n2044q4_1', year: 2044, quarter: 4, headline: '【年终观察：医生年度关键词——过劳、纠纷与坚守】', type: 'tragedy' },
+  { id: 'n2045q1_1', year: 2045, quarter: 1, headline: '【高级职称评审强调临床实绩：病案质量与带教纳入量化】', type: 'event' },
+  { id: 'n2045q3_1', year: 2045, quarter: 3, headline: '【中年医师重申职称增多：名额与年限仍是两道坎】', type: 'warning' },
+  { id: 'n2046q1_1', year: 2046, quarter: 1, headline: '【县域医院高级职称定向评价扩围，论文不再一刀切】', type: 'event' },
+  { id: 'n2046q3_1', year: 2046, quarter: 3, headline: '【医师节调查：最想要的奖励仍是少值一个夜班】', type: 'irony' },
+  { id: 'n2046q4_1', year: 2046, quarter: 4, headline: '【年终医疗观察：晋升更慢，责任更重，留下的人仍在坚守】', type: 'tragedy' },
 ];

@@ -17,11 +17,14 @@ import { HelpPanel } from '../ui/HelpPanel';
 import { showNewsToast } from '../ui/newsToast';
 import { ALL_EVENTS, getAvailableEvents } from '../data/events';
 import type { EventChoice, GameEvent } from '../data/events';
+import { paperMarketEvent } from '../data/paperTrading';
 import type { StatDelta } from '../data/stats';
 import { NEWS_TICKER } from '../data/news';
 import { determineEnding } from '../data/endings';
 import { STAT_LABELS, STAT_ICONS, HUD_STATS } from '../data/constants';
 import { applyStageEntry, describeStageEconomy } from '../data/economy';
+import { isBurnout, triggerBurnout } from '../data/burnout';
+import { checkExamCrisis, noteStudied, holdbackSanityPenalty, holdbackExtraTurns } from '../data/knowledge';
 import {
   CAMPUS_SPEC, CAMPUS_SPOTS, CAMPUS_SPAWN, CAMPUS_ORIGIN_Y, ACTIONS_PER_QUARTER,
   SLEEP_RECOVER, academicAnxiety, exhaustionPenalty,
@@ -38,6 +41,7 @@ import {
 import type { NpcTalk } from '../data/npc';
 import { sound } from '../audio/sound';
 import { saveGame, consumePendingFired } from '../data/save';
+import { showQuarterAdvancePrompt } from '../ui/quarterAdvancePrompt';
 
 // 本科阶段的可行走校园场景（星露谷式垂直切片）。
 //
@@ -46,12 +50,10 @@ import { saveGame, consumePendingFired } from '../data/save';
 // 故不继承 BaseStageScene（其布局与自动节奏不适用），只复用它的 UI 组件。
 //
 // 一个季度 = 3 个行动点，其中最多 1 个用于领 storylet（玩家自己决定去哪个地点领），
-// 其余用于日常活动。回宿舍睡觉结束本季 → 经济结算 → 进入下一季度。
+// 其余用于日常活动。行动点用完后可直接确认进入下一季度，回宿舍睡觉仍是保留的手动入口。
 
 const STAGE = 'undergrad';
 const MAX_TURNS = 20;
-/** 留级：多读一年 = 4 个季度 */
-const HOLDBACK_TURNS = 4;
 /** 与 NPC 的对话距离 */
 const NPC_TALK_DIST = 44;
 
@@ -144,7 +146,7 @@ export class CampusScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-M', () => sound.toggleMute());
 
     // 重新开档（R 键）
-    bindGameMenu(this, this.consequence, () => this.minigame !== null || this.eventCard.busy);
+    bindGameMenu(this, this.consequence, () => this.minigame !== null || this.eventCard.busy || this.consequence.busy);
 
     // 操作帮助（H 键）
     new HelpPanel(this, [
@@ -152,7 +154,7 @@ export class CampusScene extends Phaser.Scene {
       '任务清单 Q · 导师对话 T',
       '重新开档 R · 帮助 H · 静音 M',
       'ESC 取消当前交互',
-      '提示：每季 3 个行动点，睡觉得回宿舍。',
+      '提示：行动点用完后可直接确认进入下一季度。',
       '技能中心可练缝合（完成任务目标）。',
     ], () => this.minigame !== null || this.eventCard.busy || this.consequence.busy);
 
@@ -383,12 +385,16 @@ export class CampusScene extends Phaser.Scene {
   }
 
   private interact(spot: Spot) {
-    // 行动点耗尽：只剩"回宿舍睡觉"这一条路
+    // 行动点耗尽：任意地点都可以重新打开季度推进确认；宿舍仍保留睡觉入口。
     if (this.actionsLeft <= 0) {
       if (spot.sleep) { this.sleep(); return; }
-      this.floatMessage('行动点用完了，回宿舍睡一觉吧', '#ffcc80');
+      this.offerQuarterAdvance();
       return;
     }
+
+    // 秘密地点 / 特殊交互优先：让 categories:[] 的秘密地点（论文黑市等）也能触发
+    const special = this.trySpecialEvent(spot);
+    if (special) { this.openEvent(special); return; }
 
     // 有可领事件的地点优先出事件；否则走日常活动
     if (this.canDrawAt(spot)) {
@@ -506,6 +512,8 @@ export class CampusScene extends Phaser.Scene {
 
     this.consequence.show(choice.consequence ?? '你做出了选择。', choice.delta as StatDelta, () => {
       if (this.checkCrisis()) return;
+      // 体力到底 → 倦怠：跳过一季并大幅回血
+      if (this.maybeBurnout()) return;
       if (next) { this.openEvent(next, true); return; }
 
       // NPC 对话只花行动点，不占用"每季一次 storylet"的额度
@@ -514,7 +522,8 @@ export class CampusScene extends Phaser.Scene {
       this.prompt.clearAllBangs();
       this.refreshInfoBar();
       this.autoSave();
-      this.setBusy(false);
+      if (this.actionsLeft <= 0) this.offerQuarterAdvance();
+      else this.setBusy(false);
     });
   }
 
@@ -533,6 +542,7 @@ export class CampusScene extends Phaser.Scene {
   // —— 日常活动 ——
   private doDaily(spot: Spot) {
     updateStats(spot.daily.delta);
+    if ((spot.daily.delta.knowledge ?? 0) > 0) noteStudied(); // 用进废退：本季学过则季度结算不掉
     sound.click();
     this.playDeltaSound(spot.daily.delta);
     this.showDeltaFloaters(spot.daily.delta);
@@ -541,11 +551,29 @@ export class CampusScene extends Phaser.Scene {
     this.refreshInfoBar();
     this.floatMessage(spot.daily.consequence, '#cfe8ff');
     this.autoSave();
-    this.checkCrisis();
+    if (this.checkCrisis()) return;
+    // 体力到底 → 倦怠：日常活动也可能把体力耗到 0
+    if (this.maybeBurnout()) return;
+    if (this.actionsLeft <= 0) this.offerQuarterAdvance();
+  }
+
+  private offerQuarterAdvance() {
+    if (this.actionsLeft > 0 || this.leaving || this.consequence.busy) return;
+    this.setBusy(true);
+    showQuarterAdvancePrompt(
+      this.consequence,
+      () => this.sleep(),
+      () => {
+        this.refreshInfoBar();
+        this.setBusy(false);
+      },
+    );
   }
 
   // —— 睡觉：结束本季度 ——
   private sleep() {
+    // 睡觉前若已倦怠（极端情况），直接走倦怠流程，不重复回血
+    if (isBurnout()) { this.runBurnout(); return; }
     this.setBusy(true);
     updateStats(SLEEP_RECOVER);
 
@@ -557,10 +585,9 @@ export class CampusScene extends Phaser.Scene {
     if (exhaust !== 0) updateStats({ sanity: exhaust });
     if (anxiety <= -4) this.floatMessage(`跟不上进度 · 心理 ${anxiety}`, '#ffab91', 130);
     if (exhaust !== 0) this.floatMessage(`身体透支 · 心理 ${exhaust}`, '#ff8a80', 148);
-    // 留级：跟着下一届重读，每季额外的心理负担
-    if (hasFlag('ug_holdback') && !hasFlag('ug_holdback_recovered')) {
-      updateStats({ sanity: -3 });
-    }
+    // 留级：跟着下一届重读，每季额外的心理负担（本科/硕博统一）
+    const hbPen = holdbackSanityPenalty(STAGE);
+    if (hbPen !== 0) updateStats({ sanity: hbPen });
 
     const { econ, grieving, integrity } = advanceQuarter(STAGE);
     this.showQuarterBill(econ);
@@ -591,18 +618,76 @@ export class CampusScene extends Phaser.Scene {
     this.time.delayedCall(360, () => this.afterSleep());
   }
 
-  /** 睡觉结算完成后的流程分支：崩溃 / 退学 / 转阶段 / 进入下一季 */
+  /** 睡觉结算完成后的流程分支：崩溃 / 退学 / 考试危机 / 转阶段 / 进入下一季 */
   private afterSleep() {
     if (this.checkCrisis()) return;
+    // 知识太低 → 考试不及格 / 留级
+    if (this.maybeExamCrisis()) return;
     // 退学：不等读满学制，本季结束即离开
     if (hasFlag('left_undergrad')) { this.goToEnding(); return; }
     if (getState().turnsInStage >= this.totalTurns()) { this.transitionToNext(); return; }
     this.beginQuarter();
   }
 
+  // —— 倦怠：体力归零，跳过一季并回血 ——
+  private maybeBurnout(): boolean {
+    if (!isBurnout()) return false;
+    this.runBurnout();
+    return true;
+  }
+
+  private runBurnout() {
+    this.setBusy(true);
+    const { econ, grieving, integrity } = triggerBurnout();
+    this.floatMessage('倦怠 · 你瘫倒了，错过了一整个季度', '#ff8a80', 170);
+    this.showQuarterBill(econ);
+    if (grieving) this.floatMessage('思念 · 心理 -2', '#ff8a80', 150);
+
+    const mapImg = this.children.list.find(
+      (c: any) => c?.texture?.key === 'campus_map',
+    ) as Phaser.GameObjects.Image | undefined;
+    mapImg?.setTint(stageAmbientTint(STAGE, getState().quarter));
+
+    this.hud.update(getState().stats, STAGE);
+    this.refreshInfoBar();
+    this.pumpNewsForQuarter();
+    this.autoSave();
+
+    if (integrity.level !== 'none') {
+      sound.bad();
+      this.consequence.show(`【学术诚信】${integrity.message}`, {}, () => {
+        this.hud.update(getState().stats, STAGE);
+        this.afterSleep();
+      });
+      return;
+    }
+    this.cameras.main.flash(220, 0, 0, 0);
+    this.time.delayedCall(360, () => this.afterSleep());
+  }
+
+  // —— 知识太低 → 考试危机 / 留级 ——
+  private maybeExamCrisis(): boolean {
+    if (checkExamCrisis(STAGE) === null) return false;
+    if (hasFlag('ug_holdback')) return false;
+    setFlag('ug_holdback');
+    sound.bad();
+    this.consequence.show(
+      '【学业警示】本科阶段知识过低，两门核心课不及格。你被要求留级，重修一年。',
+      { knowledge: -2 },
+      () => { this.afterSleep(); },
+    );
+    return true;
+  }
+
+  // —— 秘密地点：论文黑市（categories:[] 的隐秘 spot 触发）——
+  private trySpecialEvent(spot: Spot): GameEvent | null {
+    if (spot.id !== 'secret_lab') return null;
+    return paperMarketEvent();
+  }
+
   /** 本阶段总季度数。留级会多读一年（4 个季度）。 */
   private totalTurns(): number {
-    return hasFlag('ug_holdback') ? MAX_TURNS + HOLDBACK_TURNS : MAX_TURNS;
+    return MAX_TURNS + holdbackExtraTurns(STAGE);
   }
 
   private goToEnding() {
@@ -625,8 +710,17 @@ export class CampusScene extends Phaser.Scene {
   private transitionToNext() {
     this.leaving = true;
     sound.transition();
+    // 分轨：本科结束按保研 / 长学制路由到不同下一阶段
+    //  · 本博连读（8 年制）→ 直博，跳过硕士
+    //  · 5+3 一体化 → 专硕
+    //  · 保研上岸（非转普通班）→ 科研硕士，免考研
+    //  · 其余（含长学制转普通班）→ 规培 → GuipeiWalkScene 再分
+    let nextScene = 'HospitalScene';
+    if (hasFlag('track_eight_year')) nextScene = 'PhdWalkScene';
+    else if (hasFlag('track_five_plus_three')) nextScene = 'MasterWalkScene';
+    else if (hasFlag('baoyan') && !hasFlag('long_sys_transferred')) nextScene = 'MasterWalkScene';
     this.cameras.main.fadeOut(600, 0, 0, 0);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('HospitalScene'));
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(nextScene));
   }
 
   // —— 新闻 / 存档（与 BaseStageScene 同逻辑）——

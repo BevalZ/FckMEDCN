@@ -45,6 +45,7 @@ async function continueWithSave(
       firedEvents: ['ug_fake_paper'], // 标记：读档后应恢复进场景 firedEvents
       firedNews: [],
     };
+    delete (blob.state as any).assetLedger;
     localStorage.setItem('fckmedcn_save_v1', JSON.stringify(blob));
   }, opts);
 
@@ -70,12 +71,14 @@ test('B4 旧档 sceneKey=InternshipScene：读档进卡片实习场景不白屏'
     return {
       turns: st.turnsInStage, year: st.year, quarter: st.quarter,
       firedRestored: s.firedEvents?.has?.('ug_fake_paper') ?? null,
+      assetLedger: st.assetLedger,
     };
   });
   expect(state.turns, '读档后季度应保留').toBe(2);
   expect(state.year).toBe(2029);
   expect(state.quarter).toBe(4);
   expect(state.firedRestored, '存档的 firedEvents 应恢复到场景').toBe(true);
+  expect(state.assetLedger, '旧档缺少资产流水时应安全补空数组').toEqual([]);
 
   expect(errors, `运行时报错：\n${errors.join('\n')}`).toEqual([]);
 });

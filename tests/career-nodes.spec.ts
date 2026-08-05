@@ -70,13 +70,68 @@ test('职业期强制选亚专科 → 第3季强制医患诉讼', async ({ page 
   await page.waitForFunction(
     () => {
       const s: any = (window as any).game.scene.getScene('CareerScene');
-      return s.currentEvent?.id === 'career_lawsuit_1';
+      return s.currentEvent?.id === 'career_lawsuit_1_surgery';
     },
     null, { timeout: 20000 },
   );
-  expect(await currentEventId(page), '第3季应强制诉讼').toBe('career_lawsuit_1');
+  expect(await currentEventId(page), '第3季应强制外科诉讼').toBe('career_lawsuit_1_surgery');
   const turns = await page.evaluate(() => ((window as any).__mod.gs.getState().turnsInStage));
   expect(turns, '应在第 3 季').toBeGreaterThanOrEqual(3);
+
+  // ESC 只跳过当前卡，不完成强制节点；推进一季后必须再次出现。
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(
+    () => {
+      const s: any = (window as any).game.scene.getScene('CareerScene');
+      return s.currentEvent?.id === 'career_lawsuit_1_surgery';
+    },
+    null, { timeout: 20000 },
+  );
+  expect(await currentEventId(page), 'ESC 后应继续补触发外科诉讼').toBe('career_lawsuit_1_surgery');
+});
+
+test('两轮诉讼按四个亚专科分化且赔付按职级缩放', async ({ page }) => {
+  await page.goto(BASE, { waitUntil: 'load' });
+  await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 60000 });
+
+  const r = await page.evaluate(() => {
+    const { gs, tf, ev, stats: st } = (window as any).__mod;
+    const specs = ['internal', 'surgery', 'obgyn', 'pediatrics'];
+    const base = st.createDefaultStats();
+    const rows = specs.flatMap((spec) => ([1, 2] as const).map((round) => {
+      const id = `career_lawsuit_${round}_${spec}`;
+      const ownFlag = `sub_${spec}`;
+      const otherFlag = spec === 'internal' ? 'sub_surgery' : 'sub_internal';
+      const turn = round === 1 ? 3 : 9;
+      const own = ev.getAvailableEvents('career', new Set([ownFlag]), { ...base }, new Set(), turn, 'single')
+        .find((e: any) => e.id === id);
+      const cross = ev.getAvailableEvents('career', new Set([otherFlag]), { ...base }, new Set(), turn, 'single')
+        .some((e: any) => e.id === id);
+      return { id, own: !!own, cross, title: own?.title ?? '', body: own?.body ?? '', rankScaled: own?.rankScaled === true };
+    }));
+
+    const surgery = ev.ALL_EVENTS.find((e: any) => e.id === 'career_lawsuit_1_surgery');
+    const loss = (flags: string[]) => {
+      gs.resetGame();
+      gs.patchState({ stage: 'career', flags: new Set(['sub_surgery', ...flags]) });
+      const before = gs.getState().stats.money;
+      tf.commitChoice(surgery.choices[0], surgery);
+      return before - gs.getState().stats.money;
+    };
+    return { rows, residentLoss: loss([]), chiefLoss: loss(['passed_zhenggao']) };
+  });
+
+  expect(r.rows).toHaveLength(8);
+  for (const row of r.rows) {
+    expect(row.own, `${row.id} 应在本专科可达`).toBe(true);
+    expect(row.cross, `${row.id} 不应串入其它专科`).toBe(false);
+    expect(row.title.length, `${row.id} 应有差异化标题`).toBeGreaterThan(6);
+    expect(row.body.length, `${row.id} 应有差异化案件描述`).toBeGreaterThan(30);
+    expect(row.rankScaled, `${row.id} 应启用职级赔付缩放`).toBe(true);
+  }
+  expect(new Set(r.rows.map(row => row.title)).size, '8 个诉讼节点标题应各不相同').toBe(8);
+  expect(r.residentLoss, '住院医律师费按 0.7 缩放').toBe(5600);
+  expect(r.chiefLoss, '主任律师费按 1.5 缩放').toBe(12000);
 });
 
 test('管理层事件（took_admin）可达', async ({ page }) => {

@@ -459,11 +459,26 @@ export class GaokaoScene extends Phaser.Scene {
     }));
 
     const contSpec: OptionSpec = {
-      x: 380, y: 400, w: 200, h: 42,
+      x: 280, y: 392, w: 160, h: 42,
       label: '继续选校 →', sub: undefined,
       action: () => this.showSchoolPhase(),
     };
-    this.renderOptions([contSpec]);
+    const workSpec: OptionSpec = {
+      x: 520, y: 392, w: 240, h: 42,
+      label: '放弃升学，直接工作', sub: undefined,
+      action: () => this.skipCollegeToWork(),
+    };
+    this.renderOptions([contSpec, workSpec]);
+  }
+
+  // 轻量捷径：不上大学、直接工作（非医生线）。置 no_college 后经求职→职业链路，
+  // 由 endings.ts 的非医生结局与 CareerScene 的 no_college 分流承接。
+  private skipCollegeToWork() {
+    this.removeKeyboard();
+    setFlag('no_college');
+    saveGame('JobHuntScene', [], []);
+    this.cameras.main.fadeOut(500, 0, 0, 0);
+    this.time.delayedCall(600, () => this.scene.start('JobHuntScene'));
   }
 
   private tierFlavor(tier: number): string {
@@ -646,6 +661,9 @@ export class GaokaoScene extends Phaser.Scene {
     // 学制 → 临床 / 科研 路线标记（驱动硕博阶段事件内容）
     if (degree === 'phd' || degree === 'master_pro') setFlag('track_clinical');
     else setFlag('track_research');
+    // 长学制（8 年一贯制：本博连读 / 5+3）统一置 long_system，
+    // 用于本科结束路由直读硕士/博士，以及"连续低分转普通班"警告。
+    if (track.id === 'eight_year' || track.id === 'five_plus_three') setFlag('long_system');
     // 院校档次标记（驱动阶层叙事）
     setFlag('school_tier_' + school.tier);
 

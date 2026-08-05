@@ -6,6 +6,7 @@ import { sound } from '../audio/sound';
 import { clearSave } from '../data/save';
 import { recordEnding } from '../data/collection';
 import { compareEnding } from '../data/comparison';
+import { careerFinancialSnapshot } from '../data/economy';
 
 export class EndingScene extends Phaser.Scene {
   private endingId!: string;
@@ -49,11 +50,15 @@ export class EndingScene extends Phaser.Scene {
     const verdictColor: Record<string, number> = { low: 0xff8a95, mid: 0x4fc3f7, high: 0xffc107 };
 
     const compareRows = compareEnding(ending.id, state);
-    const totalWealth = (state.stats.money ?? 0) + (state.assets ?? 0);
+    const finance = careerFinancialSnapshot();
     const infoRows: [string, string][] = [
       ['感情', maritalLabel[state.marital]],
       ['家人/子女', `${state.familyAlive}/4 在世 · ${state.hasChild ? '有娃' : '无娃'}`],
-      ['总资产', `¥${totalWealth.toLocaleString()}（现金¥${state.stats.money.toLocaleString()}＋资产¥${(state.assets ?? 0).toLocaleString()}）`],
+      ['现金 / 资产', `现金¥${finance.cash.toLocaleString()} · 资产¥${finance.assets.toLocaleString()}`],
+      ['职业现金流', `${finance.region} ${finance.title} · 季度收入¥${finance.quarterlyIncome.toLocaleString()} · 可支配¥${finance.disposable.toLocaleString()}`],
+      ['房贷', finance.mortgageBalance > 0
+        ? `余额约¥${finance.mortgageBalance.toLocaleString()} · 季度还款¥${finance.housePayment.toLocaleString()}`
+        : '未购房 / 无房贷'],
     ];
 
     this.add.text(60, 210, '你的数据', { fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#ffc107', fontStyle: 'bold' });

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { sound } from './audio/sound';
 import { GAME_WIDTH, GAME_HEIGHT } from './data/constants';
 import { BootScene } from './scenes/BootScene';
 import { TitleScene } from './scenes/TitleScene';
@@ -12,6 +13,9 @@ import { GuipeiWalkScene } from './scenes/GuipeiWalkScene';
 import { MasterScene, PhDScene } from './scenes/MasterScene';
 import { JobHuntScene } from './scenes/JobHuntScene';
 import { CareerScene } from './scenes/CareerScene';
+import { MasterWalkScene } from './scenes/MasterWalkScene';
+import { PhdWalkScene } from './scenes/PhdWalkScene';
+import { CareerWalkScene } from './scenes/CareerWalkScene';
 import { EndingScene, MentalCrisisScene } from './scenes/EndingScene';
 import { CollectionScene } from './scenes/CollectionScene';
 import { installTextPatch } from './ui/textPatch';
@@ -54,6 +58,9 @@ const config: Phaser.Types.Core.GameConfig = {
     PhDScene,
     JobHuntScene,
     CareerScene,
+    MasterWalkScene,
+    PhdWalkScene,
+    CareerWalkScene,
     EndingScene,
     MentalCrisisScene,
     CollectionScene,
@@ -61,6 +68,19 @@ const config: Phaser.Types.Core.GameConfig = {
 };
 
 const game = new Phaser.Game(config);
+
+// 全局按键音效：任何按键（非长按重复）都给一个轻 tick；首次手势解锁 BGM 自动播放。
+{
+  const unlock = () => { sound.ensure(); sound.unlockAudio(); };
+  window.addEventListener('pointerdown', unlock);
+  window.addEventListener('keydown', (e) => {
+    if (e.repeat) return; // 忽略长按自动重复，避免连发音
+    sound.ensure();
+    sound.unlockAudio();
+    sound.keytick();
+  });
+}
+
 
 // 仅开发构建暴露给自动化冒烟测试读取场景状态；生产包不含这段。
 // 注意：测试里用 import('/src/data/xxx.ts') 会拿到**另一个模块实例**（Vite 按 URL 缓存，
@@ -89,10 +109,11 @@ if (import.meta.env.DEV) {
     import('./data/npcGen'),
     import('./data/patientType'),
     import('./data/economy'),
-  ]).then(([gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad, leg, cmp, ngn, pt, ec]) => {
+    import('./data/knowledge'),
+  ]).then(([gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad, leg, cmp, ngn, pt, ec, kn]) => {
     w.__state = gs.getState;
     w.__setFlag = gs.setFlag;
     w.__patchState = gs.patchState;
-    w.__mod = { gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad, leg, cmp, ngn, pt, ec };
+    w.__mod = { gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad, leg, cmp, ngn, pt, ec, kn };
   });
 }

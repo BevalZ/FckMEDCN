@@ -1,13 +1,14 @@
-import { getState, updateStats, advanceTurn, hasFlag, setFlag } from './gameState';
+import { changeAttr, getState, updateStats, advanceTurn, hasFlag, setFlag } from './gameState';
 import { applyChoiceEffect } from './effects';
 import { getAvailableEvents, weightedRandom } from './events';
 import type { EventCategory, EventChoice, GameEvent } from './events';
-import { applyStageEconomy, currentRegionTier, REGION_HOUSE } from './economy';
+import { applyStageEconomy } from './economy';
 import type { QuarterEconomy } from './economy';
 import { rollIntegrity } from './integrity';
 import type { IntegrityOutcome } from './integrity';
 import type { StatDelta } from './stats';
 import { checkBadges } from './badges';
+import { isKnowledgeStage, tickLongSystemCounter, consumeQuarterDecay, noteStudied } from './knowledge';
 
 // 回合流程的共享逻辑。
 // BaseStageScene（卡片模式）与 CampusScene（可行走地图）都走这里，
@@ -112,18 +113,13 @@ export function commitChoice(choice: EventChoice, event?: GameEvent) {
     const rank = st.flags.has('passed_zhenggao') ? 1.5
       : st.flags.has('passed_fugao') ? 1.3
       : st.flags.has('passed_zhuzhi') ? 1.0 : 0.7;
-    // 地区因子：三甲/私立房价高、基层县城房价低（深挖第五部分 R2 落地）。
-    // 购房事件（career_mid_house）用 regionScaled 标记，首付/赔付随地区档位浮动。
-    let factor = rank;
-    if (event.regionScaled) {
-      const base = 8000; // 默认档位（市级）首付基数
-      factor = rank * (REGION_HOUSE[currentRegionTier()].down / base);
-    }
-    delta = { ...choice.delta, money: Math.round(choice.delta!.money! * factor) };
+    delta = { ...choice.delta, money: Math.round(choice.delta!.money! * rank) };
   }
   if (choice.flagSet) setFlag(choice.flagSet);
   if (choice.effect) applyChoiceEffect(choice.effect);
   updateStats(delta as StatDelta);
+  // 事件选择里加知识也算"本季学过"，季度结算不掉（用进废退）
+  if ((choice.delta?.knowledge ?? 0) > 0) noteStudied();
   checkBadges();
 }
 
@@ -151,9 +147,23 @@ export function advanceQuarter(stageName: string): {
     const heal: StatDelta = isPeds ? { sanity: 4 } : { sanity: 2 };
     updateStats(heal);
     updateStats(drain);
+    // 职业期每四季结算一次长期夜班/疲劳磨损，属性只在 0..5 内变化。
+    if (getState().turnsInStage > 0 && getState().turnsInStage % 4 === 0) {
+      changeAttr('looks', -1, '长期夜班与职业疲劳留下了痕迹');
+    }
   }
   const grieving = hasFlag('grieving');
   if (grieving) updateStats({ sanity: -2 });
+
+  // 知识衰减（仅学籍阶段）：本季学过则不掉（用进废退），否则随机 5%~10%。
+  // 衰减在诚信判定之前，让被跳过/ Burnout 的季度同样自然掉知识。
+  if (isKnowledgeStage(stageName as any)) {
+    const decay = consumeQuarterDecay();
+    if (decay > 0) updateStats({ knowledge: -decay });
+    // 长学制连续低知识计数（转普通班警告触发）
+    tickLongSystemCounter();
+  }
+
   const integrity = rollIntegrity();
   return { econ, grieving, integrity };
 }

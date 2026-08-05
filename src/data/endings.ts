@@ -162,6 +162,26 @@ export const ENDINGS: Ending[] = [
       { label: '临床能力评价试点', value: '多地探索"以临床为主"通道', source: '卫健委相关政策' },
     ],
   },
+  {
+    id: 'worker_steady', title: '安稳的日子', subtitle: '没上大学，但也过得去',
+    tone: 'bittersweet', bgColor: 0x1f2a2e,
+    desc: '你没走上那条最长的路。高中毕业后进了厂、去了工地，或者做了销售。钱不多，但每月按时到账，家里人踏实。\n偶尔刷到当年的同学成了医生，你替他们高兴，也替自己松了口气——至少你睡得早。',
+    stats: { finalAge: 38, finalMoney: 60000, totalYears: 20, title: '（打工者）', hospital: '——', verdict: '不是每条路都要读那么久' },
+    realDataCard: [
+      { label: '我国高等教育毛入学率', value: '约 60%，仍有四成青年未读大学', source: '教育部历年统计' },
+      { label: '技能工种缺口', value: '制造业 / 服务业长期存在', source: '人社部职业技能提升计划' },
+    ],
+  },
+  {
+    id: 'worker_struggle', title: '浮沉打工路', subtitle: '没学历，靠体力与时间换钱',
+    tone: 'dark', bgColor: 0x231a16,
+    desc: '没有文凭兜底，你来来回回换过几份工。工厂、外卖、零工——哪一单停了，哪一天就没进项。\n你比同龄人更早懂了"手停口停"，也更早学会了在活儿多时先存一笔应急钱。',
+    stats: { finalAge: 38, finalMoney: -5000, totalYears: 20, title: '（打工者）', hospital: '——', verdict: '学历不是唯一出路，但确实是缓冲' },
+    realDataCard: [
+      { label: '灵活就业人员规模', value: '超 2 亿', source: '国家统计局' },
+      { label: '零工经济的风险', value: '收入不稳、缺社保', source: '公开研究报告' },
+    ],
+  },
 ];
 
 export const ENDINGS_BY_ID: Record<string, Ending> = Object.fromEntries(ENDINGS.map(e => [e.id, e]));
@@ -183,6 +203,8 @@ export const ENDING_HINTS: Record<string, string> = {
   disgraced: '学术造假，被重度曝光。',
   lucky_fraud: '造过假、没被抓，还评上了职称。',
   master_clinician: '临床能力出众、论文很少、病人认你。',
+  worker_steady: '高考后选择放弃升学、直接工作。',
+  worker_struggle: '没学历兜底，手停口停、几经浮沉。',
 };
 
 export function determineEnding(state: GameState): Ending {
@@ -198,6 +220,12 @@ export function determineEnding(state: GameState): Ending {
   if (flags.has('left_undergrad')) ending = ENDINGS_BY_ID['left_undergrad']; // 本科期间退学
   else if (flags.has('left_med')) ending = ENDINGS_BY_ID['quit_guipei'];
   else if (flags.has('considering_quit_guipei') && stats.sanity < 25 && state.stage !== 'career') ending = ENDINGS_BY_ID['quit_guipei'];
+
+  // 0.1 未上大学、直接工作的非医生线：按经济与心境收尾，不走任何医学结局。
+  else if (flags.has('no_college')) {
+    if (money + (state.assets ?? 0) < -10000 || stats.sanity < 30) ending = ENDINGS_BY_ID['worker_struggle'];
+    else ending = ENDINGS_BY_ID['worker_steady'];
+  }
 
   // 0.5 学术不端：被查与侥幸
   // 身败名裂优先于一切"成功"结局——论文再多，通报盖住了。

@@ -1,7 +1,54 @@
 import type { GameEvent } from './events';
 
-// 职业阶段事件池（career）。12 回合，覆盖晋升、科研、医患、科室政治、倦怠等。
+// 职业阶段事件池（career）。20 回合，覆盖晋升、科研、医患、科室政治、倦怠等。
 // 注意：promote_zhuzhi 设置 passed_zhuzhi，与 endings.ts 的 stable_at_45 结局判定联动。
+const LAWSUIT_CASES = [
+  {
+    key: 'internal', flag: 'sub_internal', label: '内科漏诊争议',
+    first: '一位胸痛患者初诊心电图不典型，数小时后确诊心肌梗死。家属认为你延误诊断，把医院和你告上法庭。',
+    second: '一位反复腹痛患者后来查出肿瘤，家属申请医疗损害鉴定，争议焦点是当时是否充分鉴别并安排复查。',
+  },
+  {
+    key: 'surgery', flag: 'sub_surgery', label: '外科并发症争议',
+    first: '一位患者术后出现出血并再次手术。家属质疑术中操作和术后观察，一纸诉状把医院和你告上法庭。',
+    second: '一位患者术后发生吻合口漏，家属申请医疗损害鉴定，争议焦点是并发症告知与发现后的处置时机。',
+  },
+  {
+    key: 'obgyn', flag: 'sub_obgyn', label: '产科急症争议',
+    first: '一次分娩中突发产后出血，团队紧急抢救后家属仍质疑处置不够及时，把医院和你告上法庭。',
+    second: '一位高危孕产妇出现新生儿不良结局，家属申请医疗损害鉴定，争议焦点是风险评估、监护与转剖宫产时机。',
+  },
+  {
+    key: 'pediatrics', flag: 'sub_pediatrics', label: '儿科诊疗争议',
+    first: '一名高热患儿病情进展很快，转入重症监护。家长认为首诊判断过于乐观，把医院和你告上法庭。',
+    second: '一名反复喘息患儿再次急诊住院，家长申请医疗损害鉴定，争议焦点是出院交代、随访和吸入治疗指导。',
+  },
+] as const;
+
+function lawsuitEvents(): GameEvent[] {
+  return LAWSUIT_CASES.flatMap(spec => ([1, 2] as const).map(round => ({
+    id: `career_lawsuit_${round}_${spec.key}`,
+    stage: 'career',
+    title: round === 1 ? `一纸诉状：${spec.label}` : `损害鉴定：${spec.label}`,
+    body: `${round === 1 ? spec.first : spec.second}医务科让你准备病历、知情同意记录和应诉材料。`,
+    category: 'clinical',
+    weight: 1,
+    once: true,
+    minTurn: round === 1 ? 3 : 9,
+    requireFlag: spec.flag,
+    rankScaled: true,
+    choices: round === 1 ? [
+      { text: '请专业律师，整理证据正面应诉', delta: { money: -8000, stamina: -12, sanity: -6, reputation: 4 }, flagSet: 'lawsuit_done_1', consequence: '鉴定围绕诊疗规范和因果关系展开。你陈述清楚，执业记录保住了。' },
+      { text: '接受医患办调解，赔偿后结案', delta: { money: -15000, sanity: 2, relations: -3 }, flagSet: 'lawsuit_done_1', consequence: '调解书签了，争议告一段落，但这份经历留在了心里。' },
+      { text: '不请律师，自己准备答辩', delta: { money: -3000, sanity: -12, reputation: -4 }, flagSet: 'lawsuit_done_1', consequence: '对方围绕病历细节连续追问，你的答辩十分被动。' },
+    ] : [
+      { text: '请律师团队并申请补充鉴定', delta: { money: -12000, stamina: -14, sanity: -8, reputation: 3 }, flagSet: 'lawsuit_done_2', consequence: '补充鉴定厘清了部分责任，流程上保住了你的执业记录。' },
+      { text: '主动调解，赔偿后终结争议', delta: { money: -20000, sanity: 4, relations: -4 }, flagSet: 'lawsuit_done_2', consequence: '赔偿到账，程序终结。你第一次认真考虑要不要换条路。' },
+      { text: '由医院统一应对，完整配合调查', delta: { money: -6000, reputation: 2, relations: -2 }, flagSet: 'lawsuit_done_2', consequence: '医院承担主要应诉工作，你提交说明并参加了整改。' },
+    ],
+  })));
+}
+
 export const CAREER_EVENTS: GameEvent[] = [
   {
     id: 'promote_zhuzhi',
@@ -25,13 +72,26 @@ export const CAREER_EVENTS: GameEvent[] = [
     body: '年限到了，材料齐了。副高答辩在即，差一篇 SCI 可能就卡住。',
     category: 'career',
     weight: 75,
-    minTurn: 6,
+    minTurn: 8,
     once: true,
     requireFlag: 'passed_zhuzhi',
     newsTickerAfter: '【卫生高级职称评审结果公布：评价体系加快向临床实绩倾斜】',
     choices: [
       { text: '埋头补文章、备答辩', delta: { reputation: 6, knowledge: 5, papers: 1, stamina: -14, sanity: -4 }, flagSet: 'passed_fugao', consequence: '答辩通过那天，你给恩师发了条消息。' },
+      { text: '递交现有材料，接受评审结果', delta: { reputation: -2, stamina: -8, sanity: -7 }, flagSet: 'fugao_failed', consequence: '公示名单没有你：临床工作量差一分，名额也已用完。材料被退回，你只能等下一批。' },
       { text: '顺其自然，下批再战', delta: { sanity: 4 }, consequence: '你把材料收进抽屉。' },
+    ],
+  },
+  {
+    id: 'promote_fugao_retry',
+    stage: 'career',
+    title: '副高重申',
+    body: '又熬过一年。你补齐临床工作量、论文和继续教育学分，把上次被退的材料重新装订。',
+    category: 'career', weight: 80, once: true, minTurn: 12,
+    requireFlag: 'fugao_failed',
+    choices: [
+      { text: '再进一次评审室', delta: { reputation: 6, knowledge: 4, stamina: -12, sanity: -4 }, flagSet: 'passed_fugao', consequence: '这次名单上有你。落选那一年没有白熬。' },
+      { text: '暂缓申报，先把临床做好', delta: { clinical: 4, sanity: 3, stamina: -4 }, consequence: '你把材料留到下一轮，先回病房。' },
     ],
   },
   {
@@ -466,9 +526,9 @@ export const CAREER_EVENTS: GameEvent[] = [
     stage: 'career',
     title: '房贷的重量',
     body: '同事都在聊月供。你算了算自己的存款，犹豫要不要在这个城市"上车"。',
-    category: 'financial', weight: 50, once: true, minTurn: 4, rankScaled: true, regionScaled: true,
+    category: 'financial', weight: 50, once: true, minTurn: 4,
     choices: [
-      { text: '咬牙付首付，扎根', delta: { money: -8000, sanity: -3, relations: 2 }, flagSet: 'bought_house', consequence: '合同签完那晚，你站在空荡荡的客厅里，既踏实又有点慌。' },
+      { text: '咬牙付首付，扎根', delta: { sanity: -3, relations: 2 }, flagSet: 'bought_house', effect: { kind: 'buyHouse' }, consequence: '合同签完那晚，你站在空荡荡的客厅里，既踏实又有点慌。' },
       { text: '继续租房，自由些', delta: { money: 500, sanity: 4 }, consequence: '你把首付留在了账户里。' },
     ],
   },
@@ -524,11 +584,24 @@ export const CAREER_EVENTS: GameEvent[] = [
     stage: 'career',
     title: '冲刺主任医师',
     body: '正高评审开始了。这一次，材料、年限、口碑都齐了，差的只是最后再熬一熬。',
-    category: 'career', weight: 70, once: true, requireFlag: 'passed_fugao', minTurn: 9,
+    category: 'career', weight: 70, once: true, requireFlag: 'passed_fugao', minTurn: 16,
     newsTickerAfter: '【正高职称评审新规落地：论文不再是唯一"硬杠杠"】',
     choices: [
       { text: '全力冲刺正高', delta: { reputation: 8, knowledge: 5, papers: 1, stamina: -16, sanity: -5 }, flagSet: 'passed_zhenggao', consequence: '公示名单里有你。你第一个电话打给了家里。' },
+      { text: '按临床实绩申报，不临时凑论文', delta: { clinical: 4, reputation: -2, stamina: -10, sanity: -8 }, flagSet: 'zhenggao_failed', consequence: '你只差零点几分。评委认可临床能力，但这一轮名额没有留给你。' },
       { text: '副高也挺好，不折腾了', delta: { sanity: 5, stamina: 2 }, consequence: '你把机会让给了更年轻的人。' },
+    ],
+  },
+  {
+    id: 'promote_zhenggao_retry',
+    stage: 'career',
+    title: '正高再评',
+    body: '落选后的两年里，你把疑难病例、带教和质控成果逐项补齐。评审通知再次到了。',
+    category: 'career', weight: 80, once: true, minTurn: 18,
+    requireFlag: 'zhenggao_failed',
+    choices: [
+      { text: '带着补齐的材料再评一次', delta: { reputation: 8, knowledge: 4, stamina: -14, sanity: -4 }, flagSet: 'passed_zhenggao', consequence: '公示名单里终于有你。你知道这不是一次答辩换来的。' },
+      { text: '不再申报，把精力留给病人', delta: { clinical: 5, sanity: 5, reputation: 2 }, consequence: '职称停在副高，你在病房里的分量却没有变轻。' },
     ],
   },
   {
@@ -536,7 +609,7 @@ export const CAREER_EVENTS: GameEvent[] = [
     stage: 'career',
     title: '院领导找你谈话',
     body: '"科里需要你这样的同志挑担子。"言下之意：行政岗，副主任主持工作。接了，离临床就远了一步。',
-    category: 'career', weight: 55, once: true, requireFlag: 'passed_zhenggao', minTurn: 10,
+    category: 'career', weight: 55, once: true, requireFlag: 'passed_zhenggao', minTurn: 17,
     choices: [
       { text: '接下这副担子', delta: { reputation: 6, relations: 2, sanity: -5, stamina: -6 }, flagSet: 'took_admin', consequence: '你的日程表从此被会议切成碎片。' },
       { text: '只想当医生，婉拒', delta: { knowledge: 3, sanity: 4 }, consequence: '你说："我的位置在诊室里。"' },
@@ -671,31 +744,8 @@ export const CAREER_EVENTS: GameEvent[] = [
     ],
   },
 
-  // —— 人生必经：被患者告上法庭 / 申请仲裁（第 3 季、第 9 季强制触发一次）——
-  {
-    id: 'career_lawsuit_1',
-    stage: 'career',
-    title: '一纸诉状',
-    body: '你主管的一位患者术后出现并发症，家属请了律师，一纸诉状把医院和你一起告上法庭。医务科让你准备应诉材料。',
-    category: 'clinical', weight: 1, once: true, minTurn: 3,
-    choices: [
-      { text: '请专业律师，正面应诉', delta: { money: -8000, stamina: -12, sanity: -6, reputation: 4 }, flagSet: 'lawsuit_done_1', consequence: '庭上你陈述清晰，判决医院承担次要责任，你的执业记录保住了。' },
-      { text: '和家属私了，赔钱撤诉', delta: { money: -15000, sanity: 2, relations: -3 }, flagSet: 'lawsuit_done_1', consequence: '签了调解书，钱打了过去。你心里清楚，这件事不会就这么过去。' },
-      { text: '硬扛，自己答辩', delta: { money: -3000, sanity: -12, reputation: -4 }, flagSet: 'lawsuit_done_1', consequence: '庭上你被问得语塞，判决结果很被动。你在办公室坐了很久。' },
-    ],
-  },
-  {
-    id: 'career_lawsuit_2',
-    stage: 'career',
-    title: '仲裁程序',
-    body: '又一位患者家属申请医疗损害鉴定，走了仲裁程序。医务科说：这次对方证据准备得很充分，躲不过去。',
-    category: 'clinical', weight: 1, once: true, minTurn: 9,
-    choices: [
-      { text: '请律师团队 + 补充鉴定', delta: { money: -12000, stamina: -14, sanity: -8, reputation: 3 }, flagSet: 'lawsuit_done_2', consequence: '新的鉴定意见对你不利，但流程上你保住了执业记录。' },
-      { text: '主动调解，赔钱了事', delta: { money: -20000, sanity: 4, relations: -4 }, flagSet: 'lawsuit_done_2', consequence: '赔钱消灾。你第一次认真考虑，要不要换条路。' },
-      { text: '医院出面，你配合', delta: { money: -6000, reputation: 2, relations: -2 }, flagSet: 'lawsuit_done_2', consequence: '医院承担了主要责任，你写了检讨，但没有被处分。' },
-    ],
-  },
+  // —— 人生必经：第 3/9 季各一次，案件按亚专科分化，赔付按职级缩放。——
+  ...lawsuitEvents(),
   // 病历质量反哺诉讼（深挖第五部分 R5 落地）：病历书写差（record_sloppy）的人，
   // 在仲裁/诉讼里举证被动——即使流程上没输，职业声誉也受损。
   {
@@ -761,8 +811,8 @@ export const CAREER_EVENTS: GameEvent[] = [
     body: '抢救结束时拔针，一根用过的针头扎进了你的手指。血珠渗出来，患者病历上"乙肝"一栏是阳性。',
     category: 'clinical', weight: 45, once: true, minTurn: 2,
     choices: [
-      { text: '立即挤血、消毒、上报感染科', delta: { stamina: -4, sanity: -6, reputation: 2 }, flagSet: 'needlestick_reported', consequence: '感染科开了预防用药。你盯着注射器，第一次觉得白大褂没那么安全。' },
-      { text: '挤了挤血，没当回事', delta: { sanity: -3, stamina: -2 }, flagSet: 'needlestick_hidden', consequence: '你用水冲了冲继续忙。夜里想起那管血，你睡不着。' },
+      { text: '立即挤血、消毒、上报感染科', delta: { stamina: -4, sanity: -6, reputation: 2 }, flagSet: 'needlestick_reported', effect: { kind: 'changeAttr', attr: 'luck', amount: 1, reason: '及时上报职业暴露，给自己留了退路' }, consequence: '感染科开了预防用药。你盯着注射器，第一次觉得白大褂没那么安全。' },
+      { text: '挤了挤血，没当回事', delta: { sanity: -3, stamina: -2 }, flagSet: 'needlestick_hidden', effect: { kind: 'changeAttr', attr: 'luck', amount: -1, reason: '忽视职业暴露，风险没有消失' }, consequence: '你用水冲了冲继续忙。夜里想起那管血，你睡不着。' },
     ],
   },
   // 上报后的回响：预防用药的副作用与随访

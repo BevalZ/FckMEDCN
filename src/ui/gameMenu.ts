@@ -2,23 +2,27 @@ import Phaser from 'phaser';
 import { resetGame, patchState, getState } from '../data/gameState';
 import { clearSave, loadSave, saveGame } from '../data/save';
 import { applyLegacyPerks } from '../data/legacy';
+import {
+  fundChildEducation, prepayMortgage, withdrawAssets, WITHDRAWAL_FEE_RATE,
+} from '../data/economy';
 import type { ConsequencePopup } from './ConsequencePopup';
 
-// 游戏内菜单（R 键）：继续游戏 / 返回标题 / 修改性别 / 理财策略 / 重新开档。
+// 游戏内菜单（R 键）：继续游戏 / 返回标题 / 修改性别 / 理财策略 / 资产账户 / 重新开档。
 // ↑↓ 或 数字键 选择，空格/回车 确认，ESC 关闭。
 // 返回标题不清档（自动存档仍在，标题页可"继续游戏"恢复）；
-// 修改性别 / 理财策略 即时生效并写回存档（保留已触发事件集合）；
+// 修改性别 / 理财策略 / 资产提现即时生效并写回存档（保留已触发事件集合）；
 // 重新开档先弹确认（ESC 可反悔）再放弃本局。
 export function bindGameMenu(
   scene: Phaser.Scene,
   consequence: ConsequencePopup,
   isBusy?: () => boolean,
 ) {
-  const MAIN_ITEMS = ['继续游戏', '返回标题', '修改性别', '理财策略', '重新开档'] as const;
+  const MAIN_ITEMS = ['继续游戏', '返回标题', '修改性别', '理财策略', '资产账户', '重新开档'] as const;
   const GENDER_ITEMS = ['男生', '女生'] as const;
   const FINANCE_ITEMS = ['节流储蓄', '稳健生活', '适度投资'] as const;
+  const ASSET_ITEMS = ['提现 ¥5,000', '提现 ¥10,000', '子女教育基金', '提前还贷', '返回'] as const;
   type MainItem = typeof MAIN_ITEMS[number];
-  type Mode = 'main' | 'gender' | 'finance';
+  type Mode = 'main' | 'gender' | 'finance' | 'assets';
 
   let container: Phaser.GameObjects.Container | null = null;
   let selected = 0;
@@ -26,7 +30,9 @@ export function bindGameMenu(
   let kbHandler: ((e: KeyboardEvent) => void) | null = null;
   const rowTexts: Phaser.GameObjects.Text[] = [];
   const items = (): readonly string[] =>
-    mode === 'gender' ? GENDER_ITEMS : mode === 'finance' ? FINANCE_ITEMS : MAIN_ITEMS;
+    mode === 'gender' ? GENDER_ITEMS
+      : mode === 'finance' ? FINANCE_ITEMS
+      : mode === 'assets' ? ASSET_ITEMS : MAIN_ITEMS;
 
   const redraw = () => {
     const list = items();
@@ -64,6 +70,37 @@ export function bindGameMenu(
     } catch { /* 静默 */ }
   };
 
+  const persistCurrentState = () => {
+    try {
+      const blob = loadSave();
+      if (blob) saveGame(blob.sceneKey, blob.firedEvents ?? [], blob.firedNews ?? []);
+    } catch { /* 静默 */ }
+  };
+
+  const withdraw = (requested: number) => {
+    const result = withdrawAssets(requested);
+    persistCurrentState();
+    close();
+    const feePct = Math.round(WITHDRAWAL_FEE_RATE * 100);
+    const message = result.withdrawn > 0
+      ? `【资产账户】\n提现 ¥${result.withdrawn}，手续费 ¥${result.fee}（${feePct}%）。\n现金到账 ¥${result.received}，资产余额 ¥${result.assetsAfter}。`
+      : '【资产账户】\n当前没有可提现资产。';
+    consequence.show(message, {}, () => {});
+  };
+
+  const spendAssets = (kind: 'education' | 'mortgage') => {
+    const result = kind === 'education' ? fundChildEducation() : prepayMortgage();
+    persistCurrentState();
+    close();
+    const unavailable = kind === 'education'
+      ? '需要已有子女，且每局只能建立一次教育基金。'
+      : '需要已购房，且每局只能提前还贷一次。';
+    const message = result
+      ? `【资产账户】\n${kind === 'education' ? '教育基金已建立' : '提前还贷已完成'}：¥${result.amount}。\n资产抵扣 ¥${result.assetUsed}，现金支付 ¥${result.cashUsed}。`
+      : `【资产账户】\n${unavailable}`;
+    consequence.show(message, {}, () => {});
+  };
+
   const doMainAction = (item: MainItem) => {
     if (item === '继续游戏') { close(); return; }
     if (item === '返回标题') {
@@ -84,6 +121,12 @@ export function bindGameMenu(
       redraw();
       return;
     }
+    if (item === '资产账户') {
+      selected = 0;
+      mode = 'assets';
+      redraw();
+      return;
+    }
     // 重新开档：先确认，ESC 可反悔
     close();
     consequence.show(
@@ -101,7 +144,7 @@ export function bindGameMenu(
 
   const open = () => {
     if (container || isBusy?.()) return;
-    const W = 360, H = 300;
+    const W = 360, H = 340;
     const c = scene.add.container(480, 300).setDepth(190);
     container = c;
     const bg = scene.add.graphics();
@@ -146,6 +189,10 @@ export function bindGameMenu(
         } else if (mode === 'finance') {
           setFinance(selected === 0 ? 'thrifty' : selected === 2 ? 'invest' : 'stable');
           close();
+        } else if (mode === 'assets') {
+          if (selected === 4) { mode = 'main'; selected = 0; redraw(); }
+          else if (selected <= 1) withdraw(selected === 0 ? 5000 : 10000);
+          else spendAssets(selected === 2 ? 'education' : 'mortgage');
         } else {
           doMainAction(list[selected] as MainItem);
         }
@@ -155,10 +202,14 @@ export function bindGameMenu(
         const num = parseInt(e.key, 10);
         if (!Number.isNaN(num) && num >= 1 && num <= n) {
           const list = items();
-          if (mode === 'gender') setGender(selected === 0 ? 'male' : 'female');
-          else if (mode === 'finance') setFinance(selected === 0 ? 'thrifty' : selected === 2 ? 'invest' : 'stable');
-          else doMainAction(list[num - 1] as MainItem);
-          if (mode !== 'gender' && mode !== 'finance') close();
+          const picked = num - 1;
+          if (mode === 'gender') { setGender(picked === 0 ? 'male' : 'female'); close(); }
+          else if (mode === 'finance') { setFinance(picked === 0 ? 'thrifty' : picked === 2 ? 'invest' : 'stable'); close(); }
+          else if (mode === 'assets') {
+            if (picked === 4) { mode = 'main'; selected = 0; redraw(); }
+            else if (picked <= 1) withdraw(picked === 0 ? 5000 : 10000);
+            else spendAssets(picked === 2 ? 'education' : 'mortgage');
+          } else doMainAction(list[picked] as MainItem);
         }
       }
     };

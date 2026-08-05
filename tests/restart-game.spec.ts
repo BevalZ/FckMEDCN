@@ -66,10 +66,10 @@ test('游戏菜单：重新开档 → 确认 → 回新档且状态重置', asyn
     gs.setFlag('ug_tutoring');
   });
 
-  // R → 菜单 → 选"重新开档"（第 5 项，前面有 继续/返回标题/修改性别/理财策略）→ 弹确认
+  // R → 菜单 → 选"重新开档"（第 6 项，前面有 继续/返回标题/修改性别/理财策略/资产账户）→ 弹确认
   await page.keyboard.press('r');
   await page.waitForTimeout(400);
-  await page.keyboard.press('5');
+  await page.keyboard.press('6');
   await page.waitForTimeout(400);
   const confirmShown = await page.evaluate(() => {
     const scene = (window as any).game.scene.getScene('CampusScene');

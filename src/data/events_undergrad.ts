@@ -73,7 +73,11 @@ export const UNDERGRAD_EVENTS: GameEvent[] = [
     requireStat: { knowledge: [55, 100] },
     newsTickerAfter: '【考研报名人数再创新高，医学生连续多年位居报名主力】',
     choices: [
-      { text: '冲刺保研，拼绩点', delta: { reputation: 5, stamina: -10, knowledge: 3 }, flagSet: 'baoyan', consequence: '你挤进了保研名单，不用受考研的罪。' },
+      {
+        text: '冲刺保研，拼绩点', delta: { reputation: 5, stamina: -10, knowledge: 3 }, flagSet: 'baoyan',
+        requireStat: { knowledge: [90, 100] },
+        consequence: '你挤进了保研名单，不用受考研的罪。',
+      },
       { text: '备战考研，放手一搏', delta: { knowledge: 6, stamina: -14, sanity: -5 }, flagSet: 'kaoyan', consequence: '自习室成了你的第二个家。' },
       { text: '先找工作保底', delta: { sanity: 4, money: 1000 }, consequence: '你投了几份简历，心里却没底。' },
     ],
@@ -265,7 +269,7 @@ export const UNDERGRAD_EVENTS: GameEvent[] = [
     body: '医学院学制长、花费大。家里的积蓄经不起五年，助学贷款的说明摆在你面前。',
     category: 'financial', weight: 55, minTurn: 1,
     choices: [
-      { text: '申请助学贷款，安心读书', delta: { money: -2000, sanity: 2 }, consequence: '你想：毕业了慢慢还。' },
+      { text: '申请助学贷款，安心读书', delta: { sanity: 2 }, consequence: '你想：毕业了慢慢还。上学期间每季多一笔生活费，工作后再慢慢还。' },
       { text: '课余兼职赚生活费', delta: { money: 800, stamina: -10, knowledge: -2 }, consequence: '你周末发传单，少睡了几天。' },
     ],
   },
@@ -579,6 +583,7 @@ export const UNDERGRAD_EVENTS: GameEvent[] = [
     choices: [
       {
         text: '你在名单里', delta: { reputation: 5, sanity: 10, knowledge: 2 }, flagSet: 'baoyan',
+        requireStat: { knowledge: [90, 100] },
         consequence: '你反复刷新了三遍页面，确认那确实是自己的名字。',
       },
       {

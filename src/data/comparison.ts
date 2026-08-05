@@ -95,6 +95,17 @@ export const ENDING_COMPARISONS: Record<string, CompareRow[]> = {
     { label: '存款', unit: '¥', yours: money, real: '临床强、论文少 ¥20万-60万', range: [200000, 600000] },
     { label: '论文', unit: '篇', yours: papers, real: '临床型专家累计 0-3 篇', range: [0, 3] },
   ],
+  // —— 不上大学直接工作（轻量捷径 D）的非医生结局 ——
+  worker_steady: [
+    { label: '年龄', unit: '岁', yours: age, real: '早就业者常见 18-40 岁', range: [18, 40] },
+    { label: '存款', unit: '¥', yours: money, real: '蓝领技工积蓄 ¥2万-10万', range: [20000, 100000] },
+    { label: '论文', unit: '篇', yours: papers, real: '——' },
+  ],
+  worker_struggle: [
+    { label: '年龄', unit: '岁', yours: age, real: '早就业者常见 18-40 岁', range: [18, 40] },
+    { label: '存款', unit: '¥', yours: money, real: '低收入零工常负债 ¥-5万-2万', range: [-50000, 20000] },
+    { label: '论文', unit: '篇', yours: papers, real: '——' },
+  ],
 };
 
 export interface CompareResultRow {

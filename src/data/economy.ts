@@ -1,5 +1,7 @@
 import { getState, updateStats, hasFlag, setFlag, patchState } from './gameState';
 import type { StatDelta } from './stats';
+import type { AssetTransaction, AssetTransactionKind } from './gameState';
+import type { LifeStage } from './gameState';
 
 // —— 各阶段经济模型（类星露谷：每月/每季的固定收支 + 入学入职一次性费用）——
 // 数值以“季度”为粒度（本游戏一回合 = 一季度）。
@@ -17,12 +19,15 @@ interface StageEconSpec {
 }
 
 export const STAGE_ECON: Record<string, StageEconSpec> = {
-  undergrad: { income: 3000, cost: 3800, entryCost: 4000, label: '本科' },
-  internship: { income: 2200, cost: 2600, label: '临床实习' },
+  // 上学阶段：父母补贴（income）应覆盖学费房租伙食（cost），不再恒亏——
+  // 此前 income<cost 恒成立，本科生每季净亏、容易触发负债结局，不符合"父母供读书"的现实。
+  undergrad: { income: 4500, cost: 3500, entryCost: 4000, label: '本科' },
+  internship: { income: 3400, cost: 2400, label: '临床实习' },
   guipei: { income: 4200, cost: 3200, entryCost: 2000, label: '规培' },
   master: { income: 3600, cost: 2800, entryCost: 1500, label: '学硕' },
   phd: { income: 4600, cost: 3000, entryCost: 1500, label: '直博' },
-  jobhunt: { income: 0, cost: 3000, label: '求职待业' },
+  // 求职待业：父母仍给基本生活费（income），支出压到与之持平，不再每季 -3000。
+  jobhunt: { income: 2000, cost: 2000, label: '求职待业' },
   career: { income: 30000, cost: 16000, entryIncome: 6000, label: '主治医师' },
 };
 
@@ -55,11 +60,133 @@ export interface QuarterEconomy {
   assets?: number;
 }
 
+export interface AssetWithdrawal {
+  requested: number;
+  withdrawn: number;
+  fee: number;
+  received: number;
+  assetsAfter: number;
+}
+
+export interface HousePayment {
+  downPayment: number;
+  assetUsed: number;
+  cashUsed: number;
+  assetsAfter: number;
+}
+
+export interface AssetExpense {
+  amount: number;
+  assetUsed: number;
+  cashUsed: number;
+  assetsAfter: number;
+}
+
+export interface CareerFinancialSnapshot {
+  region: string;
+  title: string;
+  quarterlyIncome: number;
+  quarterlyCost: number;
+  disposable: number;
+  housePayment: number;
+  mortgageBalance: number;
+  cash: number;
+  assets: number;
+}
+
+const ASSET_LEDGER_LIMIT = 100;
+export const WITHDRAWAL_LIMIT = 10000;
+export const WITHDRAWAL_FEE_RATE = 0.02;
+export const CHILD_EDUCATION_FUND = 5000;
+
+function applyAssetTransaction(
+  kind: AssetTransactionKind,
+  assetDelta: number,
+  cashDelta: number,
+  note: string,
+  fee = 0,
+): AssetTransaction {
+  const before = getState();
+  const balanceAfter = Math.max(0, before.assets + assetDelta);
+  if (cashDelta !== 0) updateStats({ money: cashDelta });
+  const current = getState();
+  const transaction: AssetTransaction = {
+    kind,
+    year: before.year,
+    quarter: before.quarter,
+    assetDelta: balanceAfter - before.assets,
+    cashDelta,
+    fee,
+    balanceAfter,
+    note,
+  };
+  patchState({
+    assets: balanceAfter,
+    assetLedger: [...(current.assetLedger ?? []), transaction].slice(-ASSET_LEDGER_LIMIT),
+  });
+  return transaction;
+}
+
+/** 应急提现：单次最多 ¥10,000，资产扣除额包含 2% 手续费。 */
+export function withdrawAssets(
+  requested: number,
+  feeRate = WITHDRAWAL_FEE_RATE,
+  limit = WITHDRAWAL_LIMIT,
+): AssetWithdrawal {
+  const safeRequest = Math.max(0, Math.min(Math.floor(requested), limit));
+  const withdrawn = Math.min(safeRequest, Math.max(0, Math.floor(getState().assets)));
+  const fee = Math.min(withdrawn, Math.round(withdrawn * Math.max(0, feeRate)));
+  const received = withdrawn - fee;
+  if (withdrawn > 0) {
+    applyAssetTransaction('withdrawal', -withdrawn, received, `应急提现 ¥${withdrawn}`, fee);
+  }
+  return { requested: safeRequest, withdrawn, fee, received, assetsAfter: getState().assets };
+}
+
+/** 购房首付优先使用资产余额，不足部分才扣现金。 */
+export function payHouseDownPayment(): HousePayment {
+  const downPayment = houseDownPayment();
+  const assetUsed = Math.min(Math.max(0, getState().assets), downPayment);
+  const cashUsed = downPayment - assetUsed;
+  applyAssetTransaction('house', -assetUsed, -cashUsed, `购房首付 ¥${downPayment}`);
+  patchState({ mortgageBalance: downPayment * 4 });
+  return { downPayment, assetUsed, cashUsed, assetsAfter: getState().assets };
+}
+
+function payAssetBackedExpense(
+  kind: 'education' | 'mortgage',
+  amount: number,
+  note: string,
+): AssetExpense {
+  const assetUsed = Math.min(Math.max(0, getState().assets), amount);
+  const cashUsed = amount - assetUsed;
+  applyAssetTransaction(kind, -assetUsed, -cashUsed, note);
+  return { amount, assetUsed, cashUsed, assetsAfter: getState().assets };
+}
+
+/** 为已有子女建立教育基金；一次性支出换取后续育儿支出下降。 */
+export function fundChildEducation(): AssetExpense | null {
+  if (!getState().hasChild || hasFlag('child_education_fund')) return null;
+  const result = payAssetBackedExpense('education', CHILD_EDUCATION_FUND, `子女教育基金 ¥${CHILD_EDUCATION_FUND}`);
+  setFlag('child_education_fund');
+  return result;
+}
+
+/** 提前偿还三期地区房贷，后续季度房贷下降 40%。 */
+export function prepayMortgage(): AssetExpense | null {
+  if (!hasFlag('bought_house') || hasFlag('mortgage_prepaid')) return null;
+  const amount = REGION_HOUSE[currentRegionTier()].monthly * 3;
+  const result = payAssetBackedExpense('mortgage', amount, `提前还贷 ¥${amount}`);
+  patchState({ mortgageBalance: Math.max(0, (getState().mortgageBalance || houseDownPayment() * 4) - amount) });
+  setFlag('mortgage_prepaid');
+  return result;
+}
+
 // 一线城市（顶尖/强校）生活成本更高：依据就读院校档次加收房租伙食溢价。
 export function cityPremiumPct(): number {
   const t = getState().school?.tier;
-  if (t === 1) return 0.25;
-  if (t === 2) return 0.12;
+  if (t === 1) return 0.18;
+  if (t === 2) return 0.08;
   return 0;
 }
 
@@ -103,7 +230,32 @@ export function houseDownPayment(): number {
 
 /** 职业期房贷月供（随地区档位），季度结算时消费。 */
 export function houseMonthly(): number {
-  return REGION_HOUSE[currentRegionTier()].monthly;
+  const base = REGION_HOUSE[currentRegionTier()].monthly;
+  return hasFlag('mortgage_prepaid') ? Math.round(base * 0.6) : base;
+}
+
+export function childQuarterCost(): number {
+  return hasFlag('child_education_fund') ? 800 : 1200;
+}
+
+/** 结局页财务数据卡使用的动态职业画像，明确拆分现金、资产、房贷和季度可支配收入。 */
+export function careerFinancialSnapshot(): CareerFinancialSnapshot {
+  const state = getState();
+  const economy = getQuarterEconomy('career');
+  const title = state.flags.has('passed_zhenggao') ? '主任医师'
+    : state.flags.has('passed_fugao') ? '副主任医师'
+    : state.flags.has('passed_zhuzhi') ? '主治医师' : '住院医师';
+  const mortgageBalance = state.mortgageBalance || (state.flags.has('bought_house') ? houseDownPayment() * 4 : 0);
+  return {
+    region: REGION_LABEL[currentRegionTier()], title,
+    quarterlyIncome: economy.income,
+    quarterlyCost: economy.cost,
+    disposable: economy.net,
+    housePayment: state.flags.has('bought_house') ? houseMonthly() : 0,
+    mortgageBalance,
+    cash: state.stats.money,
+    assets: state.assets ?? 0,
+  };
 }
 
 export function getQuarterEconomy(stage: string): QuarterEconomy {
@@ -146,7 +298,10 @@ export function getQuarterEconomy(stage: string): QuarterEconomy {
   // —— 人生状态对收支的持续影响 ——
   const st = getState();
   if (st.marital === 'married') income += 1500; // 双职工 / 配偶补贴
-  if (st.hasChild) cost += 1200; // 育儿 / 托育
+  if (st.hasChild) cost += childQuarterCost(); // 育儿 / 托育；教育基金建成后下降
+
+  // —— 理财策略：节流储蓄把支出压一成，且真实改写 cost（账单/简报可见）——
+  if (st.financeStrategy === 'thrifty') cost = Math.round(cost * 0.9);
 
   return { income, cost, net: income - cost, cityPremiumPct: prem, financeNote: '' };
 }
@@ -161,33 +316,39 @@ export function applyStageEconomy(stage: string): QuarterEconomy {
   let assets = st.assets ?? 0;
 
   if (st.financeStrategy === 'thrifty') {
-    // 节流：支出减一成；正结余的 30% 转储蓄，储蓄每季 0.5% 计息
-    const saved = Math.round(e.cost * 0.1);
-    net = e.net + saved;
+    // 节流：支出已通过 getQuarterEconomy 压一成；此处把正结余的 30% 转储蓄，储蓄每季 0.5% 计息
     let deposit = 0;
+    const cashBeforeTransfer = net;
+    if (cashBeforeTransfer !== 0) updateStats({ money: cashBeforeTransfer } as StatDelta);
     if (net > 0) {
       deposit = Math.round(net * 0.3);
       net -= deposit;
-      assets += deposit;
+      applyAssetTransaction('deposit', deposit, -deposit, `节流转储蓄 ¥${deposit}`);
     }
+    assets = getState().assets;
     const interest = Math.max(0, Math.round(assets * 0.005));
-    assets += interest;
-    financeNote = `（节流 +${saved}，转储蓄 ${deposit}，利息 +${interest}）`;
+    if (interest > 0) applyAssetTransaction('interest', interest, 0, `季度利息 ¥${interest}`);
+    assets = getState().assets;
+    financeNote = `（节流省 ${Math.round(e.cost * 0.1)}，转储蓄 ${deposit}，利息 +${interest}）`;
   } else if (st.financeStrategy === 'invest') {
     // 投资：正结余的 50% 投入资产；资产每季 ±8% 波动
     let invested = 0;
+    const cashBeforeTransfer = net;
+    if (cashBeforeTransfer !== 0) updateStats({ money: cashBeforeTransfer } as StatDelta);
     if (net > 0) {
       invested = Math.round(net * 0.5);
       net -= invested;
-      assets += invested;
+      applyAssetTransaction('investment', invested, -invested, `投入市场 ¥${invested}`);
     }
+    assets = getState().assets;
     const swing = Math.round(assets * (Math.random() * 0.16 - 0.08));
-    assets += swing;
+    if (swing !== 0) applyAssetTransaction('market', swing, 0, `季度市场波动 ${swing >= 0 ? '+' : ''}¥${swing}`);
+    assets = getState().assets;
     financeNote = `（投入 ${invested}，资产 ${swing >= 0 ? '+' : ''}${swing}）`;
+  } else {
+    if (net !== 0) updateStats({ money: net } as StatDelta);
   }
 
-  if (net !== 0) updateStats({ money: net } as StatDelta);
-  if (assets !== (st.assets ?? 0)) patchState({ assets });
   return { ...e, net, financeNote, assets };
 }
 
@@ -202,6 +363,15 @@ export function applyStageEntry(stage: string): { cost: number; income: number; 
   const income = spec.entryIncome ?? 0;
   const net = income - cost;
   if (net !== 0) updateStats({ money: net } as StatDelta);
+
+  // 知识继承：进入硕士 / 博士 / 职业阶段时，知识重置为上阶结束值的 30%。
+  // 本科为第一阶段不继承（保持默认 30）。applyStageEntry 由 entry_<stage>
+  // flag 守护，仅进入阶段时执行一次，故继承只发生一次。
+  const inheritStages: LifeStage[] = ['master', 'phd', 'career'];
+  if (inheritStages.includes(stage as LifeStage)) {
+    const inherited = Math.floor(getState().stats.knowledge * 0.3);
+    updateStats({ knowledge: inherited - getState().stats.knowledge } as StatDelta);
+  }
   return { cost, income, net };
 }
 

@@ -7,7 +7,7 @@ import type { Page } from '@playwright/test';
 const BASE = 'http://127.0.0.1:5173/';
 
 const PLAN: Array<[string, number]> = [
-  ['undergrad', 20], ['internship', 5], ['guipei', 12], ['master', 12], ['phd', 16], ['jobhunt', 4], ['career', 12],
+  ['undergrad', 20], ['internship', 5], ['guipei', 12], ['master', 12], ['phd', 16], ['jobhunt', 4], ['career', 20],
 ];
 
 async function boot(page: Page) {

@@ -22,8 +22,11 @@ test('职业后期事件可达性与门控', async ({ page }) => {
 
     // [事件id, 需要的flag, 预期首次可达回合]
     const CASES: Array<[string, string[], number]> = [
-      ['promote_zhenggao', ['passed_fugao'], 9],
-      ['career_late_director_offer', ['passed_zhenggao'], 10],
+      ['promote_fugao', ['passed_zhuzhi'], 8],
+      ['promote_fugao_retry', ['fugao_failed'], 12],
+      ['promote_zhenggao', ['passed_fugao'], 16],
+      ['promote_zhenggao_retry', ['zhenggao_failed'], 18],
+      ['career_late_director_offer', ['passed_zhenggao'], 17],
       ['career_late_admin_burden', ['took_admin'], 10],
       ['career_late_society', ['passed_fugao'], 8],
       ['career_late_mentor_retires', [], 8],
@@ -34,10 +37,10 @@ test('职业后期事件可达性与门控', async ({ page }) => {
     ];
 
     const rows = CASES.map(([id, needFlags, expectTurn]) => {
-      // 满足门控：扫 1-12 回合，找首次可达
+      // 满足门控：扫完整 20 回合职业期，找首次可达
       const flags = new Set(needFlags);
       let firstHit = -1;
-      for (let turn = 1; turn <= 12; turn++) {
+      for (let turn = 1; turn <= 20; turn++) {
         const pool = ev.getAvailableEvents('career', flags, { ...base }, new Set(), turn, 'single');
         if (pool.some((e: any) => e.id === id)) { firstHit = turn; break; }
       }
@@ -46,7 +49,7 @@ test('职业后期事件可达性与门控', async ({ page }) => {
       const evt = ev.ALL_EVENTS.find((e: any) => e.id === id);
       if (evt?.requireFlag) {
         const bare = new Set(needFlags.filter(f => f !== evt.requireFlag));
-        for (let turn = 1; turn <= 12; turn++) {
+        for (let turn = 1; turn <= 20; turn++) {
           const pool = ev.getAvailableEvents('career', bare, { ...base }, new Set(), turn, 'single');
           if (pool.some((e: any) => e.id === id)) { gatedOk = false; break; }
         }
@@ -68,6 +71,8 @@ test('职业后期事件可达性与门控', async ({ page }) => {
       ['mentored', 'teach_intern', 'career_late_student_return'],
       ['passed_zhenggao', 'promote_zhenggao', 'career_late_director_offer'],
       ['took_admin', 'career_late_director_offer', 'career_late_admin_burden'],
+      ['fugao_failed', 'promote_fugao', 'promote_fugao_retry'],
+      ['zhenggao_failed', 'promote_zhenggao', 'promote_zhenggao_retry'],
     ];
     const chains = CHAINS.map(([flag, setter, consumer]) => ({
       flag,

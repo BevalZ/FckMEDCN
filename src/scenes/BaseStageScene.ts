@@ -11,7 +11,7 @@ import { HelpPanel } from '../ui/HelpPanel';
 import { showNewsToast } from '../ui/newsToast';
 import { NEWS_TICKER } from '../data/news';
 import { STAT_LABELS, STAT_ICONS, HUD_STATS } from '../data/constants';
-import { applyStageEntry, describeStageEconomy, getQuarterEconomy, houseMonthly } from '../data/economy';
+import { applyStageEntry, childQuarterCost, describeStageEconomy, getQuarterEconomy, houseMonthly } from '../data/economy';
 import { getPalette, createBgTexture, createStageDecor, addScanlineOverlay, addVignette, stageAmbientTint } from '../ui/pixelArt';
 import type { PaletteName } from '../ui/pixelArt';
 import { CharacterSprite } from '../ui/CharacterSprite';
@@ -250,7 +250,7 @@ export abstract class BaseStageScene extends Phaser.Scene {
     if (s.flags.has('bought_house')) {
       rows.push(`  其中 房贷 ¥-${houseMonthly().toLocaleString()}`);
     }
-    if (s.hasChild) rows.push(`  其中 育儿 ¥-1,200`);
+    if (s.hasChild) rows.push(`  其中 育儿 ¥-${childQuarterCost().toLocaleString()}`);
     rows.push(`  支出 ¥${e.cost.toLocaleString()} = 净 ${e.net >= 0 ? '+' : ''}¥${e.net.toLocaleString()}`);
     if ((s.assets ?? 0) > 0) rows.push(`  资产 ¥${(s.assets ?? 0).toLocaleString()}${e.financeNote ?? ''}`);
     const text = rows.join('\n');

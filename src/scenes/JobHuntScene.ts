@@ -1,6 +1,5 @@
 import { BaseStageScene } from './BaseStageScene';
 import { getState, updateStats } from '../data/gameState';
-import { determineEnding } from '../data/endings';
 
 export class JobHuntScene extends BaseStageScene {
   constructor() {
@@ -20,10 +19,10 @@ export class JobHuntScene extends BaseStageScene {
   }
 
   protected transitionToNext() {
-    const ending = determineEnding(getState());
+    // 求职结束后进入职业阶段（可行走地图）。此前直接跳结局会让 161 条职业事件全部失效。
     this.cameras.main.fadeOut(600, 0, 0, 0);
     this.cameras.main.once('camerafadeoutcomplete', () => {
-      this.scene.start('EndingScene', { endingId: ending.id });
+      this.scene.start('CareerWalkScene');
     });
   }
 }

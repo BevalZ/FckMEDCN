@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { GameEvent, EventChoice, EventCategory } from '../data/events';
-import { hasFlag } from '../data/gameState';
+import { choiceVisible } from '../data/events';
 import { renderGendered } from '../data/gender';
 import { getPalette } from './pixelArt';
 
@@ -56,13 +56,9 @@ export class EventCard {
     const pal = getPalette(this.stage);
     const scene = this.scene;
 
-    // 选项级门槛：flagRequire / flagExclude 决定该选项是否对玩家可见。
+    // 选项级门槛：flagRequire / flagExclude / hidden / requireStat 决定该选项是否对玩家可见。
     // 若过滤后为空（配置失误），退回展示全部选项，避免出现无选项的死卡。
-    const gated = event.choices.filter(c =>
-      !c.hidden &&
-      !(c.flagRequire && !hasFlag(c.flagRequire)) &&
-      !(c.flagExclude && hasFlag(c.flagExclude))
-    );
+    const gated = event.choices.filter(choiceVisible);
     const visibleChoices = gated.length > 0 ? gated : event.choices;
 
     // —— 先创建并测量所有文本，计算所需高度（性别占位符在此统一渲染）——

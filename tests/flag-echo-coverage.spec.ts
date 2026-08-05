@@ -79,6 +79,8 @@ const NARRATIVE_ONLY = new Set([
   'needlestick_anxious', 'flycheck_fined', 'flycheck_reformed', 'flycheck_resisted', 'flycheck_mentor',
   // 病历质量链的终端标记
   'record_fixed', 'record_owned', 'record_sloppy_exposed',
+  // 留级走出后的终端标记：解除每季心理负担由 holdbackSanityPenalty 消费，但源码用变量引用，死 flag 检测看不到
+  'ug_holdback_recovered', 'ms_holdback_recovered', 'phd_holdback_recovered',
   // 导师/关系
   'got_advisor_letter', 'considering_switch_advisor', 'advisor_career_boost',
   // 个人经历标记
@@ -100,6 +102,7 @@ test('死 flag 回归：每个 flag 都有消费者（或叙事白名单）', as
     const requiredBy = new Set<string>();
     for (const e of all) {
       if (e.requireFlag) requiredBy.add(e.requireFlag);
+      if (e.excludeFlag) requiredBy.add(e.excludeFlag); // 排除标记也是对 flag 的消费
       for (const c of e.choices ?? []) if (c.flagSet) setBy.add(c.flagSet);
     }
     // 合并源码级消费者（hasFlag/flags.has/ending/badge/quest 的 flag:）

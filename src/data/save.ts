@@ -70,7 +70,10 @@ export function applySave(blob: SaveBlob): string {
     familyWealth: (rest as { familyWealth?: string }).familyWealth ?? 'middle',
     financeStrategy: (rest as { financeStrategy?: string }).financeStrategy ?? 'stable',
     assets: (rest as { assets?: number }).assets ?? 0,
+    assetLedger: (rest as { assetLedger?: GameState['assetLedger'] }).assetLedger ?? [],
+    mortgageBalance: (rest as { mortgageBalance?: number }).mortgageBalance ?? 0,
     mentorStyle: (rest as { mentorStyle?: string }).mentorStyle ?? 'equal',
+    counters: (rest as { counters?: Record<string, number> }).counters ?? {},
   } as GameState);
   pendingFired = { firedEvents: blob.firedEvents ?? [], firedNews: blob.firedNews ?? [] };
   return blob.sceneKey;

@@ -36,6 +36,7 @@ import type { MinigameResult } from '../ui/minigameTypes';
 import type { MinigameKind } from '../ui/minigameTypes';
 import { sound } from '../audio/sound';
 import { saveGame, consumePendingFired } from '../data/save';
+import { showQuarterAdvancePrompt } from '../ui/quarterAdvancePrompt';
 import { determineEnding } from '../data/endings';
 
 const STAGE = 'guipei';
@@ -120,7 +121,7 @@ export class GuipeiWalkScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-M', () => sound.toggleMute());
 
     // 重新开档（R 键）
-    bindGameMenu(this, this.consequence, () => this.minigame !== null || this.eventCard.busy);
+    bindGameMenu(this, this.consequence, () => this.minigame !== null || this.eventCard.busy || this.consequence.busy);
 
     // 操作帮助（H 键）
     new HelpPanel(this, [
@@ -128,7 +129,7 @@ export class GuipeiWalkScene extends Phaser.Scene {
       '任务清单 Q · 导师对话 T',
       '重新开档 R · 帮助 H · 静音 M',
       'ESC 取消当前交互',
-      '提示：规培是心理压力最大的阶段，注意休息。',
+      '提示：行动点用完后可直接确认进入下一季度。规培压力大，也要注意休息。',
       '执业医师考试 通过后才能独立执业。',
     ], () => this.minigame !== null || this.eventCard.busy || this.consequence.busy);
 
@@ -305,7 +306,7 @@ export class GuipeiWalkScene extends Phaser.Scene {
   private interact(spot: Spot) {
     if (this.actionsLeft <= 0) {
       if (spot.sleep) { this.sleep(); return; }
-      this.floatMessage('行动点用完了，去值班室睡一觉吧', '#ffcc80');
+      this.offerQuarterAdvance();
       return;
     }
     if (this.canDrawAt(spot)) {
@@ -409,7 +410,8 @@ export class GuipeiWalkScene extends Phaser.Scene {
       this.prompt.clearAllBangs();
       this.refreshInfoBar();
       this.autoSave();
-      this.setBusy(false);
+      if (this.actionsLeft <= 0) this.offerQuarterAdvance();
+      else this.setBusy(false);
     });
   }
 
@@ -435,7 +437,21 @@ export class GuipeiWalkScene extends Phaser.Scene {
     this.refreshInfoBar();
     this.floatMessage(spot.daily.consequence, '#cfe8ff');
     this.autoSave();
-    this.checkCrisis();
+    if (this.checkCrisis()) return;
+    if (this.actionsLeft <= 0) this.offerQuarterAdvance();
+  }
+
+  private offerQuarterAdvance() {
+    if (this.actionsLeft > 0 || this.leaving || this.consequence.busy) return;
+    this.setBusy(true);
+    showQuarterAdvancePrompt(
+      this.consequence,
+      () => this.sleep(),
+      () => {
+        this.refreshInfoBar();
+        this.setBusy(false);
+      },
+    );
   }
 
   private sleep() {
@@ -492,7 +508,12 @@ export class GuipeiWalkScene extends Phaser.Scene {
     this.leaving = true;
     sound.transition();
     this.cameras.main.fadeOut(600, 0, 0, 0);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('MasterScene'));
+    this.cameras.main.once('camerafadeoutcomplete', () => {
+      // 规培期已做轨道选择：科研轨（track_research）继续读硕博，
+      // 临床轨 / 未选（默认）直接进入求职——不再强制所有人都读硕博（解除求职与学业 overlap）。
+      const next = getState().flags.has('track_research') ? 'MasterWalkScene' : 'JobHuntScene';
+      this.scene.start(next);
+    });
   }
 
   private checkCrisis(): boolean {

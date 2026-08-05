@@ -5,26 +5,18 @@ import type { PaletteName } from '../ui/pixelArt';
 
 type Osc = OscillatorType;
 
-const MOOD: Record<string, number> = {
-  gaokao: 130.81,
-  undergrad: 116.54,
-  internship: 110.0,
-  guipei: 103.83,
-  master: 98.0,
-  phd: 92.5,
-  jobhunt: 123.47,
-  career: 110.0,
-  default: 110.0,
-};
-
 class SoundManager {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
-  private bgmGain: GainNode | null = null;
-  private bgmOscs: OscillatorNode[] = [];
-  private bgmLfo: OscillatorNode | null = null;
-  private bgmStarted = false;
   private muted = false;
+  // 文件化 BGM（两首 MP3，按阶段切换，循环播放）
+  private bgmAudio: HTMLAudioElement | null = null;
+  private currentBgmUrl: string | null = null;
+  private bgmVolume = 0.5;
+  // 按键 / 点击采样（下载的 CC0 音效，失败回退合成）
+  private clickAudio: HTMLAudioElement | null = null;
+  private keytickAudio: HTMLAudioElement | null = null;
+  private lastKeytick = 0;
 
   ensure() {
     try {
@@ -48,6 +40,7 @@ class SoundManager {
   toggleMute() {
     this.muted = !this.muted;
     if (this.master) this.master.gain.value = this.muted ? 0 : 0.9;
+    if (this.bgmAudio) this.bgmAudio.volume = this.muted ? 0 : this.bgmVolume;
   }
 
   private blip(freq: number, start: number, dur: number, type: Osc, vol: number, slideTo?: number) {
@@ -73,7 +66,51 @@ class SoundManager {
   }
 
   // —— 交互音效 ——
-  click() { this.blip(620, 0, 0.06, 'square', 0.16); }
+  /** 优先播放真实采样（UI 点击音），不可用时回退合成 blip */
+  click() {
+    const a = this.lazySample('click');
+    if (a) {
+      a.volume = this.muted ? 0 : 0.5;
+      a.currentTime = 0;
+      void a.play().catch(() => this.synthClick());
+      return;
+    }
+    this.synthClick();
+  }
+
+  private synthClick() { this.blip(620, 0, 0.06, 'square', 0.16); }
+
+  /** 按键 tick：更轻、略高音，节流避免长按连发 */
+  keytick() {
+    const now = Date.now();
+    if (now - this.lastKeytick < 55) return;
+    this.lastKeytick = now;
+    const a = this.lazySample('keytick');
+    if (a) {
+      a.volume = this.muted ? 0 : 0.32;
+      a.currentTime = 0;
+      void a.play().catch(() => { /* 忽略 */ });
+    }
+  }
+
+  /** 懒加载一个采样音轨；首次访问时创建 HTMLAudioElement */
+  private lazySample(kind: 'click' | 'keytick'): HTMLAudioElement | null {
+    if (kind === 'click') {
+      if (!this.clickAudio) {
+        try { this.clickAudio = new Audio('/audio/sfx/click.mp3'); this.clickAudio.preload = 'auto'; }
+        catch { this.clickAudio = null; }
+      }
+      return this.clickAudio;
+    }
+    if (!this.keytickAudio) {
+      try {
+        this.keytickAudio = new Audio('/audio/sfx/click2.mp3');
+        this.keytickAudio.preload = 'auto';
+        this.keytickAudio.playbackRate = 1.15; // 略高音，做出 tick 区别
+      } catch { this.keytickAudio = null; }
+    }
+    return this.keytickAudio;
+  }
 
   /** 行走脚步：短促低频噪声感 blip，左右脚略有音高差 */
   footstep(right = false) {
@@ -106,69 +143,63 @@ class SoundManager {
     else this.arp([329.63, 311.13, 261.63], 0.2, 'sine', 0.16); // bitter / 默认
   }
 
-  // —— 环境 BGM：低沉小调 pad + 缓慢 tremolo ——
-  startBgm() {
-    this.ensure();
-    if (!this.ctx || !this.master || this.bgmStarted) return;
-    const ctx = this.ctx;
-    this.bgmGain = ctx.createGain();
-    this.bgmGain.gain.value = 0.0001;
-    this.bgmGain.connect(this.master);
+  // —— 环境 BGM：两首 MP3 文件，按阶段切换、循环播放 ——
+  private readonly BGM_TRACKS: Record<string, string> = {
+    gaokao: '/audio/bgm_absolutesound.mp3',
+    undergrad: '/audio/bgm_absolutesound.mp3',
+    internship: '/audio/bgm_absolutesound.mp3',
+    jobhunt: '/audio/bgm_absolutesound.mp3',
+    guipei: '/audio/bgm_alexmorgan.mp3',
+    master: '/audio/bgm_alexmorgan.mp3',
+    phd: '/audio/bgm_alexmorgan.mp3',
+    career: '/audio/bgm_alexmorgan.mp3',
+    default: '/audio/bgm_absolutesound.mp3',
+  };
 
-    const lp = ctx.createBiquadFilter();
-    lp.type = 'lowpass';
-    lp.frequency.value = 620;
-    lp.connect(this.bgmGain);
-
-    const root = MOOD.default;
-    const ratios = [1, 1.1892, 1.4983]; // 根音 / 小三度 / 纯五度
-    this.bgmOscs = ratios.map((r, i) => {
-      const o = ctx.createOscillator();
-      o.type = i === 0 ? 'sine' : 'triangle';
-      o.frequency.value = root * r;
-      o.detune.value = (i - 1) * 4;
-      o.connect(lp);
-      o.start();
-      return o;
-    });
-
-    const lfo = ctx.createOscillator();
-    lfo.frequency.value = 0.12;
-    const lfoGain = ctx.createGain();
-    lfoGain.gain.value = 0.02;
-    lfo.connect(lfoGain);
-    lfoGain.connect(this.bgmGain.gain);
-    lfo.start();
-    this.bgmLfo = lfo;
-
-    this.bgmGain.gain.exponentialRampToValueAtTime(0.06, ctx.currentTime + 2.5);
-    this.bgmStarted = true;
+  private getBgm(): HTMLAudioElement | null {
+    if (!this.bgmAudio) {
+      try {
+        const a = new Audio();
+        a.loop = true;
+        a.preload = 'auto';
+        a.volume = this.muted ? 0 : this.bgmVolume;
+        this.bgmAudio = a;
+      } catch {
+        return null;
+      }
+    }
+    return this.bgmAudio;
   }
 
+  /** 标题屏等无明确阶段处启动默认 BGM */
+  startBgm() { this.setBgmMood('default'); }
+
   setBgmMood(stage: string | PaletteName) {
-    if (!this.bgmStarted) this.startBgm();
-    if (!this.ctx || this.bgmOscs.length === 0) return;
-    const root = MOOD[stage as string] ?? MOOD.default;
-    const ratios = [1, 1.1892, 1.4983];
-    const t = this.ctx.currentTime;
-    this.bgmOscs.forEach((o, i) => o.frequency.exponentialRampToValueAtTime(root * ratios[i], t + 1.6));
+    const a = this.getBgm();
+    if (!a) return;
+    const url = this.BGM_TRACKS[stage as string] ?? this.BGM_TRACKS.default;
+    if (this.currentBgmUrl !== url) {
+      a.src = url;
+      this.currentBgmUrl = url;
+      a.load();
+    }
+    if (!this.muted) {
+      a.volume = this.bgmVolume;
+      void a.play().catch(() => { /* 自动播放被拦截时静默，等用户手势 unlockAudio */ });
+    }
+  }
+
+  /** 用户手势后调用：恢复 AudioContext 并在已选曲情况下启动 BGM */
+  unlockAudio() {
+    this.ensure();
+    if (this.bgmAudio && this.currentBgmUrl && !this.muted) {
+      this.bgmAudio.volume = this.bgmVolume;
+      void this.bgmAudio.play().catch(() => { /* 忽略 */ });
+    }
   }
 
   stopBgm() {
-    if (!this.bgmStarted || !this.ctx || !this.bgmGain) return;
-    const t = this.ctx.currentTime;
-    this.bgmGain.gain.cancelScheduledValues(t);
-    this.bgmGain.gain.setValueAtTime(Math.max(0.0001, this.bgmGain.gain.value), t);
-    this.bgmGain.gain.exponentialRampToValueAtTime(0.0001, t + 1.0);
-    const oscs = this.bgmOscs;
-    const lfo = this.bgmLfo;
-    window.setTimeout(() => {
-      oscs.forEach((o) => { try { o.stop(); } catch { /* 已停止 */ } });
-      try { lfo?.stop(); } catch { /* 已停止 */ }
-    }, 1200);
-    this.bgmStarted = false;
-    this.bgmOscs = [];
-    this.bgmLfo = null;
+    this.bgmAudio?.pause();
   }
 }
 
