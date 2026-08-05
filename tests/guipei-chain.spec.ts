@@ -56,6 +56,10 @@ test('B7 规培链：同岗同酬选项即时续接教学部回复', async ({ pa
 
   // —— 跳到本科最后一季睡觉 → 实习医院 ——
   await page.evaluate(() => {
+    // 盲选 Gaokao 默认本博连读 8 年制 → 路由 PhdWalkScene；清掉长学制标记走正常实习医院路径。
+    const f = (window as any).__state().flags;
+    f.delete('track_eight_year');
+    f.delete('long_system');
     (window as any).__patchState({ turnsInStage: 19 });
     (window as any).game.scene.getScene('CampusScene').actionsLeft = 0;
   });

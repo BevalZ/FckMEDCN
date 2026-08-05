@@ -36,6 +36,11 @@ test('HospitalScene: 从校园过渡到实习医院', async ({ page }) => {
 
   // 直接跳到最后一季，然后睡觉推进到实习
   await page.evaluate(() => {
+    // 盲选 Gaokao 默认落在第一个志愿（本博连读 8 年制），会路由到 PhdWalkScene；
+    // 这里清掉长学制路由标记，让本科结束正常进入实习医院场景。
+    const f = (window as any).__state().flags;
+    f.delete('track_eight_year');
+    f.delete('long_system');
     (window as any).__patchState({ turnsInStage: 19 });
     const s: any = (window as any).game.scene.getScene('CampusScene');
     s.actionsLeft = 0;
@@ -101,6 +106,11 @@ test('HospitalScene: 地图渲染与交互点', async ({ page }) => {
 
   // 跳转到实习
   await page.evaluate(() => {
+    // 盲选 Gaokao 默认落在第一个志愿（本博连读 8 年制），会路由到 PhdWalkScene；
+    // 这里清掉长学制路由标记，让本科结束正常进入实习医院场景。
+    const f = (window as any).__state().flags;
+    f.delete('track_eight_year');
+    f.delete('long_system');
     (window as any).__patchState({ turnsInStage: 19 });
     const s: any = (window as any).game.scene.getScene('CampusScene');
     s.actionsLeft = 0;

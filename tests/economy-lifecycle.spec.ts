@@ -21,15 +21,6 @@ test('全生命周期经济：普通家境存活、拮据可贷款缓解、买�
   const r = await page.evaluate((PLAN) => {
     const { gs, tf, stats: st } = (window as any).__mod;
 
-    // 固定 PRNG（复用 lifecycle-sim 的播种方式）
-    let rngState = 20260801;
-    Math.random = () => {
-      rngState |= 0; rngState = (rngState + 0x6D2B79F5) | 0;
-      let t = Math.imul(rngState ^ (rngState >>> 15), 1 | rngState);
-      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-
     function pick(choices: any[]): number {
       const s = gs.getState().stats;
       let best = 0, bestScore = -1e9;
@@ -50,6 +41,16 @@ test('全生命周期经济：普通家境存活、拮据可贷款缓解、买�
     }
 
     function runLife(attrs: any, loan: boolean): number {
+      // 固定 PRNG（复用 lifecycle-sim 的播种方式），每轮重新播种：保证家境/贷款
+      // 各配置比较的是"同一条随机人生"，否则 tight 与 tightLoan 模拟的是不同序列，
+      // 贷款收益比较无意义（此前 rngState 在函数外共享、跨调用不重置所致）。
+      let rngState = 20260801;
+      Math.random = () => {
+        rngState |= 0; rngState = (rngState + 0x6D2B79F5) | 0;
+        let t = Math.imul(rngState ^ (rngState >>> 15), 1 | rngState);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
       gs.resetGame();
       const base = st.createDefaultStats();
       const s0 = {
