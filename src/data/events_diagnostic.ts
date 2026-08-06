@@ -5,7 +5,7 @@ import type { GameEvent } from './events';
 export const DIAGNOSTIC_EVENTS: GameEvent[] = [
   {
     id: 'diagnostic_workup', stage: 'internship', title: '胸闷患者的第一张检查单',
-    body: '门诊来了位胸闷患者。你先核对生命体征和病史，再决定把哪些信息写进检查申请，并请带教一起看。',
+    body: '门诊来了位胸闷患者。你先核对生命体征、问清病史；对急性胸闷还要尽早安排心电图等时间敏感的检查，再把检查目的写清楚，并请带教一起看。',
     category: 'clinical', weight: 65, once: true, minTurn: 2,
     choices: [
       { text: '先核对生命体征，按流程申请必要检查并请上级复核', delta: { clinical: 5, knowledge: 4, stamina: -6, reputation: 2 }, flagSet: 'diagnostic_triage_ok', consequence: '检查单不是答案。你把症状、风险和检查目的写清楚，带教点头让你继续。' },

@@ -72,4 +72,8 @@ test('M10 新增事件均有事实审计记录且不写处方剂量', async ({ p
   for (const id of IDS) expect(audit, `${id} 必须在医学事实清单中登记`).toContain(id);
   const text = events.map((event: any) => [event.title, event.body, ...event.choices.map((choice: any) => choice.text)].join(' ')).join(' ');
   expect(text, '诊断链不应出现剂量/处方化表述').not.toMatch(/\b\d+\s*(mg|毫克|片\/日|次\/日)\b/i);
+  const workup = events.find((event: any) => event.id === 'diagnostic_workup');
+  expect(workup.body, '急性胸闷应点出时间敏感检查（心电图）时序').toContain('心电图');
+  expect(events.find((event: any) => event.id === 'diagnostic_report_review').body, '报告解读须强调单一体征/异常不等于诊断')
+    .toMatch(/不能.*等同|不能自动等同|不等于/);
 });
