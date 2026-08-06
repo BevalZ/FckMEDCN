@@ -342,6 +342,35 @@ export const MASTER_PHD_EVENTS: GameEvent[] = [
     ],
   },
 
+  // —— 一作之争（OPTIMIZATION-ROADMAP R7，科研生态高频痛点）——
+  // 同门抢共一/导师加名：争/让/被安抚三向 flag，后续在职业阶段（评职称翻旧账/师兄还人情）
+  // 与硕博阶段（导师承诺兑现与否）分别回响。
+  {
+    id: 'ms_first_author_dispute',
+    stage: ['master', 'phd'],
+    title: '一作之争',
+    body: '你那篇投了半年的文章终于要大修后接收。导师却提出：让即将出站的师兄挂共同一作——"他需要这篇文章。"你的名字，要往后挪一位。',
+    category: 'career', weight: 55, minTurn: 3, once: true,
+    choices: [
+      { text: '争到底：按实际贡献署名', delta: { reputation: 2, relations: -6, sanity: -6 }, flagSet: 'fa_fought', consequence: '导师没再坚持，但组里的空气冷了几周。' },
+      { text: '让出共一，换个人情', delta: { relations: 4, sanity: -4, reputation: 1 }, flagSet: 'fa_conceded', consequence: '对方请你吃了顿饭，说"以后有我一口就有你一口"。' },
+      { text: '忍了，导师画饼"下一篇让你独立一作"', delta: { sanity: -3, knowledge: 1 }, flagSet: 'fa_placated', consequence: '你把这句话记在了心里——记仇本的第一页。' },
+    ],
+  },
+  // 被画饼者的回响：导师的承诺兑现了吗
+  {
+    id: 'ms_first_author_placated_echo',
+    stage: ['master', 'phd'],
+    title: '导师兑现承诺了吗',
+    body: '下一篇文章写完了。署名那天，你想起那句"下一篇让你独立一作"。',
+    category: 'career', weight: 45, once: true, minTurn: 5,
+    requireFlag: 'fa_placated',
+    choices: [
+      { text: '去问个明白', delta: { reputation: 2, sanity: -2, papers: 1 }, consequence: '导师这次没食言。独立一作，实打实。' },
+      { text: '算了，不想再撕破脸', delta: { sanity: -4, relations: 2 }, consequence: '共一名单里多了个你没见过的名字。你咽下了这口气。' },
+    ],
+  },
+
   // —— 留级剧情链（与本科 ug_holdback_life 对齐）：硕士/博士留级后抽出，选"重来一次"解除每季心理负担 ——
   {
     id: 'ms_holdback_life',

@@ -87,6 +87,8 @@ const NARRATIVE_ONLY = new Set([
   'overwork_aware', 'conflict_prone', 'in_couple', 'exp_failed',
   // NPC 好感度事件分支标记（修复关系/接受内推等叙事结果）
   'roommate_repaired', 'senior_referral', 'senior_repaired', 'teacher_repaired', 'counselor_repaired',
+  // R8 家庭链终端标记（修复完成/关系落定/子女入学，叙事终点无后续消费）
+  'family_anchored', 'family_repaired', 'spouse_reconciled', 'marriage_cold', 'child_in_medschool',
 ]);
 
 test('死 flag 回归：每个 flag 都有消费者（或叙事白名单）', async ({ page }) => {

@@ -882,6 +882,216 @@ export const CAREER_EVENTS: GameEvent[] = [
     ],
   },
 
+  // —— 一作之争的职业回响（OPTIMIZATION-ROADMAP R7）——
+  // 当年争来的署名，评职称时是实打实的一作；当年让出的人情，十年后连本带息。
+  {
+    id: 'career_first_author_fought_echo',
+    stage: 'career',
+    title: '一作那一栏',
+    body: '评职称填表，一作那一栏你写得理直气壮。当年争来的署名，如今是材料里最硬的一行。',
+    category: 'career', weight: 40, once: true, minTurn: 4,
+    requireFlag: 'fa_fought',
+    choices: [
+      { text: '不后悔当年争过', delta: { reputation: 3, sanity: 4 }, consequence: '有些底线，退一步就再也回不来。' },
+    ],
+  },
+  {
+    id: 'career_first_author_conceded_echo',
+    stage: 'career',
+    title: '师兄还的人情',
+    body: '当年你让出共一的师兄，如今是另一家的学科带头人。他牵线把你的疑难病例讨论请进了省年会。',
+    category: 'career', weight: 40, once: true, minTurn: 4,
+    requireFlag: 'fa_conceded',
+    choices: [
+      { text: '人情这东西，存十年也有利息', delta: { relations: 4, reputation: 4, sanity: 2 }, consequence: '你们相视一笑，谁都没提当年那篇文章。' },
+    ],
+  },
+
+  // —— 破五唯：临床型晋升通道（OPTIMIZATION-ROADMAP R7，与 master_clinician 结局联动）——
+  // 论文少但临床强也能评上：临床实绩突出者经"临床为主"评审通道拿副高，
+  // passed_fugao 由结局判定与正高事件消费，无新死 flag。
+  {
+    id: 'career_clinical_track_review',
+    stage: 'career',
+    title: '破五唯：临床型晋升通道',
+    body: '省里下发职称改革文件：长期扎根临床、工作量与同行评议突出者，可经"临床实绩"通道申报副高——论文不再是硬杠杠。你的手术量和门诊量全科第一，SCI 却寥寥几篇。',
+    category: 'career', weight: 65, once: true, minTurn: 8,
+    requireFlag: 'passed_zhuzhi', excludeFlag: 'passed_fugao',
+    requireStat: { clinical: [60, 100] },
+    newsTickerAfter: '【卫生职称改革深化：多省落地"以临床为主"评价通道】',
+    choices: [
+      { text: '走临床实绩通道申报副高', delta: { reputation: 6, clinical: 4, stamina: -12, sanity: -4 }, flagSet: 'passed_fugao', consequence: '评审专家翻完你的病案和手术记录："这样的大夫，该评上。"' },
+      { text: '再等等，先把文章补上', delta: { sanity: 2, knowledge: 2 }, consequence: '你把文件折好收进口袋，转身回了病房。' },
+    ],
+  },
+
+  // —— 国自然申报季（OPTIMIZATION-ROADMAP R7）：可重复的季节事件 ——
+  // 命中率按 papers/knowledge/reputation 加权，落在现实 15-25% 区间；中/不中都有回响。
+  {
+    id: 'career_nsfc_season',
+    stage: 'career',
+    title: '国自然申报季',
+    body: '三月，又到了写标书的季节。科里年轻人都在熬，你把去年的评审意见翻出来——"创新性不足，建议修改后再报"。',
+    category: 'career', weight: 50, minTurn: 2, once: false,
+    choices: [
+      {
+        text: '再报一次，逐条打磨', delta: { stamina: -14, sanity: -4, knowledge: 3 },
+        effect: { kind: 'rollOutcome', base: 0.08, paperBonus: 0.03, knowledgeBonus: 0.001, repPer10: 0.01, successFlag: 'nsfc_won', failFlag: 'nsfc_failed' },
+        consequence: '提交截止那晚，你按下"确认"——剩下的交给评审。',
+      },
+      { text: '今年不报了，歇一年', delta: { sanity: 4 }, consequence: '你关掉模板，难得准点下了班。' },
+    ],
+  },
+  {
+    id: 'career_nsfc_won_echo',
+    stage: 'career',
+    title: '中标通知',
+    body: '八月放榜。资助名单里有你的名字——四年期项目。科主任在群里发了个红包，备注："请客。"',
+    category: 'career', weight: 60, once: true, minTurn: 3,
+    requireFlag: 'nsfc_won',
+    newsTickerAfter: '【国家自然科学基金资助名单公布：医学部中标率约 16%】',
+    choices: [
+      { text: '请全组吃饭，开始张罗课题', delta: { reputation: 6, relations: 4, money: 12000, stamina: -6 }, consequence: '经费到账那天，你把标书里写的设备一件件下单。' },
+    ],
+  },
+  {
+    id: 'career_nsfc_failed_echo',
+    stage: 'career',
+    title: '又没中',
+    body: '放榜名单从头看到尾，没有你。评审意见还是那几句。同事安慰你："国自然嘛，中一次够吃五年。"',
+    category: 'mental', weight: 50, once: true, minTurn: 3,
+    requireFlag: 'nsfc_failed', excludeFlag: 'nsfc_won',
+    choices: [
+      { text: '把意见钉在桌上，明年再战', delta: { sanity: -3, knowledge: 2 }, consequence: '你在日历上圈了明年三月。' },
+      { text: '算了，把精力还给临床', delta: { sanity: 3, clinical: 2 }, consequence: '你想通了：病人不等基金。' },
+    ],
+  },
+
+  // —— 家庭与代际（OPTIMIZATION-ROADMAP R8，医生职业的时间挤压）——
+  // 值班错过家庭重要时刻：家长会 vs 排定的手术。两向 flag 各自回响——
+  // 守住的成为撑下去的动力，错过的在孩子长大后连本带息地还回来。
+  {
+    id: 'career_missed_family_moment',
+    stage: 'career',
+    title: '错过的家长会',
+    body: '下午三点，孩子的家长会；三点半，一台排了两周的手术。爱人发来消息："孩子问，你这次能不能来。"',
+    category: 'social', weight: 55, minTurn: 2,
+    requireMarital: 'married', requireFlag: 'has_child',
+    choices: [
+      { text: '请同事替台，赶去学校的尾巴', delta: { relations: 5, sanity: 3, reputation: -2, stamina: -2 }, flagSet: 'family_moment_kept', consequence: '你赶到时只剩尾声，孩子却一眼就从人堆里认出了你。' },
+      { text: '手术不能放，下次一定', delta: { relations: -5, sanity: -4, reputation: 2 }, flagSet: 'family_moment_missed', consequence: '深夜回家，桌上留着孩子画的全家福——你的位置空着。' },
+    ],
+  },
+  {
+    id: 'career_kept_family_echo',
+    stage: 'career',
+    title: '孩子的作文',
+    body: '老师布置作文《我的家人》。孩子写："我的家长是医生，很忙，但重要的日子都在。"老师打了个优。',
+    category: 'social', weight: 45, once: true, minTurn: 5,
+    requireFlag: 'family_moment_kept',
+    choices: [
+      { text: '把作文拍照存进手机', delta: { sanity: 8, relations: 3 }, flagSet: 'family_anchored', consequence: '后来每个难熬的夜班，你都会翻出来看一眼。' },
+    ],
+  },
+  {
+    id: 'career_missed_family_echo',
+    stage: 'career',
+    title: '孩子长大了',
+    body: '孩子上了初中，家长会通知不再转发给你了。ta 说："反正你也来不了。"语气平静得像在陈述天气预报。',
+    category: 'mental', weight: 45, once: true, minTurn: 6,
+    requireFlag: 'family_moment_missed',
+    choices: [
+      { text: '这个月推掉应酬，认真陪一次', delta: { relations: 6, sanity: 5, reputation: -2 }, flagSet: 'family_repaired', consequence: 'ta 嘴上嫌你烦，却把合影设成了手机桌面。' },
+      { text: '多打点钱，算是补偿', delta: { money: -3000, relations: -2, sanity: -3 }, consequence: '转账被退回了，附言只有两个字："不用。"' },
+    ],
+  },
+
+  // —— 配偶怨言事件链（R8）：认真谈 → 修复回声；拖延 → 分房睡 → 咨询或冷战 ——
+  {
+    id: 'career_spouse_strain',
+    stage: 'career',
+    title: '"这个家你还要不要"',
+    body: '连续第三个周末值班。爱人把你们的合影扣在桌上："孩子以为你住在医院宿舍。我呢？我算什么——室友吗？"',
+    category: 'social', weight: 50, once: true, minTurn: 3,
+    requireMarital: 'married',
+    choices: [
+      { text: '请年假，认真谈一次', delta: { relations: 6, sanity: 4, money: -1500, reputation: -2 }, flagSet: 'spouse_talked', consequence: '你们谈到凌晨。ta 说："我不是要你不当医生，我是要你别把我们忘了。"' },
+      { text: '"等忙完这阵再说"', delta: { relations: -6, sanity: -5 }, flagSet: 'spouse_drifting', consequence: 'ta 没再说话。从那以后，很多事 ta 不再跟你说了。' },
+    ],
+  },
+  {
+    id: 'career_spouse_echo_talk',
+    stage: 'career',
+    title: '重新排开的班表',
+    body: '你把夜班和家里的重要日子画在同一张日历上。主任看了你的调班申请，签了字。',
+    category: 'social', weight: 40, once: true, minTurn: 5,
+    requireFlag: 'spouse_talked',
+    choices: [
+      { text: '结婚纪念日这顿饭，补上', delta: { relations: 5, sanity: 6, money: -800 }, flagSet: 'spouse_reconciled', consequence: 'ta 笑了，说你还是当年那个人。' },
+    ],
+  },
+  {
+    id: 'career_spouse_echo_drift',
+    stage: 'career',
+    title: '分房睡的第几个月',
+    body: '你们开始分房睡。不是吵架——是连吵架的力气都没有了。白大褂挂在两个房间中间的门上。',
+    category: 'mental', weight: 40, once: true, minTurn: 5,
+    requireFlag: 'spouse_drifting',
+    choices: [
+      { text: '请婚姻咨询，拉一把这个家', delta: { money: -3000, sanity: -3, relations: 4 }, flagSet: 'spouse_reconciled', consequence: '咨询师说："你们的问题不是不爱，是没时间爱。"' },
+      { text: '随它去，工作才是避风港', delta: { sanity: -8, relations: -3, reputation: 2 }, flagSet: 'marriage_cold', consequence: '你把更多时间泡在医院——至少病房还需要你。' },
+    ],
+  },
+
+  // —— 子女叙事（R8）："我要学医"——你比谁都清楚这条路上有什么 ——
+  // 支持/劝退/让 ta 自己决定，志愿表在两年后揭晓（与多周目传承主题呼应）。
+  {
+    id: 'career_child_asks_medicine',
+    stage: 'career',
+    title: '"我想学医"',
+    body: '晚饭桌上，读高中的孩子忽然说："我想好了，高考就报医学院。"你夹菜的手停在半空——这条路上有什么，你比谁都清楚。',
+    category: 'social', weight: 45, once: true, minTurn: 9,
+    requireMarital: 'married', requireFlag: 'has_child',
+    choices: [
+      { text: '支持：把这条路的好坏都讲透', delta: { relations: 5, sanity: 4, knowledge: 2 }, flagSet: 'child_med_supported', consequence: '你说："苦是真的，值得也是真的。"ta 听完了，没改主意。' },
+      { text: '劝退：把苦水全倒出来', delta: { relations: -3, sanity: -2 }, flagSet: 'child_med_deterred', consequence: 'ta 沉默很久："可是我看你下手术台的样子，从来没后悔过。"' },
+      { text: '让 ta 自己决定', delta: { sanity: 2 }, flagSet: 'child_med_own_choice', consequence: '你只说了一句："想清楚了，我们都支持。"' },
+    ],
+  },
+  {
+    id: 'career_child_med_echo',
+    stage: 'career',
+    title: '白大褂的传承',
+    body: '孩子的高考志愿表发下来。第一志愿栏，端端正正写着：临床医学。',
+    category: 'social', weight: 45, once: true, minTurn: 11,
+    requireFlag: 'child_med_supported',
+    choices: [
+      { text: '把当年自己穿白袍的照片发给 ta', delta: { relations: 5, sanity: 6 }, flagSet: 'child_in_medschool', consequence: 'ta 回："以后查房遇上难题，可要跟你请教了。"' },
+    ],
+  },
+  {
+    id: 'career_child_deterred_echo',
+    stage: 'career',
+    title: '志愿表上没有医学院',
+    body: '孩子最终报了计算机。ta 说想通了，你却从 ta 的眼神里读到一丝没死心的光。',
+    category: 'mental', weight: 40, once: true, minTurn: 11,
+    requireFlag: 'child_med_deterred',
+    choices: [
+      { text: '告诉 ta：哪天想学医，永远来得及', delta: { relations: 4, sanity: 3 }, consequence: '你说的是真心话——这条路晚一点走，反而走得稳。' },
+    ],
+  },
+  {
+    id: 'career_child_own_choice_echo',
+    stage: 'career',
+    title: '孩子自己做的决定',
+    body: '志愿表交上去那天，孩子才告诉你：第一志愿，临床医学。ta 说："你没劝过我，也没拦过我——所以这是我自己的决定。"',
+    category: 'social', weight: 40, once: true, minTurn: 11,
+    requireFlag: 'child_med_own_choice',
+    choices: [
+      { text: '拍拍 ta 的肩，什么都没说', delta: { relations: 5, sanity: 6 }, flagSet: 'child_in_medschool', consequence: '你转身进了厨房，眼眶有点热。' },
+    ],
+  },
+
   // —— 开局选亚专科（第 0 季强制）：内科/外科/妇产科/儿科，劳累程度不同 ——
   {
     id: 'career_specialty_choice',

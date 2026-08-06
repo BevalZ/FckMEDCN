@@ -23,7 +23,7 @@ function endingFlags(): string[] {
   return [...new Set(refs)].sort();
 }
 
-/** 全项目所有 flagSet:'x' 与 setFlag('x') 设置过的 flag 集合 */
+/** 全项目所有 flagSet:'x'、setFlag('x') 与 rollOutcome successFlag/failFlag 设置过的 flag 集合 */
 function settableFlags(): Set<string> {
   const out = new Set<string>();
   const scanDir = (dir: string) => {
@@ -35,6 +35,8 @@ function settableFlags(): Set<string> {
       const txt = fs.readFileSync(p, 'utf8');
       for (const m of txt.matchAll(/flagSet:\s*['"]([A-Za-z0-9_]+)['"]/g)) out.add(m[1]);
       for (const m of txt.matchAll(/setFlag\(\s*['"]([A-Za-z0-9_]+)['"]\s*\)/g)) out.add(m[1]);
+      // rollOutcome 概率结算也是真实来源（如 jh_bianzhi_in / nsfc_won）
+      for (const m of txt.matchAll(/(?:successFlag|failFlag):\s*['"]([A-Za-z0-9_]+)['"]/g)) out.add(m[1]);
     }
   };
   scanDir(path.join(ROOT, 'src'));

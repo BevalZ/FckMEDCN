@@ -115,9 +115,14 @@
 **现实**：破五唯（唯论文）改革；一作/通讯之争真实高频；国自然中标率 ~15-20%。
 
 **任务**：
-- [ ] "一作/通讯之争"事件（同门抢一作、导师加名）——科研生态高频痛点
-- [ ] "临床型晋升通道"事件（论文少但临床强也能评上）呼应破五唯，与 master_clinician 结局联动
-- [ ] 国自然申报做季节事件（固定季度触发，命中率按 papers/research 加权）
+- [x] "一作/通讯之争"事件（同门抢一作、导师加名）——科研生态高频痛点
+  （ms_first_author_dispute 三向 flag：fa_fought/fa_conceded/fa_placated，
+  分别由职业回声 career_first_author_fought/conceded_echo 与硕博回声 ms_first_author_placated_echo 消费）
+- [x] "临床型晋升通道"事件（论文少但临床强也能评上）呼应破五唯，与 master_clinician 结局联动
+  （career_clinical_track_review：requireStat clinical≥60 + passed_zhuzhi，临床实绩通道拿 passed_fugao）
+- [x] 国自然申报做季节事件（固定季度触发，命中率按 papers/research 加权）
+  （career_nsfc_season 可重复，rollOutcome base 0.08 + paperBonus 0.03 + knowledgeBonus 0.001 + repPer10 0.01，
+  典型画像命中率 25% 贴合现实 15-30%；中标/落榜各有回声，落榜回声 excludeFlag nsfc_won 防先中后败矛盾）
 
 ---
 
@@ -125,9 +130,15 @@
 
 **实据**：婚姻/育儿/家人离世已建；缺"值班错过家庭时刻"与子女叙事。
 **任务**：
-- [ ] "值班错过家庭重要时刻"事件（纪念日/家长会/父母生日）——真实高频
-- [ ] 配偶职业冲突/怨言事件链
-- [ ] 子女叙事（孩子是否学医），可与多周目继承联动
+- [x] "值班错过家庭重要时刻"事件（纪念日/家长会/父母生日）——真实高频
+  （career_missed_family_moment：家长会 vs 排定手术，family_moment_kept/missed 两向 flag
+  各有回声——孩子作文正向锚点 / 孩子长大后疏远与修复尝试）
+- [x] 配偶职业冲突/怨言事件链
+  （career_spouse_strain：认真谈→spouse_talked→调班表修复回声；拖延→spouse_drifting→
+  分房睡→婚姻咨询(spouse_reconciled)或冷战(marriage_cold)）
+- [x] 子女叙事（孩子是否学医），可与多周目继承联动
+  （career_child_asks_medicine 三向：支持/劝退/让 ta 自己决定，志愿表两年后经三条回声揭晓，
+  终端 child_in_medschool 与传承主题呼应；玩家称谓全部性别中立）
 
 ---
 
@@ -177,8 +188,8 @@
 | P1 | 晋升失败分支 + 年限门槛 + 职业期延长 | 3 | 核心职业体验"熬" | ✅ 已落地（20 季，第 8/16 季申报 + 两级重申） |
 | P1 | 职业暴露 / 医保飞检 | 6 | 真实高频且教育价值高 | ✅ 已落地（针刺伤/飞检事件链） |
 | P1 | 资产提现 + 属性成长 | 4/9 | 让现有系统闭环 | ✅ 已落地（资产/属性/结局财务卡 + 专项回归） |
-| P2 | 一作之争 / 临床型晋升 | 7 | 呼应破五唯 | ⬜ 待做 |
-| P2 | 值班错过家庭 / 子女叙事 | 8 | 共鸣向粘性 | ⬜ 待做 |
+| P2 | 一作之争 / 临床型晋升 | 7 | 呼应破五唯 | ✅ 已落地（ms_first_author_dispute + career_clinical_track_review + career_nsfc_season，2026-08-06） |
+| P2 | 值班错过家庭 / 子女叙事 | 8 | 共鸣向粘性 | ✅ 已落地（career_missed_family_moment / career_spouse_strain / career_child_asks_medicine 三链，2026-08-06） |
 | P2 | 极端组合 balance 断言 / 强制事件回归 | 9/10 | 测试防线 | ✅ 已落地（balance-matrix + career-nodes ESC） |
 | P3 | 事件池去重回归 / 阶段索引 | 10 | 防重复并降低每回合全池扫描成本 | ✅ 已落地（event-pool-diversity.spec，2026-08-04） |
 | P3 | 亚专科第 5 项(急诊)/时间轴重构 | 3/6 | 结构改造，风险大 | ⬜ 待做 |
