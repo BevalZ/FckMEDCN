@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { advanceByEnterUntilScene } from './helpers';
 
 // 经济系统回归：
 // 1) 随机家庭条件决定上学期间父母补贴（rich > middle > tight）；
@@ -58,24 +59,22 @@ test('理财策略每季自动应用（节流/稳健/投资）', async ({ page }
 test('职业阶段收入含职称档差与绩效、支出含房贷', async ({ page }) => {
   await boot(page);
   const r = await page.evaluate(() => {
-    const { gs, tf } = (window as any).__mod;
+    const { gs, ec } = (window as any).__mod;
     const netOf = (setup: () => void) => {
       gs.resetGame();
       gs.patchState({ stage: 'career', familyWealth: 'middle', financeStrategy: 'stable' });
       setup();
-      const m = gs.getState().stats.money;
-      tf.advanceQuarter('career');
-      return gs.getState().stats.money - m;
+      return ec.getQuarterEconomy('career').net;
     };
     const base = netOf(() => {});
     const fugao = netOf(() => { gs.setFlag('passed_fugao'); gs.setFlag('bought_house'); });
     return { base, fugao };
   });
   console.log('  职业净结余(底薪/副高+房贷):', JSON.stringify(r));
-  // 默认市级档位（REGION_INCOME=1.1，房贷月供 3000，深挖第五部分 R2 落地后）：
-  // 底薪(rep10): (30000+500)×1.1 - 16000 = 17550；副高+房贷: (30000+8000+500)×1.1 - 16000-3000 = 23350
-  expect(r.base, '职业底薪净结余').toBe(17550);
-  expect(r.fugao, '副高档差+房贷后的净结余').toBe(23350);
+  // 直接断言纯经济盘口，避免 advanceQuarter 的健康/政策/life-system tick 污染此测试。
+  // 默认市级档位（REGION_INCOME=1.1），且默认政策盈余给绩效部分 4% 加成。
+  expect(r.base, '职业底薪净结余').toBe(18288);
+  expect(r.fugao, '副高档差+房贷后的净结余').toBe(24282);
 });
 
 test('R 菜单可调整理财策略并持久化', async ({ page }) => {
@@ -90,7 +89,7 @@ test('R 菜单可调整理财策略并持久化', async ({ page }) => {
     () => ((window as any).game?.scene?.getScenes(true) ?? []).some((s: any) => s.sys.settings.key === 'GaokaoScene'),
     null, { timeout: 60000 },
   );
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  await advanceByEnterUntilScene(page, 'CampusScene');
   await page.waitForFunction(
     () => ((window as any).game?.scene?.getScenes(true) ?? []).some((s: any) => s.sys.settings.key === 'CampusScene'),
     null, { timeout: 60000 },
@@ -131,7 +130,7 @@ test('R 菜单资产账户可应急提现并持久化流水', async ({ page }) =
     () => ((window as any).game?.scene?.getScenes(true) ?? []).some((s: any) => s.sys.settings.key === 'GaokaoScene'),
     null, { timeout: 60000 },
   );
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  await advanceByEnterUntilScene(page, 'CampusScene');
   await page.waitForFunction(
     () => ((window as any).game?.scene?.getScenes(true) ?? []).some((s: any) => s.sys.settings.key === 'CampusScene'),
     null, { timeout: 60000 },

@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { advanceByEnterUntilScene } from './helpers';
 
 // M3 三大系统的行为验证：
 //   1. 造假风险引擎的概率分布（小造假可赌、大造假必爆、严重等级可达）
@@ -23,7 +24,7 @@ async function enterCampus(page: Page) {
   await waitForScene(page, 'TitleScene');
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  await advanceByEnterUntilScene(page, 'CampusScene');
   await waitForScene(page, 'CampusScene');
   await page.keyboard.press('Space');
   await page.waitForFunction(

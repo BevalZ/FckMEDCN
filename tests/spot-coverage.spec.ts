@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { advanceByEnterUntilScene } from './helpers';
 
 // 覆盖率回归：可行走场景里每个地点在每个回合都应当有可领事件，
 // 否则玩家走过去只能做日常活动，'!' 常年不亮（操场/公告栏此前就是这样）。
@@ -21,7 +22,7 @@ async function enterCampus(page: Page) {
   await waitForScene(page, 'TitleScene');
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  await advanceByEnterUntilScene(page, 'CampusScene');
   await waitForScene(page, 'CampusScene');
 }
 

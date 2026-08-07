@@ -132,6 +132,36 @@ export const ENDINGS: Ending[] = [
     ],
   },
   {
+    id: 'era0_unchosen_road', title: '未选择的路', subtitle: '你没有踏进医学院',
+    tone: 'bittersweet', bgColor: 0x20251f,
+    desc: '那年夏天，你去了另一座城市，读了另一个专业。后来偶尔在新闻里看到医生的消息，心里会轻轻动一下，然后继续往前走。人生没有如果；没有选择学医，也不等于选择错了。',
+    stats: { finalAge: 18, finalMoney: 5000, totalYears: 0, title: '另一专业的新生', hospital: '——', verdict: '你选择了更适合当时自己的路' },
+    realDataCard: [
+      { label: '专业选择影响因素', value: '兴趣、家庭、就业与培养成本共同作用', source: '高校专业选择相关研究' },
+      { label: '转专业与重新选择', value: '选择并非一次性定终身', source: '普通高等学校学生管理规定' },
+    ],
+  },
+  {
+    id: 'era0_fell_short', title: '差一点', subtitle: '分数线停在你面前',
+    tone: 'bitter', bgColor: 0x25211f,
+    desc: '分数出来的那个晚上，你离医学院只差一段看得见、却跨不过去的距离。后来你去了另一所学校。很多年后再想起，那个夏天像一场梦——你差一点就成为医生了。差一点。',
+    stats: { finalAge: 18, finalMoney: 5000, totalYears: 0, title: '未被医学院录取', hospital: '——', verdict: '一次考试改变了路线，却没有定义你的一生' },
+    realDataCard: [
+      { label: '本科录取竞争', value: '不同省份、年份与专业差异显著', source: '教育考试院公开数据' },
+      { label: '医学培养入口', value: '本科、定向、专升本等路径并存', source: '高校招生简章' },
+    ],
+  },
+  {
+    id: 'era0_escape_white_tower', title: '逃离白色巨塔', subtitle: '你把“学医”留在了那个夏天',
+    tone: 'escape', bgColor: 0x1b2428,
+    desc: '那晚之后，你再也没有主动提起过“学医”。你去了另一座城市，读了另一个专业，过着另一种生活。偶尔在深夜里，你会想起那个曾经想成为医生的自己——但你已经走得很远了。',
+    stats: { finalAge: 18, finalMoney: 5000, totalYears: 0, title: '重新选择方向', hospital: '——', verdict: '离开也是一种对自己的保护' },
+    realDataCard: [
+      { label: '生涯决策', value: '重大落差后宜避免在情绪峰值仓促决定', source: '生涯规划与心理健康常识' },
+      { label: '心理援助热线', value: '全国：400-161-9995', source: '国家卫健委' },
+    ],
+  },
+  {
     id: 'disgraced', title: '通报里的那个名字', subtitle: '学术不端调查结论公布',
     tone: 'dark', bgColor: 0x2a1418,
     desc: '撤稿、撤销学位、五年内禁止申报课题。通报挂在官网上，搜索你的名字，第一条就是它。你还能穿白大褂，但很多扇门在同一天关上了。',
@@ -182,6 +212,66 @@ export const ENDINGS: Ending[] = [
       { label: '零工经济的风险', value: '收入不稳、缺社保', source: '公开研究报告' },
     ],
   },
+  {
+    id: 'great_healer', title: '大医精诚', subtitle: '归途完整，承诺兑现',
+    tone: 'hopeful', bgColor: 0x18231f,
+    desc: '你走的时候，家人和学生都在。你留下的不只是一串职称，还有被认真对待过的患者、被托举过的后来者，以及一套能在你离开后继续运转的准则。\n十八岁那句“我想学医”，终于有了完整的句号。',
+    stats: { finalAge: 80, finalMoney: 0, totalYears: 62, title: '医生 · 教师 · 传承者', hospital: '一生行医之地', verdict: '称职，也被记住' },
+    realDataCard: [
+      { label: '未竟之事完成度', value: '80%以上', source: '本局生涯记录' },
+      { label: '留下的遗产', value: '临床、学术、制度、精神与家庭', source: '本局选择汇总' },
+    ],
+  },
+  {
+    id: 'inheritor', title: '传承者', subtitle: '你离开了岗位，没有离开医学',
+    tone: 'hopeful', bgColor: 0x17252a,
+    desc: '学生继续使用你教过的方法，也会修正你没有解决的问题。你的名字未必总被提起，但你的判断方式仍活在下一代医生的手里。',
+    stats: { finalAge: 78, finalMoney: 0, totalYears: 60, title: '传承者', hospital: '后来者的科室', verdict: '接力棒已经交出' },
+    realDataCard: [
+      { label: '传承值', value: '60以上', source: '本局生涯记录' },
+      { label: '接班与教学', value: '已形成可持续的后来者路径', source: '时代6-8选择' },
+    ],
+  },
+  {
+    id: 'ordinary_road', title: '平凡之路', subtitle: '没有传奇，仍然值得',
+    tone: 'bittersweet', bgColor: 0x202522,
+    desc: '你没有成为院士，也没有让所有人记住名字。但几十年里，你认真看病、写病历、值夜班，也在能力范围内保护过一些人。\n几位患者和同事来送你。这已经足够构成一生。',
+    stats: { finalAge: 79, finalMoney: 0, totalYears: 61, title: '医生', hospital: '曾经工作过的医院', verdict: '平凡，但值得' },
+    realDataCard: [
+      { label: '完成度', value: '60以上', source: '本局生涯记录' },
+      { label: '职业价值', value: '不只由头衔和论文定义', source: '全局选择汇总' },
+    ],
+  },
+  {
+    id: 'unfinished_life', title: '未尽', subtitle: '总有一些事，来不及',
+    tone: 'resigned', bgColor: 0x232021,
+    desc: '还有一些话没说，一些人没见，一些页没有写完。人生不会因为遗憾而全部失效，只是最后那一刻，你仍能感到那些空白的形状。',
+    stats: { finalAge: 75, finalMoney: 0, totalYears: 57, title: '退休医生', hospital: '——', verdict: '未完成，也是人生的一部分' },
+    realDataCard: [
+      { label: '未竟之事完成度', value: '不足60', source: '本局生涯记录' },
+      { label: '仍被保留的部分', value: '已完成的关系与选择', source: '全局选择汇总' },
+    ],
+  },
+  {
+    id: 'final_rest', title: '安息', subtitle: '终于可以休息了',
+    tone: 'resigned', bgColor: 0x1a2026,
+    desc: '你太累了。多年里，你习惯把休息排在患者、科室和家庭之后。最后一次闭上眼睛时，不再有下一张排班表。\n这一次，休息不需要向任何人请假。',
+    stats: { finalAge: 74, finalMoney: 0, totalYears: 56, title: '退休医生', hospital: '——', verdict: '劳累终止，尊严仍在' },
+    realDataCard: [
+      { label: '身体负荷', value: '长期高劳损', source: '健康模块记录' },
+      { label: '最后选择', value: '休息', source: '时代8最终选择' },
+    ],
+  },
+  {
+    id: 'meteor_life', title: '流星', subtitle: '短暂，明亮，被一些人看见',
+    tone: 'bittersweet', bgColor: 0x231f2a,
+    desc: '你的职业生涯经历过不止一次严重倒下。它比原本计划的更短，却照亮过患者、同事和学生的一段路。那些被照亮的人，会继续向前。',
+    stats: { finalAge: 70, finalMoney: 0, totalYears: 52, title: '医生', hospital: '——', verdict: '长度不是唯一的尺度' },
+    realDataCard: [
+      { label: '重大身体事件', value: '多次', source: '健康模块记录' },
+      { label: '仍留下的回声', value: '患者、同事与学生', source: '本局选择汇总' },
+    ],
+  },
 ];
 
 export const ENDINGS_BY_ID: Record<string, Ending> = Object.fromEntries(ENDINGS.map(e => [e.id, e]));
@@ -200,11 +290,20 @@ export const ENDING_HINTS: Record<string, string> = {
   academic_star: '论文 6 篇以上，科研能力突出。',
   grassroots_hero: '去基层，并把身边的人处成自己人。',
   left_undergrad: '本科期间，真的递交退学申请。',
+  era0_unchosen_road: '在志愿填报前，主动选择另一条专业道路。',
+  era0_fell_short: '分数未达到医学院门槛，也没有选择复读或定向培养。',
+  era0_escape_white_tower: '放榜落差后，拒绝继续讨论复读、定向或学医。',
   disgraced: '学术造假，被重度曝光。',
   lucky_fraud: '造过假、没被抓，还评上了职称。',
   master_clinician: '临床能力出众、论文很少、病人认你。',
   worker_steady: '高考后选择放弃升学、直接工作。',
   worker_struggle: '没学历兜底，手停口停、几经浮沉。',
+  great_healer: '完成大部分未竟之事，同时守住传承、家庭和职业底线。',
+  inheritor: '在时代6-8把接力棒真正交给后来者。',
+  ordinary_road: '走到归途，完成度达到60，接受一生的普通与价值。',
+  unfinished_life: '走到归途，但仍有较多未竟之事。',
+  final_rest: '长期高劳损，并在最后选择休息。',
+  meteor_life: '一生经历多次重大身体事件，仍留下清晰回声。',
 };
 
 export function determineEnding(state: GameState): Ending {
@@ -216,8 +315,27 @@ export function determineEnding(state: GameState): Ending {
   const research = stats.research ?? 0;
 
   let ending: Ending;
+  const late = state.lateLife;
+  const reachedFinalEra = state.stage === 'eternity' || (state.stage === 'ending' && late?.finalChoice != null);
+  if (reachedFinalEra && late) {
+    const health = state.health;
+    const stableInnerLife = (state.spirit?.meaning ?? 50) >= 60
+      && (state.family?.familyFunction ?? 50) >= 45
+      && (state.publicImage?.publicRisk ?? 0) < 70
+      && (state.research?.misconductRisk ?? 0) < 70;
+    if ((health?.collapseCount ?? 0) >= 2 || (health?.majorIncidents?.length ?? 0) >= 4) ending = ENDINGS_BY_ID['meteor_life'];
+    else if (late.finalChoice === 'rest' || (health?.strain ?? 0) >= 85) ending = ENDINGS_BY_ID['final_rest'];
+    else if (late.completion >= 80 && late.legacy >= 65 && stats.reputation >= 45 && state.familyAlive > 0 && stableInnerLife) ending = ENDINGS_BY_ID['great_healer'];
+    else if (late.finalChoice === 'passed_the_baton' || late.legacy >= 60 || flags.has('era6_legacy_success') || (state.colleagues?.studentLoyalty ?? 0) >= 75) ending = ENDINGS_BY_ID['inheritor'];
+    else if ((state.publicImage?.publicRisk ?? 0) >= 90 || (state.research?.misconductRisk ?? 0) >= 90) ending = ENDINGS_BY_ID['unfinished_life'];
+    else if (late.completion >= 60 || ((state.spirit?.meaning ?? 0) >= 55 && (state.leisure?.lifeSatisfaction ?? 0) >= 50)) ending = ENDINGS_BY_ID['ordinary_road'];
+    else ending = ENDINGS_BY_ID['unfinished_life'];
+  }
   // 0. 真正退出了医疗行业
-  if (flags.has('left_undergrad')) ending = ENDINGS_BY_ID['left_undergrad']; // 本科期间退学
+  else if (flags.has('era0_unchosen_road')) ending = ENDINGS_BY_ID['era0_unchosen_road'];
+  else if (flags.has('era0_fell_short')) ending = ENDINGS_BY_ID['era0_fell_short'];
+  else if (flags.has('era0_escape_white_tower')) ending = ENDINGS_BY_ID['era0_escape_white_tower'];
+  else if (flags.has('left_undergrad')) ending = ENDINGS_BY_ID['left_undergrad']; // 本科期间退学
   else if (flags.has('left_med')) ending = ENDINGS_BY_ID['quit_guipei'];
   else if (flags.has('considering_quit_guipei') && stats.sanity < 25 && state.stage !== 'career') ending = ENDINGS_BY_ID['quit_guipei'];
 
@@ -229,7 +347,7 @@ export function determineEnding(state: GameState): Ending {
 
   // 0.5 学术不端：被查与侥幸
   // 身败名裂优先于一切"成功"结局——论文再多，通报盖住了。
-  else if (flags.has('exposed_ruin')) ending = ENDINGS_BY_ID['disgraced'];
+  else if (flags.has('exposed_ruin') || (state.research?.misconductRisk ?? 0) >= 90) ending = ENDINGS_BY_ID['disgraced'];
   // 侥幸：造过假、没被重度处理、靠造假红利评上了职称。
   // 比"稳定晋升"更讽刺，也更真实——很多被撤稿的人其实已经评过了。
   else if (flags.has('has_faked')
@@ -273,7 +391,7 @@ export function determineEnding(state: GameState): Ending {
   else if (flags.has('kin_all_gone') && stats.sanity < 35) ending = ENDINGS_BY_ID['burnout_early'];
 
   // 6. 早期职业倦怠（未崩但濒临）
-  else if (age < 35 && stats.sanity < 30) ending = ENDINGS_BY_ID['burnout_early'];
+  else if (age < 35 && (stats.sanity < 30 || (state.spirit?.meaning ?? 50) < 20)) ending = ENDINGS_BY_ID['burnout_early'];
 
   // 7. 深陷负债（真实经济后果：现金+资产 长期为负才算真破产）
   else if (money + (state.assets ?? 0) < -30000) ending = ENDINGS_BY_ID['exhausted_attending'];

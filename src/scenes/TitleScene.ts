@@ -17,6 +17,9 @@ const SCENE_BY_STAGE: Record<string, string> = {
   phd: 'PhDScene',
   jobhunt: 'JobHuntScene',
   career: 'CareerScene',
+  pinnacle: 'PinnacleScene',
+  retirement: 'RetirementScene',
+  eternity: 'EternityScene',
 };
 
 export class TitleScene extends Phaser.Scene {

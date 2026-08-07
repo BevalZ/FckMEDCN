@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { advanceByEnterUntilScene } from './helpers';
 
 // 验证本科新增的结构性分支真的生效：
 //   left_undergrad → 本季结束直接进 EndingScene（新结局 left_undergrad）
@@ -22,7 +23,7 @@ async function enterCampus(page: Page) {
   await waitForScene(page, 'TitleScene');
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  await advanceByEnterUntilScene(page, 'CampusScene');
   await waitForScene(page, 'CampusScene');
   await page.keyboard.press('Space');
   await page.waitForFunction(

@@ -2,6 +2,7 @@ import { getState, updateStats, hasFlag, setFlag, patchState } from './gameState
 import type { StatDelta } from './stats';
 import type { AssetTransaction, AssetTransactionKind } from './gameState';
 import type { LifeStage } from './gameState';
+import { policyPerformanceMultiplier } from './policy';
 
 // —— 各阶段经济模型（类星露谷：每月/每季的固定收支 + 入学入职一次性费用）——
 // 数值以“季度”为粒度（本游戏一回合 = 一季度）。
@@ -29,6 +30,9 @@ export const STAGE_ECON: Record<string, StageEconSpec> = {
   // 求职待业：父母仍给基本生活费（income），支出压到与之持平，不再每季 -3000。
   jobhunt: { income: 2000, cost: 2000, label: '求职待业' },
   career: { income: 30000, cost: 16000, entryIncome: 6000, label: '主治医师' },
+  pinnacle: { income: 42000, cost: 22000, label: '职业巅峰' },
+  retirement: { income: 12000, cost: 10000, label: '退休生活' },
+  eternity: { income: 9000, cost: 12000, label: '归途' },
 };
 
 // 上学阶段：收入来自父母补贴，随随机家庭条件浮动
@@ -286,12 +290,15 @@ export function getQuarterEconomy(stage: string): QuarterEconomy {
   }
 
   // —— 职业阶段：底薪 + 职称档差 + 绩效（声望），支出含房贷/育儿 ——
-  if (stage === 'career') {
+  if (stage === 'career' || stage === 'pinnacle') {
     const s = getState();
     if (s.flags.has('passed_zhenggao')) income += 12000;
     else if (s.flags.has('passed_fugao')) income += 8000;
     else if (s.flags.has('passed_zhuzhi')) income += 5000;
     income += Math.round((s.stats.reputation ?? 0) / 10) * 500; // 绩效随声望
+    const fixedIncome = Math.round(income * 0.45);
+    const performanceIncome = income - fixedIncome;
+    income = fixedIncome + Math.round(performanceIncome * policyPerformanceMultiplier(s.policy, stage));
     // 医院/地区系数：三甲/私立上浮、基层/县城下调（求职选择真正影响收入）
     income = Math.round(income * REGION_INCOME[currentRegionTier()]);
     if (s.flags.has('bought_house')) cost += houseMonthly();      // 房贷月供按地区档位
@@ -301,6 +308,7 @@ export function getQuarterEconomy(stage: string): QuarterEconomy {
   const st = getState();
   if (st.marital === 'married') income += 1500; // 双职工 / 配偶补贴
   if (st.hasChild) cost += childQuarterCost(); // 育儿 / 托育；教育基金建成后下降
+  cost += Math.max(0, st.health?.treatmentCost ?? 0);
 
   // —— 理财策略：节流储蓄把支出压一成，且真实改写 cost（账单/简报可见）——
   if (st.financeStrategy === 'thrifty') cost = Math.round(cost * 0.9);
@@ -396,7 +404,7 @@ export function describeStageEconomy(stage: string): string | null {
     `每季度净收支：${e.net >= 0 ? '+' : ''}¥${e.net}`,
     `理财策略：${FINANCE_LABEL[s.financeStrategy] ?? '稳健生活'}（R 菜单可调）`,
   ];
-  if (stage === 'career') {
+  if (stage === 'career' || stage === 'pinnacle') {
     lines.splice(1, 0, `工作单位：${REGION_LABEL[currentRegionTier()]}`);
   }
   if (familyLine) lines.splice(2, 0, familyLine);

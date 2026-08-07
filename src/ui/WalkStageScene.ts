@@ -13,7 +13,7 @@ import type { TileMapSpec } from './tilemap';
 import { npcTileNear } from './npcPlacement';
 import { addScanlineOverlay, addVignette, getPalette, stageAmbientTint } from './pixelArt';
 import type { PaletteName } from './pixelArt';
-import { getState, updateStats, setFlag, hasFlag, addNews } from '../data/gameState';
+import { getState, updateStats, setFlag, hasFlag, addNews, enterStage } from '../data/gameState';
 import type { LifeStage } from '../data/gameState';
 import { drawStorylet, hasStorylet, commitChoice, advanceQuarter } from '../data/turnFlow';
 import { bindGameMenu } from './gameMenu';
@@ -140,6 +140,7 @@ export abstract class WalkStageScene extends Phaser.Scene {
   }
 
   create() {
+    enterStage(this.stageName);
     this.leaving = false;
     this.busy = true;
 

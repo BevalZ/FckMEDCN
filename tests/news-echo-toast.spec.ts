@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { advanceByEnterUntilScene } from './helpers';
 
 // 新闻回声行为回归：里程碑事件选择后，头条进入 newsLog 且屏幕上方弹出醒目横幅（防玩家错过）。
 
@@ -18,7 +19,7 @@ test('里程碑事件选择后新闻入 log 并弹横幅', async ({ page }) => {
   await waitForScene(page, 'TitleScene');
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  await advanceByEnterUntilScene(page, 'CampusScene');
   await waitForScene(page, 'CampusScene');
   await page.keyboard.press('Enter');
   await page.waitForTimeout(400);

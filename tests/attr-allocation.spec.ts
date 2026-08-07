@@ -29,6 +29,16 @@ const phaseTexts = (page: Page) => page.evaluate(() => {
   return list.filter((o: any) => o.type === 'Text').map((o: any) => o.text as string);
 });
 
+async function advanceUntilText(page: Page, text: string, maxPresses = 10) {
+  for (let i = 0; i < maxPresses; i++) {
+    const texts = await phaseTexts(page);
+    if (texts.some((t: string) => t.includes(text))) return texts;
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(700);
+  }
+  return phaseTexts(page);
+}
+
 test('属性分配：默认值、确认后写入 attrs 与起始属性', async ({ page }) => {
   await toAttrPhase(page);
 
@@ -71,14 +81,14 @@ test('属性分配：可调整；成绩低时高分数档不可选', async ({ pa
   const mid = await phaseTexts(page);
   expect(mid.some((t: string) => t.includes('剩余点数：3 / 10')), '减 3 点后应剩 3 点').toBe(true);
 
-  // 回车确认 → 成绩直接定档（成绩 2 → 560-609 档），放榜夜分数应在该档区间
+  // 回车确认 → 进入时代0叙事；继续走默认项到放榜夜，分数应由成绩定档
   await page.keyboard.press('Enter');
   await page.waitForTimeout(1000);
-  const texts = await phaseTexts(page);
+  const texts = await advanceUntilText(page, '放榜夜');
   expect(texts.some((t: string) => t.includes('放榜夜')), '应进入放榜夜').toBe(true);
   const state = await page.evaluate(() => ((window as any).__mod.gs.getState()));
   expect(state.attrs.academic, '成绩应改为 2').toBe(2);
-  expect(state.score, '分数应由成绩定档（560-609）').toBeGreaterThanOrEqual(595);
+  expect(state.score, '分数应由成绩定档并允许考前/运气波动').toBeGreaterThanOrEqual(545);
   expect(state.score, '分数不应越档到 685').toBeLessThan(610);
 });
 

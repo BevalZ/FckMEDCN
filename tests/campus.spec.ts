@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { advanceByEnterUntilScene } from './helpers';
 
 // CampusScene 冒烟测试：验证可行走切片的核心闭环在真实浏览器里跑得通。
 // 通过 window.game（Phaser.Game 实例，仅 DEV 构建暴露）读取场景内部状态，
@@ -54,10 +55,7 @@ async function enterCampus(page: Page) {
   await waitForScene(page, 'GaokaoScene');
 
   // 分数 → 放榜 → 选校 → 选学制 → 确认：每步都取焦点项
-  for (let i = 0; i < 6; i++) {
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(700);
-  }
+  await advanceByEnterUntilScene(page, 'CampusScene');
   await waitForScene(page, 'CampusScene');
 }
 

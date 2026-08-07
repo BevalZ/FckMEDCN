@@ -1,5 +1,6 @@
 import { test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { advanceByEnterUntilScene } from './helpers';
 
 // 数值平衡模拟：在真实事件池 + 真实经济模型下跑满本科 20 回合，
 // 检验不同打法的体力/存款/心理曲线。用于调参，不做硬断言。
@@ -21,7 +22,7 @@ async function enterCampus(page: Page) {
   await waitForScene(page, 'TitleScene');
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  await advanceByEnterUntilScene(page, 'CampusScene');
   await waitForScene(page, 'CampusScene');
 }
 

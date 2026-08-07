@@ -81,11 +81,13 @@ const DYNAMIC_PREFIXES = ['trust_', 'distant_', 'school_tier_'];
 // 运行时经"变量" setFlag 置位的 flag（字面量正则扫不到，但实际可达），需并入可设置集合。
 //  - 求职写实管线 signUnit：setFlag(u.regionFlag)，按单位 regionFlag 动态置位以下 region flag；
 //  - WalkStageScene 留级：setFlag(holdbackFlag) 按阶段动态置位 ms_holdback / phd_holdback。
+//  - undergradProgress 学业预警：setFlag(`academic_crisis_lv${crisisLevel}`) 按危机等级动态置位。
 // 这些 flag 有真实消费者（endings / currentRegionTier / 留级剧情链），并非死 flag。
 const RUNTIME_SET_FLAGS = new Set<string>([
   'offer_sanjia', 'offer_grass', 'took_hospital_a', 'took_hospital_b',
   'took_public', 'took_private', 'city_home', 'city_tier1', 'base_home',
   'ms_holdback', 'phd_holdback',
+  'academic_crisis_lv2', 'academic_crisis_lv4',
 ]);
 
 test('每个 requireFlag 都有来源（无死事件）', () => {

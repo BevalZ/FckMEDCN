@@ -1,4 +1,4 @@
-import { changeAttr, getState, updateStats, advanceTurn, hasFlag, setFlag } from './gameState';
+import { changeAttr, getState, updateStats, advanceTurn, hasFlag, setFlag, patchState } from './gameState';
 import { applyChoiceEffect } from './effects';
 import { getAvailableEvents, weightedRandom } from './events';
 import type { EventCategory, EventChoice, GameEvent } from './events';
@@ -9,6 +9,20 @@ import type { IntegrityOutcome } from './integrity';
 import type { StatDelta } from './stats';
 import { checkBadges } from './badges';
 import { isKnowledgeStage, tickLongSystemCounter, consumeQuarterDecay, noteStudied } from './knowledge';
+import { tickEra3Quarter } from './era3';
+import { tickHealthState, collapseRisk } from './health';
+import { recordQuarterFinance } from './finance';
+import { tickPolicyState } from './policy';
+import { tickLateLife } from './lateLife';
+import { signalExistingLegalEvent, tickLegalState } from './legal';
+import { publishPaper, tickResearchState } from './research';
+import { factionBonus, tickMentorFaction } from './mentorFaction';
+import { tickColleagues } from './colleagues';
+import { tickFamily } from './family';
+import { tickLove } from './loveMarriage';
+import { changeSpirit, tickSpirit } from './spirit';
+import { publicImmunity, tickPublicImage } from './publicImage';
+import { tickLeisure } from './leisure';
 
 // 回合流程的共享逻辑。
 // BaseStageScene（卡片模式）与 CampusScene（可行走地图）都走这里，
@@ -28,6 +42,7 @@ const RARE_WEIGHT = 20;
 // 故每次抽取先以此概率在**手写池**内抽，抽不到再回落到全池。
 // 这样既保留生成事件的日常质感，又保证叙事主线真的能被玩家看到。
 const isGenerated = (e: GameEvent) => e.id.startsWith('gen_');
+const isDueEvent = (e: GameEvent) => e.requireFlag?.endsWith('_due') === true;
 
 // 运气影响手写主线事件的出现率：运气越高，越容易遇到精心编排的主线事件。
 // 运气 0 → 0.45，运气 5 → 0.75（默认 0.65 对应运气约 3）。
@@ -65,6 +80,11 @@ export function drawStorylet(
   );
   if (full.length === 0) return null;
 
+  // 持续系统置位的 *_due 事件是“危机已经到期”，不应继续被地点分类或
+  // 程序生成日常稀释；玩家下一次领取 storylet 时优先处理。
+  const due = full.filter(isDueEvent);
+  if (due.length > 0) return pickWithPriority(due);
+
   const pool = categories && categories.length > 0
     ? full.filter(ev => categories.includes(ev.category))
     : full;
@@ -97,6 +117,7 @@ export function hasStorylet(
     state.stats as unknown as Record<string, number>,
     firedEvents, state.turnsInStage, state.marital,
   );
+  if (full.some(isDueEvent)) return true;
   if (!categories || categories.length === 0) return full.length > 0;
   return full.some(ev => categories.includes(ev.category));
 }
@@ -116,8 +137,19 @@ export function commitChoice(choice: EventChoice, event?: GameEvent) {
     delta = { ...choice.delta, money: Math.round(choice.delta!.money! * rank) };
   }
   if (choice.flagSet) setFlag(choice.flagSet);
-  if (choice.effect) applyChoiceEffect(choice.effect);
+  if (event) patchState({ legal: signalExistingLegalEvent(getState().legal, event.id, choice.flagSet) });
+  if (choice.effect) {
+    const effects = Array.isArray(choice.effect) ? choice.effect : [choice.effect];
+    for (const effect of effects) applyChoiceEffect(effect);
+  }
   updateStats(delta as StatDelta);
+  if ((delta?.papers ?? 0) > 0 && event) {
+    let research = getState().research;
+    for (let i = 0; i < (delta?.papers ?? 0); i++) research = publishPaper(research, { title: event.title, journal: '职业生涯成果', impactFactor: 2, authorship: 'co_author', type: 'clinical' }, getState().year);
+    patchState({ research });
+  }
+  const flashbackGain = Math.min(20, Math.max(0, delta?.clinical ?? 0) + Math.max(0, delta?.reputation ?? 0));
+  if (flashbackGain > 0) patchState({ spirit: changeSpirit(getState().spirit, { flashbackCharge: flashbackGain }) });
   // 事件选择里加知识也算"本季学过"，季度结算不掉（用进废退）
   if ((choice.delta?.knowledge ?? 0) > 0) noteStudied();
   checkBadges();
@@ -130,10 +162,101 @@ export function advanceQuarter(stageName: string): {
   econ: QuarterEconomy; grieving: boolean; integrity: IntegrityOutcome;
 } {
   advanceTurn();
-  const econ = applyStageEconomy(stageName);
+  tickEra3Quarter(stageName);
+  const beforeSystems = getState();
+  const policy = tickPolicyState(beforeSystems.policy, stageName, beforeSystems.turnsInStage);
+  patchState({ policy });
+  const afterPolicy = getState();
+  const legal = tickLegalState(afterPolicy.legal, {
+    stage: stageName,
+    turn: afterPolicy.turnsInStage,
+    stamina: afterPolicy.stats.stamina,
+    specialtyRisk: afterPolicy.flags.has('sub_surgery') ? 1.6
+      : afterPolicy.flags.has('sub_obgyn') ? 1.4
+      : afterPolicy.flags.has('sub_pediatrics') ? 1.2 : 1,
+    administrative: afterPolicy.flags.has('took_admin'),
+    policyRisk: afterPolicy.policy.complianceRisk,
+    healthEnergy: afterPolicy.health.energy,
+  });
+  patchState({ legal });
+  if (legal.legalRisk >= 50 && !hasFlag('legal_complaint_due')) setFlag('legal_complaint_due');
+  if (legal.legalRisk >= 70 && !hasFlag('legal_dispute_due')) setFlag('legal_dispute_due');
+  if (legal.legalRisk >= 90 && !hasFlag('legal_lawsuit_due')) setFlag('legal_lawsuit_due');
+  if (legal.adminPenaltyRisk >= 50 && !hasFlag('legal_admin_due')) setFlag('legal_admin_due');
+  if (legal.adminPenaltyRisk >= 80 && !hasFlag('legal_suspension_due')) setFlag('legal_suspension_due');
+  if (legal.lawsuitFatigue >= 60) {
+    setFlag('legal_fatigue_penalty');
+    updateStats({ stamina: -4, sanity: -4 });
+  }
+  if (legal.lawsuitFatigue >= 80) setFlag('legal_burnout_risk');
+  if (stageName === 'retirement' && (hasFlag('policy_historical_violation') || hasFlag('legal_historical_violation')) && !hasFlag('legal_retrospective_due')) setFlag('legal_retrospective_due');
+  const health = tickHealthState(afterPolicy.health, {
+    stage: stageName,
+    age: afterPolicy.stats.age,
+    quarter: afterPolicy.quarter,
+    stamina: afterPolicy.stats.stamina,
+    surgical: afterPolicy.flags.has('sub_surgery'),
+    preventiveCare: afterPolicy.health.preventiveCare,
+  });
+  patchState({ health, lateLife: tickLateLife(afterPolicy.lateLife, stageName) });
+  updateStats({ stamina: health.energy - getState().stats.stamina });
+  if (collapseRisk(health) >= 170) setFlag('health_collapse_warning');
+  if (health.energy <= 5 && health.constitution < 40) setFlag('health_collapse_due');
+  // 模块5-12共享季度推进。顺序体现依赖：关系/生活 -> 家庭婚姻 -> 精神 -> 舆论。
+  const beforeLife = getState();
+  const mentorFaction = tickMentorFaction(beforeLife.mentorFaction, beforeLife.stats.reputation);
+  const colleagues = tickColleagues(beforeLife.colleagues, beforeLife.stats.reputation, mentorFaction.rivalry);
+  const workPressure = Math.max(beforeLife.policy.drgPressure, beforeLife.health.strain, beforeLife.era3.clinicalPressure, beforeLife.era3.researchPressure);
+  const leisure = tickLeisure(beforeLife.leisure, workPressure);
+  const economicStability = beforeLife.finance.financialAnxiety ? 25 : beforeLife.stats.money < 0 ? 15 : 70;
+  const newYear = beforeLife.quarter === 1;
+  const family = tickFamily(beforeLife.family, workPressure, economicStability, newYear);
+  const estimatedHours = 40 + Math.round(workPressure * 0.35) + leisure.sideBusiness.timeCost;
+  const nightShifts = beforeLife.era3.residency.nightShifts > 0 ? Math.min(8, Math.round(beforeLife.era3.residency.nightShifts / 4)) : (stageName === 'career' ? 3 : 1);
+  const love = tickLove(beforeLife.love, estimatedHours, nightShifts, beforeLife.health.strain, newYear);
+  const relationshipSupport = Math.round((family.familyFunction + colleagues.integration + (love.status === 'married' ? love.maritalSatisfaction : 50)) / 3);
+  const spirit = tickSpirit(beforeLife.spirit, relationshipSupport, leisure.workLifeBalance, beforeLife.health.strain);
+  const publicImage = tickPublicImage(beforeLife.publicImage);
+  const research = tickResearchState(beforeLife.research, {
+    stage: stageName, age: beforeLife.stats.age, statsResearch: beforeLife.stats.research, statsPapers: beforeLife.stats.papers,
+    mentorBond: mentorFaction.mentorBond, factionBonus: factionBonus(mentorFaction), healthEnergy: health.energy, policyPressure: beforeLife.policy.drgPressure,
+  });
+  patchState({ mentorFaction, colleagues, leisure, family, love, spirit, publicImage, research });
+  if (research.researchAbility > beforeLife.stats.research) updateStats({ research: Math.min(3, research.researchAbility - beforeLife.stats.research) });
+  if (mentorFaction.mentorBond + mentorFaction.factionLoyalty < 60) setFlag('faction_outsider_debuff');
+  if (mentorFaction.rivalry > 50 || colleagues.peerEnvy > 50) setFlag('social_obstruction_due');
+  if (family.familyFunction < 30) setFlag('family_crisis_due');
+  if (love.status === 'married' && love.maritalSatisfaction < 30) setFlag('love_crisis_due');
+  if (spirit.meaning < 30) setFlag('meaning_crisis_due');
+  if (spirit.flashbackCharge >= 100) setFlag('spirit_flashback_due');
+  if (publicImage.publicRisk > 50) setFlag('public_exposure_due');
+  if (publicImage.publicRisk > 70) setFlag('public_harassment_due');
+  if (leisure.workLifeBalance < 30) setFlag('work_consumed_life');
+  if (leisure.sideBusiness.investigationRisk > 70) setFlag('side_business_investigation_due');
+  if (publicImage.onlineHarassment.active) {
+    const immunity = publicImmunity(publicImage, spirit.resilience);
+    updateStats({ sanity: immunity >= 65 ? -2 : -6, stamina: immunity >= 65 ? -1 : -3 });
+  } else if (spirit.resilience >= 70 && leisure.workLifeBalance >= 50) updateStats({ sanity: 2 });
+
+  const baseEcon = applyStageEconomy(stageName);
+  const sideIncome = leisure.sideBusiness.active ? Math.max(0, leisure.sideBusiness.quarterlyIncome) : 0;
+  if (sideIncome > 0) updateStats({ money: sideIncome });
+  const econ: QuarterEconomy = sideIncome > 0
+    ? { ...baseEcon, income: baseEcon.income + sideIncome, net: baseEcon.net + sideIncome, financeNote: `${baseEcon.financeNote}（副业 +¥${sideIncome.toLocaleString()}）` }
+    : baseEcon;
+  const settled = getState();
+  patchState({ finance: recordQuarterFinance(settled.finance, {
+    cash: settled.stats.money,
+    income: econ.income,
+    expense: econ.cost,
+    mortgage: settled.mortgageBalance,
+    healthCost: settled.health?.treatmentCost ?? 0,
+    hasChild: settled.hasChild,
+  }) });
+  if (getState().finance.financialAnxiety) updateStats({ sanity: -2 });
   // 职业期亚专科被动消耗 + 日常回血（深挖第五部分 R28 落地）。
   // 放在共享季度结算层，保证真实游戏（场景调用）与纯模拟（直接调 advanceQuarter）行为一致。
-  if (stageName === 'career') {
+  if (stageName === 'career' || stageName === 'pinnacle') {
     const f = getState().flags;
     const isPeds = f.has('sub_pediatrics');
     const isSurg = f.has('sub_surgery');

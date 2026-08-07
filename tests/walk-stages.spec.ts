@@ -8,7 +8,7 @@ import type { Page } from '@playwright/test';
 //  A) JobHuntScene.transitionToNext 现在进入 CareerWalkScene（而非 EndingScene）
 //  B) 规培科研轨（track_research）→ MasterWalkScene
 //  C) 规培临床轨（无 track_research）→ JobHuntScene
-//  D) CareerWalkScene 读满学制 → EndingScene（结局由 determineEnding 决定）
+//  D) CareerWalkScene 读满学制 → PinnacleScene（职业后半程进入晚年三阶段）
 
 const BASE = 'http://127.0.0.1:5173/';
 
@@ -130,13 +130,12 @@ test('C. 规培临床轨（无 track_research）→ 求职', async ({ page }) =>
   expect(ok, '临床轨应直接进入求职（不再被强制读硕博）').toBe(true);
 });
 
-test('D. 职业可行走场景读满学制 → 结局', async ({ page }) => {
+test('D. 职业可行走场景读满学制 → 巅峰阶段', async ({ page }) => {
   await startScene(page, 'CareerWalkScene', 'career', 19);
   await sleepNow(page, 'CareerWalkScene');
-  await waitForScene(page, 'EndingScene', 20000);
-  const info = await page.evaluate(() => {
-    const s: any = (window as any).game.scene.getScene('EndingScene');
-    return { endingId: (s.scene.settings.data as any)?.endingId ?? null };
-  });
-  expect(info.endingId, '职业读满应进入结局并给出结局 id').toBeTruthy();
+  await waitForScene(page, 'PinnacleScene', 20000);
+  const active = await page.evaluate(() =>
+    (window as any).game.scene.getScenes(true).map((s: any) => s.sys.settings.key));
+  expect(active, '职业读满应进入巅峰阶段').toContain('PinnacleScene');
+  expect(active, '职业读满后不应跳过晚年阶段直接结局').not.toContain('EndingScene');
 });

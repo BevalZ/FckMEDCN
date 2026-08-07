@@ -23,9 +23,19 @@ async function toGaokao(page: Page) {
 }
 
 test('HUD 显示开局属性与家庭/理财策略', async ({ page }) => {
-  await toGaokao(page);
-  // 过完整高考进入校园
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  await page.goto(BASE, { waitUntil: 'load' });
+  await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 60000 });
+  await page.evaluate(() => {
+    const { gs } = (window as any).__mod;
+    gs.resetGame();
+    gs.patchState({
+      stage: 'undergrad',
+      attrs: { family: 2, academic: 5, luck: 1, looks: 2 },
+      familyWealth: 'middle',
+      financeStrategy: 'stable',
+    });
+    (window as any).game.scene.start('CampusScene');
+  });
   await waitForScene(page, 'CampusScene');
   await page.keyboard.press('Enter'); // 关简报
   await page.waitForTimeout(500);
@@ -47,6 +57,9 @@ test('HUD 显示开局属性与家庭/理财策略', async ({ page }) => {
   expect(texts.some((t: string) => t.includes('运气1')), 'HUD 应显示运气').toBe(true);
   expect(texts.some((t: string) => t.includes('外貌2')), 'HUD 应显示外貌').toBe(true);
   expect(texts.some((t: string) => t.includes('理财:稳健')), 'HUD 应显示理财策略').toBe(true);
+  expect(texts.some((t: string) => t.includes('研5/0')), 'HUD 应显示科研系统摘要').toBe(true);
+  expect(texts.some((t: string) => t.includes('派0')), 'HUD 应显示派系系统摘要').toBe(true);
+  expect(texts.some((t: string) => t.includes('舆5')), 'HUD 应显示舆论系统摘要').toBe(true);
 });
 
 test('开局阶段 ESC 可返回', async ({ page }) => {

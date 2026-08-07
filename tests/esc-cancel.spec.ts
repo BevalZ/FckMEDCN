@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { advanceByEnterUntilScene } from './helpers';
 
 // A3 回归：ESC 取消对话必须干净回滚（docs/known-issues.md A3）。
 // - NPC 对话：退还"本季可聊"资格、重新点亮感叹号、不消耗行动点，可立刻重新对话
@@ -26,10 +27,7 @@ async function enterCampus(page: Page) {
 
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
-  for (let i = 0; i < 6; i++) {
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(700);
-  }
+  await advanceByEnterUntilScene(page, 'CampusScene');
   await waitForScene(page, 'CampusScene');
 
   // 首次进入的经济简报弹窗，空格关闭后等场景就绪

@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { advanceByEnterUntilScene } from './helpers';
 
 const BASE = 'http://127.0.0.1:5173/';
 
@@ -29,7 +30,7 @@ test('HospitalScene: 从校园过渡到实习医院', async ({ page }) => {
   await waitForScene(page, 'TitleScene');
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  await advanceByEnterUntilScene(page, 'CampusScene');
   await waitForScene(page, 'CampusScene');
   await page.keyboard.press('Space');
   await page.waitForFunction(() => (window as any).game.scene.getScene('CampusScene').busy === false, null, { timeout: 10000 });
@@ -99,7 +100,7 @@ test('HospitalScene: 地图渲染与交互点', async ({ page }) => {
   await waitForScene(page, 'TitleScene');
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  await advanceByEnterUntilScene(page, 'CampusScene');
   await waitForScene(page, 'CampusScene');
   await page.keyboard.press('Space');
   await page.waitForFunction(() => (window as any).game.scene.getScene('CampusScene').busy === false, null, { timeout: 10000 });

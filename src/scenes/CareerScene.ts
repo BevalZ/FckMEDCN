@@ -1,6 +1,5 @@
 import { BaseStageScene } from './BaseStageScene';
-import { getState } from '../data/gameState';
-import { determineEnding } from '../data/endings';
+import { getState, setFlag } from '../data/gameState';
 
 // 亚专科选择：开局选科室，决定职业阶段被动体力/心理消耗（劳累程度不同）。
 export const SUB_SPECIALTIES: Array<{ flag: string; label: string; desc: string }> = [
@@ -24,7 +23,7 @@ export class CareerScene extends BaseStageScene {
     super({ key: 'CareerScene' });
     this.stageName = 'career';
     this.paletteName = 'career';
-    this.nextSceneKey = 'EndingScene';
+    this.nextSceneKey = 'PinnacleScene';
     this.maxTurns = 20;
   }
 
@@ -46,6 +45,20 @@ export class CareerScene extends BaseStageScene {
       if (turn === 0 && !hasSub) this.forcedEventId = 'career_specialty_choice';
       else if (turn >= 3 && !flags.has('lawsuit_done_1')) this.forcedEventId = lawsuitEventId(1);
       else if (turn >= 9 && !flags.has('lawsuit_done_2')) this.forcedEventId = lawsuitEventId(2);
+      else if (turn >= 5 && !flags.has('legal_complaint_handled')) {
+        setFlag('legal_complaint_due');
+        this.forcedEventId = 'legal_first_complaint';
+      }
+      else if (flags.has('legal_dispute_due') && !flags.has('legal_dispute_open') && !flags.has('legal_resolution_chosen')) {
+        this.forcedEventId = 'legal_seal_records';
+      }
+      else if (flags.has('meaning_crisis_due')) this.forcedEventId = 'sp_midlife_collapse';
+      else if (flags.has('family_crisis_due')) this.forcedEventId = 'fa_spouse_night_talk';
+      else if (flags.has('love_crisis_due') && getState().marital === 'married') this.forcedEventId = 'lv_living_room';
+      else if (flags.has('public_harassment_due')) this.forcedEventId = 'pi_hanging_post';
+      else if (flags.has('public_exposure_due')) this.forcedEventId = 'pi_filmed_clinic';
+      else if (flags.has('side_business_investigation_due')) this.forcedEventId = 'le_side_investigation';
+      else if (flags.has('social_obstruction_due')) this.forcedEventId = 'mf_betrayal';
     }
     super.triggerNextEvent();
   }
@@ -57,10 +70,9 @@ export class CareerScene extends BaseStageScene {
   }
 
   protected transitionToNext() {
-    const ending = determineEnding(getState());
     this.cameras.main.fadeOut(600, 0, 0, 0);
     this.cameras.main.once('camerafadeoutcomplete', () => {
-      this.scene.start('EndingScene', { endingId: ending.id });
+      this.scene.start('PinnacleScene');
     });
   }
 }

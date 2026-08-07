@@ -16,6 +16,7 @@ import { CareerScene } from './scenes/CareerScene';
 import { MasterWalkScene } from './scenes/MasterWalkScene';
 import { PhdWalkScene } from './scenes/PhdWalkScene';
 import { CareerWalkScene } from './scenes/CareerWalkScene';
+import { PinnacleScene, RetirementScene, EternityScene } from './scenes/LateEraScene';
 import { EndingScene, MentalCrisisScene } from './scenes/EndingScene';
 import { CollectionScene } from './scenes/CollectionScene';
 import { installTextPatch } from './ui/textPatch';
@@ -61,6 +62,9 @@ const config: Phaser.Types.Core.GameConfig = {
     MasterWalkScene,
     PhdWalkScene,
     CareerWalkScene,
+    PinnacleScene,
+    RetirementScene,
+    EternityScene,
     EndingScene,
     MentalCrisisScene,
     CollectionScene,

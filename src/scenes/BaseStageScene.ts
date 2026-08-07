@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { HUD } from '../ui/HUD';
 import { EventCard } from '../ui/EventCard';
 import { ConsequencePopup } from '../ui/ConsequencePopup';
-import { getState, setFlag, hasFlag, addNews } from '../data/gameState';
+import { getState, setFlag, hasFlag, addNews, enterStage } from '../data/gameState';
 import { ALL_EVENTS } from '../data/events';
 import type { EventChoice, GameEvent } from '../data/events';
 import { drawStorylet, commitChoice, advanceQuarter } from '../data/turnFlow';
@@ -56,6 +56,7 @@ export abstract class BaseStageScene extends Phaser.Scene {
   private minigame: ActiveMinigame | null = null;
 
   create() {
+    enterStage(this.stageName as LifeStage);
     const pal = getPalette(this.paletteName);
 
     createBgTexture(this, `bg_${this.paletteName}`, this.paletteName);

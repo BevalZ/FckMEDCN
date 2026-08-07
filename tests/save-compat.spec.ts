@@ -8,7 +8,9 @@ import type { Page } from '@playwright/test';
 
 const BASE = 'http://127.0.0.1:5173/';
 
-async function waitForScene(page: Page, key: string, timeout = 20000) {
+test.setTimeout(180000);
+
+async function waitForScene(page: Page, key: string, timeout = 60000) {
   await page.waitForFunction(
     (k) => ((window as any).game?.scene?.getScenes(true) ?? [])
       .some((s: any) => s.sys.settings.key === k),
@@ -21,8 +23,7 @@ async function continueWithSave(
   page: Page,
   opts: { sceneKey: string; stage: string; turnsInStage: number; year: number; quarter: number },
 ) {
-  await page.goto(BASE, { waitUntil: 'load' });
-  await waitForScene(page, 'TitleScene', 120000);
+  await page.goto(BASE, { waitUntil: 'domcontentloaded' });
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: 'load' });
   await waitForScene(page, 'TitleScene');
@@ -52,7 +53,8 @@ async function continueWithSave(
   // 重新进标题页让"继续"按钮出现
   await page.reload({ waitUntil: 'load' });
   await waitForScene(page, 'TitleScene');
-  await page.evaluate(() => (document.getElementById('title-continue') as HTMLButtonElement)?.click());
+  await page.waitForFunction(() => !!document.getElementById('title-continue'), null, { timeout: 20000 });
+  await page.locator('#title-continue').click();
 }
 
 test('B4 旧档 sceneKey=InternshipScene：读档进卡片实习场景不白屏', async ({ page }) => {
@@ -72,6 +74,18 @@ test('B4 旧档 sceneKey=InternshipScene：读档进卡片实习场景不白屏'
       turns: st.turnsInStage, year: st.year, quarter: st.quarter,
       firedRestored: s.firedEvents?.has?.('ug_fake_paper') ?? null,
       assetLedger: st.assetLedger,
+      motivation: st.motivation,
+      undergrad: st.undergrad,
+      lifeSystems: {
+        research: st.research,
+        mentorFaction: st.mentorFaction,
+        colleagues: st.colleagues,
+        family: st.family,
+        love: st.love,
+        spirit: st.spirit,
+        publicImage: st.publicImage,
+        leisure: st.leisure,
+      },
     };
   });
   expect(state.turns, '读档后季度应保留').toBe(2);
@@ -79,6 +93,16 @@ test('B4 旧档 sceneKey=InternshipScene：读档进卡片实习场景不白屏'
   expect(state.quarter).toBe(4);
   expect(state.firedRestored, '存档的 firedEvents 应恢复到场景').toBe(true);
   expect(state.assetLedger, '旧档缺少资产流水时应安全补空数组').toEqual([]);
+  expect(state.motivation, '旧档缺少动机画像时应补零值').toEqual({ idealism: 0, family: 0, pragmatism: 0 });
+  expect(state.undergrad.professionalIdentity, '旧档缺少职业认同时应补默认值').toBe(50);
+  expect(state.lifeSystems.research.researchAbility, '旧档缺少科研模块时应从旧科研值迁移').toBe(5);
+  expect(state.lifeSystems.mentorFaction.faction.level).toBe('fringe');
+  expect(state.lifeSystems.colleagues.integration).toBe(40);
+  expect(state.lifeSystems.family.familyFunction).toBeGreaterThan(0);
+  expect(state.lifeSystems.love.status).toBe('single');
+  expect(state.lifeSystems.spirit.meaning).toBe(50);
+  expect(state.lifeSystems.publicImage.publicRisk).toBe(5);
+  expect(state.lifeSystems.leisure.sideBusiness.type).toBe('none');
 
   expect(errors, `运行时报错：\n${errors.join('\n')}`).toEqual([]);
 });

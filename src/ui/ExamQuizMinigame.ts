@@ -67,6 +67,7 @@ export class ExamQuizMinigame {
   private timerBar!: Phaser.GameObjects.Rectangle;
   private timerBg!: Phaser.GameObjects.Rectangle;
   private meta!: Phaser.GameObjects.Text;
+  private nextQuestionTimer: Phaser.Time.TimerEvent | null = null;
   private deadline = 0;
   private answered = false;
 
@@ -132,6 +133,7 @@ export class ExamQuizMinigame {
   }
 
   private showQuestion() {
+    if (this.closed || !this.root?.active) return;
     if (this.idx >= this.questions.length) { this.finish(); return; }
     this.answered = false;
     const q = this.questions[this.idx];
@@ -171,7 +173,10 @@ export class ExamQuizMinigame {
       this.choiceTexts[q.answer].setColor('#69f0ae');
     }
     this.idx++;
-    this.scene.time.delayedCall(450, () => this.showQuestion());
+    this.nextQuestionTimer = this.scene.time.delayedCall(450, () => {
+      this.nextQuestionTimer = null;
+      this.showQuestion();
+    });
   }
 
   private finish() {
@@ -212,10 +217,14 @@ export class ExamQuizMinigame {
   }
 
   destroy() {
+    if (this.closed && !this.root?.active) return;
+    this.closed = true;
+    this.nextQuestionTimer?.remove(false);
+    this.nextQuestionTimer = null;
     if (this.keyHandler) {
       this.scene.input.keyboard?.off('keydown', this.keyHandler);
       this.keyHandler = null;
     }
-    this.root.destroy(true);
+    this.root?.destroy(true);
   }
 }

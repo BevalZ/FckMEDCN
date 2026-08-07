@@ -8,8 +8,6 @@ import type { Spot } from '../data/campusMap';
 import type { StatDelta } from '../data/stats';
 import type { LifeStage } from '../data/gameState';
 import type { GameEvent } from '../data/events';
-import { getState } from '../data/gameState';
-import { determineEnding } from '../data/endings';
 import { paperMarketEvent } from '../data/paperTrading';
 
 // 职业阶段可行走场景（临床轨：规培 / 求职后进入）。
@@ -43,8 +41,7 @@ export class CareerWalkScene extends WalkStageScene {
 
   protected transitionToNext() {
     this.leaving = true;
-    const ending = determineEnding(getState());
     this.cameras.main.fadeOut(600, 0, 0, 0);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('EndingScene', { endingId: ending.id }));
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('PinnacleScene'));
   }
 }

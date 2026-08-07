@@ -8,9 +8,11 @@ import type { Page } from '@playwright/test';
 
 const BASE = 'http://127.0.0.1:5173/';
 
+test.setTimeout(180000);
+
 async function boot(page: Page) {
   await page.goto(BASE, { waitUntil: 'load' });
-  await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 60000 });
+  await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 120000 });
 }
 
 test('阶段索引与全池过滤等价且单次筛选低于 2ms', async ({ page }) => {

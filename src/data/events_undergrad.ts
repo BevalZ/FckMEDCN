@@ -11,9 +11,9 @@ export const UNDERGRAD_EVENTS: GameEvent[] = [
     weight: 90,
     minTurn: 2,
     choices: [
-      { text: '熬夜突击，重点全背', delta: { knowledge: 6, stamina: -15, sanity: -6 }, consequence: '你硬啃下两本砖头，考前一晚只睡了三小时。' },
-      { text: '抓大放小，主攻生理', delta: { knowledge: 3, stamina: -8, sanity: -3 }, consequence: '生化勉强飘过，生理还算扎实。' },
-      { text: '随缘考，挂了再说', delta: { stamina: -2, sanity: 6 }, flagSet: 'failed_physiology', consequence: '你安慰自己"医学博大精深，挂一科不算什么"。' },
+      { text: '熬夜突击，重点全背', delta: { knowledge: 6, stamina: -15, sanity: -6 }, effect: { kind: 'changeProfessionalIdentity', amount: 2 }, consequence: '你硬啃下两本砖头，考前一晚只睡了三小时。' },
+      { text: '抓大放小，主攻生理', delta: { knowledge: 3, stamina: -8, sanity: -3 }, effect: { kind: 'addCrisisCredits', amount: 2 }, consequence: '生化勉强飘过，生理还算扎实。危机学分 +2。' },
+      { text: '随缘考，挂了再说', delta: { stamina: -2, sanity: -8 }, flagSet: 'failed_physiology', effect: [{ kind: 'addCrisisCredits', amount: 6 }, { kind: 'changeProfessionalIdentity', amount: -5 }, { kind: 'changeDropoutThoughts', amount: 1 }], consequence: '生理学挂科。危机学分 +6；“我真的适合学医吗”第一次变得具体。' },
     ],
   },
   {
@@ -39,9 +39,9 @@ export const UNDERGRAD_EVENTS: GameEvent[] = [
     weight: 85,
     minTurn: 3,
     choices: [
-      { text: '主动问病史、查体', delta: { knowledge: 6, stamina: -6, reputation: 3 }, consequence: '老师点头："这学生眼里有活。"' },
-      { text: '默默跟在后面记录', delta: { knowledge: 3, stamina: -3 }, consequence: '你记了满满一本笔记。' },
-      { text: '站远点，怕被传染', delta: { knowledge: 0, sanity: -4 }, consequence: '你全程贴在门边。' },
+      { text: '主动问病史、查体', delta: { knowledge: 6, clinical: 6, stamina: -6, reputation: 3 }, effect: [{ kind: 'changeProfessionalIdentity', amount: 10 }, { kind: 'changeMotivation', motive: 'idealism', amount: 1 }], consequence: '老师点头："这学生眼里有活。"病人叫了你一声“大夫”。' },
+      { text: '默默跟在后面记录', delta: { knowledge: 3, clinical: 2, stamina: -3 }, effect: { kind: 'changeProfessionalIdentity', amount: 3 }, consequence: '你记了满满一本笔记。' },
+      { text: '站远点，怕被传染', delta: { knowledge: 0, sanity: -4 }, effect: { kind: 'changeProfessionalIdentity', amount: -10 }, flagSet: 'clinical_anxiety', consequence: '你全程贴在门边。第一次临床接触没有让你更确定，反而更怀疑。' },
     ],
   },
   {
@@ -198,9 +198,9 @@ export const UNDERGRAD_EVENTS: GameEvent[] = [
     weight: 40,
     minTurn: 5,
     choices: [
-      { text: '给家里打个电话', delta: { sanity: 8, relations: 3 }, consequence: '母亲没骂你，只说"累了就回家"。' },
+      { text: '给家里打个电话', delta: { sanity: 8, relations: 3 }, effect: [{ kind: 'changeMotivation', motive: 'family', amount: 1 }, { kind: 'changeDropoutThoughts', amount: -1 }], consequence: '母亲没骂你，只说"累了就回家"。' },
       { text: '找学长聊聊', delta: { sanity: 6, knowledge: 2 }, flagSet: 'mentor_talk', consequence: '学长说"我也想过，后来熬过来了"。' },
-      { text: '一个人硬扛', delta: { sanity: -8, stamina: -5 }, flagSet: 'dropout_urge', consequence: '你把搜索记录删了，但念头还在。' },
+      { text: '一个人硬扛', delta: { sanity: -8, stamina: -5 }, flagSet: 'dropout_urge', effect: [{ kind: 'changeDropoutThoughts', amount: 1 }, { kind: 'changeProfessionalIdentity', amount: -8 }], consequence: '你把搜索记录删了，但念头还在。' },
     ],
   },
   {
@@ -224,8 +224,9 @@ export const UNDERGRAD_EVENTS: GameEvent[] = [
     body: '开学典礼。老师把叠得方正的大褂递给你，左胸绣着你的名字。镜子里那个"准医生"，有点陌生，也有点帅。',
     category: 'study', weight: 80, once: true, minTurn: 1, maxTurn: 3,
     choices: [
-      { text: '郑重地扣好每一颗扣子', delta: { knowledge: 3, sanity: 10, reputation: 2 }, consequence: '你拍了张照，发给了高三那年鼓励你的老师。' },
-      { text: '觉得也就是件衣服', delta: { sanity: 4, knowledge: 1 }, consequence: '你把它套上，跑去了食堂。' },
+      { text: '跟着宣誓，声音坚定，眼眶发热', delta: { knowledge: 3, sanity: 5, reputation: 2 }, flagSet: 'proud_whitecoat', effect: [{ kind: 'changeProfessionalIdentity', amount: 10 }, { kind: 'changeMotivation', motive: 'idealism', amount: 2 }], consequence: '“健康所系，性命相托。”你第一次感到这件衣服有重量。' },
+      { text: '跟着念，但心里想：这真的适合我吗', delta: { sanity: -2, knowledge: 1 }, flagSet: 'doubting_whitecoat', effect: [{ kind: 'changeProfessionalIdentity', amount: 3 }, { kind: 'changeDropoutThoughts', amount: 1 }], consequence: '誓词念完了，疑问没有消失。' },
+      { text: '拍张自拍发朋友圈', delta: { relations: 3, reputation: 1 }, flagSet: 'showoff_whitecoat', effect: { kind: 'changeMotivation', motive: 'pragmatism', amount: 2 }, consequence: '点赞很快过百。白大衣先成为了一张好看的照片。' },
     ],
   },
   {
@@ -717,17 +718,17 @@ export const UNDERGRAD_EVENTS: GameEvent[] = [
     choices: [
       {
         text: '申请重修，咬牙跟下一届读',
-        delta: { sanity: -10, knowledge: 3, money: -3000 }, flagSet: 'ug_holdback',
+        delta: { sanity: -10, knowledge: 3, money: -3000 }, flagSet: 'ug_holdback', effect: [{ kind: 'addCrisisCredits', amount: 20 }, { kind: 'changeProfessionalIdentity', amount: -12 }],
         nextEventId: 'ug_holdback_life', consequence: '你留级了。原来的同学成了学长学姐，你要重新认识一个班。',
       },
       {
         text: '找老师求情，争取补考',
-        delta: { knowledge: 4, stamina: -12, sanity: -6, reputation: -2 }, flagSet: 'ug_barely_passed',
-        consequence: '补考过了，压线。老师说"下不为例"。',
+        delta: { knowledge: 4, stamina: -12, sanity: -6, reputation: -2 }, flagSet: 'ug_barely_passed', effect: { kind: 'addCrisisCredits', amount: 7 },
+        consequence: '补考过了，压线。危机学分仍记 7 分，老师说"下不为例"。',
       },
       {
         text: '这书没法读了',
-        delta: { sanity: -8 }, nextEventId: 'ug_dropout_decision',
+        delta: { sanity: -8 }, nextEventId: 'ug_dropout_decision', effect: { kind: 'changeDropoutThoughts', amount: 2 },
         consequence: '你把警示单截图发给了家里，然后关了手机。',
       },
     ],
@@ -739,8 +740,27 @@ export const UNDERGRAD_EVENTS: GameEvent[] = [
     body: '你坐在比你小一届的教室里。老师点名时会多看你一眼，同学不知道该叫你同学还是{senior}。',
     category: 'mental', weight: 55, once: true, requireFlag: 'ug_holdback',
     choices: [
-      { text: '把这一年当成重来一次的机会', delta: { knowledge: 8, sanity: 4, stamina: -8 }, flagSet: 'ug_holdback_recovered', consequence: '这次你听懂了。原来当初不是笨，是没喘过气。' },
+      { text: '把这一年当成重来一次的机会', delta: { knowledge: 8, sanity: 4, stamina: -8 }, flagSet: 'ug_holdback_recovered', effect: [{ kind: 'addCrisisCredits', amount: -10 }, { kind: 'changeProfessionalIdentity', amount: 5 }], consequence: '这次你听懂了。危机学分减半，原来当初不是笨，是没喘过气。' },
       { text: '整天抬不起头', delta: { sanity: -12, knowledge: 2, relations: -5 }, consequence: '你坐最后一排，谁也不认识，谁也不想认识。' },
+    ],
+  },
+  {
+    id: 'ug_academic_support',
+    stage: 'undergrad', title: '强制学业帮扶',
+    body: '危机学分达到警告线。辅导员、任课老师和你坐在一张桌前，面前是一份必须签字的帮扶计划。部分社团活动暂停，每周要提交学习记录。',
+    category: 'system', weight: 85, once: true, requireFlag: 'academic_crisis_lv2', minTurn: 5,
+    choices: [
+      { text: '接受帮扶，把短板一门门补回来', delta: { knowledge: 7, stamina: -10, sanity: 3 }, effect: [{ kind: 'addCrisisCredits', amount: -7 }, { kind: 'changeDropoutThoughts', amount: -1 }], consequence: '这不是惩罚，而是一道护栏。危机学分 -7。' },
+      { text: '敷衍签到，继续自己扛', delta: { knowledge: 2, sanity: -8 }, effect: { kind: 'changeProfessionalIdentity', amount: -5 }, consequence: '记录表填满了，真正的问题没有动。' },
+    ],
+  },
+  {
+    id: 'ug_forced_withdrawal',
+    stage: 'undergrad', title: '退学处理通知',
+    body: '留级后危机学分再次越过红线。教务处通知写得很克制：根据学籍管理规定，拟作退学处理。五年制被你读得更长，但这一次，学校不再给下一次补考。',
+    category: 'system', weight: 200, once: true, requireFlag: 'academic_crisis_lv4', minTurn: 8,
+    choices: [
+      { text: '签收通知，承认自己已经尽力', delta: { sanity: 8, reputation: -8 }, flagSet: 'left_undergrad', effect: { kind: 'changeProfessionalIdentity', amount: -20 }, consequence: '你收好通知。没有毕业证，但这段路并不是不存在。' },
     ],
   },
   {
@@ -753,17 +773,17 @@ export const UNDERGRAD_EVENTS: GameEvent[] = [
     choices: [
       {
         text: '签了，我不学医了',
-        delta: { sanity: 20, reputation: -10, knowledge: -10 }, flagSet: 'left_undergrad',
+        delta: { sanity: 20, reputation: -10, knowledge: -10 }, flagSet: 'left_undergrad', effect: { kind: 'changeProfessionalIdentity', amount: -30 },
         consequence: '走出教务处那一刻，阳光刺得你睁不开眼。你哭了，但也终于能呼吸了。',
       },
       {
         text: '撕了表格，再撑一学期',
-        delta: { sanity: -6, stamina: -6, knowledge: 3 }, flagSet: 'ug_stayed_after_urge',
+        delta: { sanity: -6, stamina: -6, knowledge: 3 }, flagSet: 'ug_stayed_after_urge', effect: [{ kind: 'changeProfessionalIdentity', amount: 5 }, { kind: 'changeDropoutThoughts', amount: -1 }],
         consequence: '你把碎纸片扔进垃圾桶，回教室上了下午的课。',
       },
       {
         text: '先休学一年，去看看别的活法',
-        delta: { sanity: 14, knowledge: -4, money: 2000 }, flagSet: 'ug_gap_year',
+        delta: { sanity: 14, knowledge: -4, money: 2000 }, flagSet: 'ug_gap_year', effect: { kind: 'setUndergradLeave', value: true },
         consequence: '你去南方打了一年工。回来时，你说"我想清楚了"。',
       },
     ],

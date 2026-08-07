@@ -68,8 +68,8 @@ export class HUD {
       fontFamily: '"Courier New", monospace', fontSize: '10px', color: '#aaaaaa',
     });
     // 属性/家庭/理财策略（HUD 第二行右侧）
-    this.attrsLabel = this.scene.add.text(430, 36, '', {
-      fontFamily: '"Courier New", monospace', fontSize: '10px', color: '#9aa0b5',
+    this.attrsLabel = this.scene.add.text(420, 36, '', {
+      fontFamily: '"Courier New", monospace', fontSize: '8px', color: '#9aa0b5',
     });
     this.container.add([this.balanceLabel, this.balanceBar, this.riskLabel, this.attrsLabel]);
   }
@@ -145,7 +145,24 @@ export class HUD {
     this.buildMuteIcon();
   }
 
-  update(stats: Stats, _stage: string) {
+  private compactLifeSystems() {
+    const s = getState();
+    if (!(s.research && s.mentorFaction && s.colleagues && s.family && s.love && s.spirit && s.publicImage && s.leisure)) return '';
+    const love = s.love.status === 'single' ? '单' : s.love.status === 'married' ? s.love.maritalSatisfaction : s.love.intimacy;
+    const side = s.leisure.sideBusiness.active ? ` 副${Math.round(s.leisure.sideBusiness.quarterlyIncome / 1000)}k` : '';
+    return [
+      `研${s.research.researchAbility}/${s.research.paperProgress}`,
+      `派${s.mentorFaction.factionLoyalty}`,
+      `同${s.colleagues.integration}`,
+      `家${s.family.familyFunction}`,
+      `婚${love}`,
+      `心${s.spirit.meaning}`,
+      `舆${s.publicImage.publicRisk}`,
+      `余${s.leisure.workLifeBalance}${side}`,
+    ].join(' ');
+  }
+
+  update(stats: Stats, stage: string) {
     const statMap = stats as unknown as Record<string, number>;
     for (const [key, text] of this.statTexts) {
       const val = statMap[key] ?? 0;
@@ -172,14 +189,27 @@ export class HUD {
     const assetStr = (s.assets ?? 0) > 0 ? ` · 资产¥${(s.assets ?? 0).toLocaleString()}` : '';
     // 职业阶段显示科室（亚专科 flag），让玩家知道自己"在什么科"（深挖第五部分 R38 落地）
     let subLabel = '';
-    if (s.stage === 'career') {
+    if (stage === 'career') {
       const subMap: Record<string, string> = { sub_internal: '内科', sub_surgery: '外科', sub_obgyn: '妇产科', sub_pediatrics: '儿科' };
       for (const [f, l] of Object.entries(subMap)) {
         if (s.flags.has(f)) { subLabel = ` ｜ 科室:${l}`; break; }
       }
     }
-    this.attrsLabel.setText(
-      `${subLabel}家境${a.family}/${wealthWord} · 成绩${a.academic} · 运气${a.luck} · 外貌${a.looks}${loanMark ? ` · 助学${loanMark}` : ''}${assetStr} ｜ 理财:${finWord}`,
+    const e3 = (stage === 'guipei' || stage === 'master' || stage === 'phd') ? s.era3 : null;
+    const era3Label = e3?.initialized
+      ? ` ｜ 临床压${e3.clinicalPressure} 科研压${e3.researchPressure} 睡眠${e3.estimatedSleep}h`
+      : '';
+    const h = s.health;
+    const p = s.policy;
+    const systems = h && p
+      ? `健${h.energy}/${h.constitution}/${h.strain} 财${s.finance?.financialAnxiety ? '危' : '稳'} DRG${p.drgPressure}`
+      : '';
+    const lateStage = ['career', 'pinnacle', 'retirement', 'eternity'].includes(stage);
+    const lifeSystems = this.compactLifeSystems();
+    const earlyLine = `家境${a.family}/${wealthWord} 成绩${a.academic} 运气${a.luck} 外貌${a.looks}${loanMark ? ` 助学${loanMark}` : ''}${assetStr} 理财:${finWord}${era3Label}`;
+    this.attrsLabel.setText(lateStage
+      ? `${subLabel}${systems} ｜ ${lifeSystems}`
+      : `${earlyLine} ｜ ${lifeSystems}`,
     );
   }
 

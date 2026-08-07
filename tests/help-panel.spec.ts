@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { advanceByEnterUntilScene } from './helpers';
 
 // H 键帮助面板回归：行走场景按 H 弹出操作帮助，再按 H 关闭；事件展示期间 H 不抢占。
 
@@ -25,7 +26,7 @@ test('H 键帮助面板：弹出/关闭', async ({ page }) => {
   await waitForScene(page, 'TitleScene');
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  await advanceByEnterUntilScene(page, 'CampusScene');
   await waitForScene(page, 'CampusScene');
   await page.keyboard.press('Enter'); // 简报
   await page.waitForTimeout(400);

@@ -28,6 +28,12 @@ import { NPC_AFFINITY_EVENTS } from './events_npc_affinity';
 import { DIAGNOSTIC_EVENTS } from './events_diagnostic';
 import { MEDICATION_EVENTS } from './events_medication';
 import { CLINICAL_WORKFLOW_EVENTS } from './events_clinical_workflow';
+import { ERA3_EVENTS } from './events_era3';
+import { HEALTH_EVENTS, FINANCE_POLICY_EVENTS } from './events_systems';
+import { LATE_ERA_EVENTS } from './events_late';
+import { LEGAL_EVENTS } from './events_legal';
+import { LIFE_SYSTEM_EVENTS } from './events_life_systems';
+import type { MotivationKind } from './motivation';
 
 export type EventCategory = 'study' | 'clinical' | 'social' | 'financial' | 'mental' | 'career' | 'news' | 'system' | 'personal';
 
@@ -43,6 +49,64 @@ export type ChoiceEffect =
   | { kind: 'selfReport' }
   | { kind: 'buyHouse' }
   | { kind: 'changeAttr'; attr: 'luck' | 'looks'; amount: number; reason: string }
+  | { kind: 'changeMotivation'; motive: MotivationKind; amount: number }
+  | { kind: 'changeProfessionalIdentity'; amount: number }
+  | { kind: 'addCrisisCredits'; amount: number }
+  | { kind: 'changeDropoutThoughts'; amount: number }
+  | { kind: 'setUndergradLeave'; value: boolean }
+  // —— 时代3：临床/科研双重身份与规培进度 ——
+  | { kind: 'changeEra3Pressure'; axis: 'clinical' | 'research'; amount: number }
+  | { kind: 'changeEra3Mentor'; amount: number }
+  | { kind: 'changeEra3QuitThoughts'; amount: number }
+  | { kind: 'advanceEra3Residency'; rotations?: number; cases?: number; procedures?: number; nightShifts?: number; evaluation?: number }
+  | { kind: 'advanceEra3Research'; paper?: number; thesis?: number; submitted?: boolean; accepted?: boolean }
+  | { kind: 'resolveEra3Assessment'; assessment: 'midterm' | 'completion' }
+  | { kind: 'resolveEra3Submission'; tier: 'safe' | 'ambitious' }
+  | { kind: 'recordEra3MedicalError' }
+  | { kind: 'setEra3Flag'; flag: string }
+  // —— 身体 / 财务 / 政策 ——
+  | { kind: 'changeHealth'; field: 'energy' | 'constitution' | 'strain'; amount: number; incident?: string }
+  | { kind: 'useHealthCare'; constitution?: number; strain?: number; energy?: number; cost?: number; preventive?: boolean }
+  | { kind: 'hardCarry' }
+  | { kind: 'changeFinance'; field: 'corruption'; amount: number; purchase?: string }
+  | { kind: 'changePolicy'; field: 'deptSurplus' | 'drgPressure' | 'procurementCompliance' | 'complianceRisk'; amount: number; violation?: string }
+  | { kind: 'recordProcurement'; round: string; product?: string; complaint?: boolean; savings?: number }
+  // —— 时代6-8：传承与终局 ——
+  | { kind: 'completeBucket'; item: 'memoir' | 'lastVisit' | 'lastPerson' | 'apology' | 'will' | 'tree'; legacy?: number; completion?: number }
+  | { kind: 'setFinalChoice'; choice: 'worth_it' | 'did_my_best' | 'passed_the_baton' | 'rest' }
+  | { kind: 'setTombstone'; tombstone: 'doctor' | 'healer' | 'book' | 'family_teacher' | 'oath' }
+  | { kind: 'consumeEcho'; echo: string }
+  | { kind: 'changeLegal'; field: 'legalRisk' | 'recordDefense' | 'lawsuitFatigue' | 'adminPenaltyRisk' | 'defensiveMedicine' | 'communicationRecord' | 'legalSupport'; amount: number; violation?: string; severity?: 'minor' | 'major' }
+  | { kind: 'recordLegalViolation'; violation: string; severity?: 'minor' | 'major' }
+  | { kind: 'startLegalDispute'; status: 'complaint' | 'mediation' | 'lawsuit' }
+  | { kind: 'resolveLegalDispute'; path: 'negotiation' | 'mediation' | 'administrative' | 'lawsuit' | 'arbitration'; outcome?: 'favorable' | 'partial' | 'adverse' }
+  // —— 模块5-12：关系、科研、家庭、精神、舆论与第二曲线 ——
+  | { kind: 'changeResearch'; field: 'researchAbility' | 'paperProgress' | 'academicReputation' | 'misconductRisk' | 'clinicalTime' | 'researchTime' | 'representativeIndex'; amount: number }
+  | { kind: 'startResearchProject'; title: string; paperType: 'basic' | 'clinical' | 'translational' | 'review' | 'case_report'; progress?: number }
+  | { kind: 'publishResearchPaper'; title: string; journal: string; impactFactor: number; authorship: 'first' | 'co_first' | 'corresponding' | 'co_author'; paperType: 'basic' | 'clinical' | 'translational' | 'review' | 'case_report' }
+  | { kind: 'applyResearchGrant'; grantType: 'hospital' | 'city' | 'provincial' | 'nsfc_youth' | 'nsfc_general' | 'nsfc_elite' }
+  | { kind: 'recordResearchMisconduct'; violation: string; amount: number }
+  | { kind: 'retractResearchPaper' }
+  | { kind: 'changeMentorFaction'; mentorBond?: number; factionLoyalty?: number; reputation?: number; rivalry?: number }
+  | { kind: 'setFaction'; name: string; factionType: 'academic' | 'clinical' | 'administrative' | 'none' }
+  | { kind: 'changeColleagues'; peerBond?: number; nurseAlliance?: number; peerEnvy?: number; studentLoyalty?: number }
+  | { kind: 'recordColleagueConflict'; event: string; opponent: string; resolution: 'win' | 'lose' | 'compromise' | 'ongoing' }
+  | { kind: 'changeFamily'; familyOrigin?: number; spouseBond?: number; childBond?: number; conflict?: number }
+  | { kind: 'setSpouseType'; spouseType: 'physician' | 'nurse' | 'civil_servant' | 'teacher' | 'full_time' | 'other'; name?: string }
+  | { kind: 'recordFamilyAbsence'; absence: 'birthday' | 'parent_meeting' | 'holiday' }
+  | { kind: 'setChildCareer'; career: 'medicine' | 'other' | 'undecided' }
+  | { kind: 'changeLove'; intimacy?: number; passion?: number; commitment?: number }
+  | { kind: 'setRelationshipStatus'; status: 'single' | 'dating' | 'engaged' | 'married' | 'separated' | 'divorced' | 'widowed' }
+  | { kind: 'recordLoveCrisis'; crisisType: 'absence' | 'exhaustion' | 'conflict' | 'infidelity'; impact: number; resolution?: 'resolved' | 'ongoing' | 'divorce' }
+  | { kind: 'changeSpirit'; purposePurity?: number; meaning?: number; flashbackCharge?: number; event?: string }
+  | { kind: 'setPurposeType'; purposeType: 'idealistic' | 'family' | 'pragmatic' | 'accidental'; originStory: string }
+  | { kind: 'triggerFlashback'; event: string; impact: number }
+  | { kind: 'changePublicImage'; publicRisk?: number; onlineHeat?: number; privacyAwareness?: number; crisisManagement?: number }
+  | { kind: 'startOnlineHarassment'; severity: number }
+  | { kind: 'setSocialMedia'; strategy: 'none' | 'pure_education' | 'mixed' | 'commercial' | 'controversial'; monetized?: boolean; mcnContract?: boolean }
+  | { kind: 'changeLeisure'; lifeSatisfaction?: number; hobbyLevel?: number; socialCircle?: number; secondCurve?: number }
+  | { kind: 'setHobby'; hobbyType: 'sports' | 'reading' | 'arts' | 'travel' | 'gardening' | 'cooking' | 'learning'; level?: number }
+  | { kind: 'setSideBusiness'; businessType: 'online_consultation' | 'multi_site' | 'training' | 'consulting' | 'expert_witness' | 'science_blogger' | 'feidao_sunshine' | 'feidao_shadow' | 'none'; quarterlyIncome: number; timeCost: number; compliance: 'legal' | 'gray' | 'illegal' }
   // —— 求职写实（投简历 / 概率结算 / 多offer / 签三方 / 违约）——
   // rollOutcome：按玩家属性 + 本校附属/导师推荐加成计算成功概率，随机置 success/fail flag。
   // 引擎保持"单位无关"——affiliateBonus/referralBonus 的具体数值由事件作者按单位写好。
@@ -73,7 +137,7 @@ export interface EventChoice {
   // 选项级属性门槛：未达到区间 [lo,hi] 则该选项对玩家不可见（与事件级 requireStat 同语义）。
   requireStat?: Partial<Record<string, [number, number]>>;
   // 选择后的自定义副作用（如改变婚姻/家庭状态）。用声明式描述而非闭包，便于校验与调试。
-  effect?: ChoiceEffect;
+  effect?: ChoiceEffect | ChoiceEffect[];
 }
 
 export interface GameEvent {
@@ -123,14 +187,21 @@ export const ALL_EVENTS: GameEvent[] = [
   ...DIAGNOSTIC_EVENTS,
   ...MEDICATION_EVENTS,
   ...CLINICAL_WORKFLOW_EVENTS,
+  ...ERA3_EVENTS,
+  ...HEALTH_EVENTS,
+  ...FINANCE_POLICY_EVENTS,
+  ...LATE_ERA_EVENTS,
+  ...LEGAL_EVENTS,
+  ...LIFE_SYSTEM_EVENTS,
   // —— 以下为原有示例事件，保留以兼容旧流程 ——
   {
     id: 'anatomy_first_day', stage: 'undergrad', title: '解剖课第一天',
     body: '解剖室的气味扑面而来。台子上躺着一位捐献者。',
     category: 'study', weight: 100, minTurn: 1, maxTurn: 3, once: true,
     choices: [
-      { text: '深呼吸，专注学习', delta: { stamina: -10, knowledge: 8, sanity: -5 }, consequence: '你撑过去了。' },
-      { text: '跑出去了', delta: { stamina: -5, sanity: -15 }, consequence: '你在走廊蹲了20分钟。' },
+      { text: '深深鞠躬，虽然手在抖，仍专注学习', delta: { stamina: -10, knowledge: 8, sanity: -10 }, flagSet: 'respected_cadaver', effect: [{ kind: 'changeProfessionalIdentity', amount: 8 }, { kind: 'changeMotivation', motive: 'idealism', amount: 2 }], consequence: '你撑过去了，也记住了“大体老师”这个称呼。' },
+      { text: '强忍恶心站在后排', delta: { stamina: -5, sanity: -15 }, flagSet: 'avoided_cadaver', effect: { kind: 'changeProfessionalIdentity', amount: -5 }, consequence: '你没有离开，但整节课几乎没敢抬头。' },
+      { text: '冲出教室，在走廊里吐了', delta: { stamina: -8, sanity: -20 }, flagSet: 'fainted_cadaver', effect: [{ kind: 'changeProfessionalIdentity', amount: -8 }, { kind: 'changeDropoutThoughts', amount: 1 }], consequence: '辅导员记下了你的名字，建议你去心理中心聊聊。' },
     ],
   },
 ];

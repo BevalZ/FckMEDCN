@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { advanceByEnterUntilScene } from './helpers';
 
 // 回归测试：可行走场景按地点做分类切片后，池子会从整阶段的一万多权重骤降到一两百。
 // 若直接在切片内加权抽取，w=4 的「母亲走了」会从 0.03% 飙到 3%——大一新生第一周
@@ -24,7 +25,7 @@ test('稀有事件在分类切片下不被放大', async ({ page }) => {
   await waitForScene(page, 'TitleScene');
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  await advanceByEnterUntilScene(page, 'CampusScene');
   await waitForScene(page, 'CampusScene');
 
   const result = await page.evaluate(async () => {

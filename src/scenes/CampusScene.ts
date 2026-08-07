@@ -10,7 +10,7 @@ import type { WalkerKeys } from '../ui/Walker';
 import { renderTileMap } from '../ui/tilemap';
 import { npcTileNear } from '../ui/npcPlacement';
 import { addScanlineOverlay, addVignette, getPalette, stageAmbientTint } from '../ui/pixelArt';
-import { getState, updateStats, setFlag, hasFlag, addNews } from '../data/gameState';
+import { getState, updateStats, setFlag, hasFlag, addNews, enterStage } from '../data/gameState';
 import { drawStorylet, hasStorylet, commitChoice, advanceQuarter } from '../data/turnFlow';
 import { bindGameMenu } from '../ui/gameMenu';
 import { HelpPanel } from '../ui/HelpPanel';
@@ -93,6 +93,7 @@ export class CampusScene extends Phaser.Scene {
   constructor() { super({ key: 'CampusScene' }); }
 
   create() {
+    enterStage(STAGE);
     this.leaving = false;
     this.busy = true;
 
@@ -193,7 +194,8 @@ export class CampusScene extends Phaser.Scene {
     const left = Math.max(0, Math.min(ACTIONS_PER_QUARTER, this.actionsLeft));
     const dots = '●'.repeat(left) + '○'.repeat(ACTIONS_PER_QUARTER - left);
     const storylet = this.storyletUsed ? '（本季事件已领）' : '';
-    this.apLabel.setText(`行动点 ${dots} ${storylet}`);
+    const ug = s.undergrad;
+    this.apLabel.setText(`认同 ${ug.professionalIdentity} · 危机 L${ug.crisisLevel}(${ug.crisisCredits}) · 行动点 ${dots} ${storylet}`);
     this.questLog?.setItems(undergradQuests(s.flags, this.actionsLeft, this.storyletUsed));
   }
 

@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { advanceByEnterUntilScene } from './helpers';
 
 // B7 回归：规培可行走场景的链式事件即时续接（此前 handleChoice 没有 resolveChained，
 // nextEventId 被静默丢弃，见 docs/known-issues.md B7）。
@@ -50,7 +51,7 @@ test('B7 规培链：同岗同酬选项即时续接教学部回复', async ({ pa
   await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 20000 });
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  await advanceByEnterUntilScene(page, 'CampusScene');
   await waitForScene(page, 'CampusScene');
   await dismissPopups(page, 'CampusScene');
 

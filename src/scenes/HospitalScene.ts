@@ -13,7 +13,7 @@ import type { WalkerKeys } from '../ui/Walker';
 import { renderTileMap } from '../ui/tilemap';
 import { npcTileNear } from '../ui/npcPlacement';
 import { addScanlineOverlay, addVignette, getPalette, stageAmbientTint } from '../ui/pixelArt';
-import { getState, updateStats, setFlag, hasFlag, addNews } from '../data/gameState';
+import { getState, updateStats, setFlag, hasFlag, addNews, enterStage } from '../data/gameState';
 import type { LifeStage } from '../data/gameState';
 import { drawStorylet, hasStorylet, commitChoice, advanceQuarter } from '../data/turnFlow';
 import type { EventChoice, GameEvent } from '../data/events';
@@ -75,6 +75,7 @@ export class HospitalScene extends Phaser.Scene {
   constructor() { super({ key: 'HospitalScene' }); }
 
   create() {
+    enterStage(STAGE);
     this.leaving = false;
     this.busy = true;
 

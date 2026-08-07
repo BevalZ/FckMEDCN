@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { advanceByEnterUntilScene } from './helpers';
 
 // A4 回归：技能中心真实存在且能练缝合（用户报告"没有技能中心"）。
 // 三根支柱：① 地图上有 skills 交互点、门口可行走；② 缝合事件 clinical_skills_lab
@@ -63,7 +64,7 @@ test('A4 技能中心：地点存在、缝合事件可抽、门口可交互', as
   // ③ 行为级：进校园，传送到技能中心门口按 E，应能交互（开卡或消耗行动点）
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  await advanceByEnterUntilScene(page, 'CampusScene');
   await waitForScene(page, 'CampusScene');
   await page.keyboard.press('Space');
   await page.waitForFunction(
@@ -111,7 +112,7 @@ test('技能中心优先触发缝合事件（任务"技能中心练缝合"落到
 
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  await advanceByEnterUntilScene(page, 'CampusScene');
   await waitForScene(page, 'CampusScene');
   await page.keyboard.press('Space');
   await page.waitForFunction(

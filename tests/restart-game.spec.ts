@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { advanceByEnterUntilScene } from './helpers';
 
 // 游戏内菜单（R 键）回归：
 // 1) R 打开菜单，数字键选择，空格确认；
@@ -22,7 +23,7 @@ async function enterCampus(page: Page) {
   await page.evaluate(() => (window as any).__mod.col.resetCollectionForTest());
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  await advanceByEnterUntilScene(page, 'CampusScene');
   await waitForScene(page, 'CampusScene');
   await page.keyboard.press('Enter'); // 关掉阶段经济简报
   await page.waitForTimeout(500);

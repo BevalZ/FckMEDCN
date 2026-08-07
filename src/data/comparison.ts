@@ -80,6 +80,21 @@ export const ENDING_COMPARISONS: Record<string, CompareRow[]> = {
     { label: '存款', unit: '¥', yours: money, real: '退学转轨起步 ¥0.5万-2万', range: [5000, 20000] },
     { label: '论文', unit: '篇', yours: papers, real: '——' },
   ],
+  era0_unchosen_road: [
+    { label: '年龄', unit: '岁', yours: age, real: '高考志愿选择通常发生在 17-19 岁', range: [17, 19] },
+    { label: '存款', unit: '¥', yours: money, real: '高中毕业阶段通常无独立积蓄', range: [0, 20000] },
+    { label: '论文', unit: '篇', yours: papers, real: '——' },
+  ],
+  era0_fell_short: [
+    { label: '年龄', unit: '岁', yours: age, real: '高考落榜/改道常见 17-20 岁', range: [17, 20] },
+    { label: '存款', unit: '¥', yours: money, real: '高中毕业阶段通常无独立积蓄', range: [0, 20000] },
+    { label: '论文', unit: '篇', yours: papers, real: '——' },
+  ],
+  era0_escape_white_tower: [
+    { label: '年龄', unit: '岁', yours: age, real: '高考后重新选择通常发生在 17-20 岁', range: [17, 20] },
+    { label: '存款', unit: '¥', yours: money, real: '高中毕业阶段通常无独立积蓄', range: [0, 20000] },
+    { label: '论文', unit: '篇', yours: papers, real: '——' },
+  ],
   disgraced: [
     { label: '年龄', unit: '岁', yours: age, real: '被撤稿者多为 35-50 岁', range: [35, 50] },
     { label: '存款', unit: '¥', yours: money, real: '处分后收入受挫 ¥0-20万', range: [0, 200000] },
@@ -105,6 +120,36 @@ export const ENDING_COMPARISONS: Record<string, CompareRow[]> = {
     { label: '年龄', unit: '岁', yours: age, real: '早就业者常见 18-40 岁', range: [18, 40] },
     { label: '存款', unit: '¥', yours: money, real: '低收入零工常负债 ¥-5万-2万', range: [-50000, 20000] },
     { label: '论文', unit: '篇', yours: papers, real: '——' },
+  ],
+  great_healer: [
+    { label: '年龄', unit: '岁', yours: age, real: '完整职业生涯常见 70-85 岁', range: [70, 85] },
+    { label: '存款', unit: '¥', yours: money, real: '退休后现金结余差异很大，以家庭与健康支出为主', range: [-50000, 500000] },
+    { label: '论文', unit: '篇', yours: papers, real: '资深临床教师累计发文 5-30 篇', range: [5, 30] },
+  ],
+  inheritor: [
+    { label: '年龄', unit: '岁', yours: age, real: '退休返聘/带教常见 65-80 岁', range: [65, 80] },
+    { label: '存款', unit: '¥', yours: money, real: '传承型医生收入回落，重心转向带教与制度交接', range: [-50000, 400000] },
+    { label: '论文', unit: '篇', yours: papers, real: '教学型骨干累计发文 3-20 篇', range: [3, 20] },
+  ],
+  ordinary_road: [
+    { label: '年龄', unit: '岁', yours: age, real: '普通医生退休后常见 65-80 岁', range: [65, 80] },
+    { label: '存款', unit: '¥', yours: money, real: '普通退休家庭现金结余通常受住房、子女与医疗支出影响', range: [-100000, 300000] },
+    { label: '论文', unit: '篇', yours: papers, real: '普通临床医生发文跨度 0-10 篇', range: [0, 10] },
+  ],
+  unfinished_life: [
+    { label: '年龄', unit: '岁', yours: age, real: '带遗憾收束的职业生涯多在 70 岁后回望', range: [70, 85] },
+    { label: '存款', unit: '¥', yours: money, real: '长期压力与家庭/健康支出可显著侵蚀退休储蓄', range: [-150000, 250000] },
+    { label: '论文', unit: '篇', yours: papers, real: '未竟路径不由论文数量单独定义', range: [0, 20] },
+  ],
+  final_rest: [
+    { label: '年龄', unit: '岁', yours: age, real: '长期高劳损后的退休收束常见 65-80 岁', range: [65, 80] },
+    { label: '存款', unit: '¥', yours: money, real: '健康支出上升后现金结余可能偏低', range: [-150000, 200000] },
+    { label: '论文', unit: '篇', yours: papers, real: '劳损型职业生涯发文不是核心指标', range: [0, 15] },
+  ],
+  meteor_life: [
+    { label: '年龄', unit: '岁', yours: age, real: '严重健康事件会缩短可工作年限，常见 60-75 岁收束', range: [60, 75] },
+    { label: '存款', unit: '¥', yours: money, real: '重大健康事件后现金流承压', range: [-200000, 150000] },
+    { label: '论文', unit: '篇', yours: papers, real: '短促但高亮的职业生涯发文跨度很大', range: [0, 20] },
   ],
 };
 

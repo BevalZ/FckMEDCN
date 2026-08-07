@@ -1,8 +1,42 @@
 import { createDefaultStats, applyDelta } from './stats';
 import type { Stats, StatDelta } from './stats';
 import type { School, TrackType, DegreeType } from './constants';
+import { DEFAULT_MOTIVATION } from './motivation';
+import type { InitialAnswer, MotivationKind, MotivationProfile } from './motivation';
+import { DEFAULT_UNDERGRAD_PROGRESS } from './undergradProgress';
+import type { UndergradProgress } from './undergradProgress';
+import { DEFAULT_ERA0_PROGRESS } from './era0';
+import type { Era0Progress } from './era0';
+import { DEFAULT_ERA3_PROGRESS } from './era3';
+import type { Era3Progress } from './era3';
+import { DEFAULT_HEALTH_STATE } from './health';
+import type { HealthState } from './health';
+import { DEFAULT_FINANCE_STATE } from './finance';
+import type { FinanceState } from './finance';
+import { DEFAULT_POLICY_STATE } from './policy';
+import type { PolicyState } from './policy';
+import { DEFAULT_LATE_LIFE_STATE } from './lateLife';
+import type { LateLifeState } from './lateLife';
+import { DEFAULT_LEGAL_STATE } from './legal';
+import type { LegalState } from './legal';
+import { DEFAULT_RESEARCH_STATE } from './research';
+import type { ResearchState } from './research';
+import { DEFAULT_MENTOR_FACTION_STATE } from './mentorFaction';
+import type { MentorFactionState } from './mentorFaction';
+import { DEFAULT_COLLEAGUE_STATE } from './colleagues';
+import type { ColleagueState } from './colleagues';
+import { DEFAULT_FAMILY_STATE } from './family';
+import type { FamilyState } from './family';
+import { DEFAULT_LOVE_STATE } from './loveMarriage';
+import type { LoveMarriageState } from './loveMarriage';
+import { DEFAULT_SPIRIT_STATE } from './spirit';
+import type { SpiritState } from './spirit';
+import { DEFAULT_PUBLIC_IMAGE_STATE } from './publicImage';
+import type { PublicImageState } from './publicImage';
+import { DEFAULT_LEISURE_STATE } from './leisure';
+import type { LeisureState } from './leisure';
 
-export type LifeStage = 'gaokao' | 'undergrad' | 'internship' | 'guipei' | 'master' | 'phd' | 'jobhunt' | 'career' | 'ending';
+export type LifeStage = 'gaokao' | 'undergrad' | 'internship' | 'guipei' | 'master' | 'phd' | 'jobhunt' | 'career' | 'pinnacle' | 'retirement' | 'eternity' | 'ending';
 
 export interface NewsItem { year: number; quarter: number; headline: string; type: 'event' | 'warning' | 'irony' | 'tragedy'; }
 
@@ -53,6 +87,30 @@ export interface GameState {
   gender: PlayerGender;
   // —— 开局点数分配（家境/成绩/运气/外貌），家境决定家庭条件 ——
   attrs: AttrAlloc;
+  // —— 时代0“学医动机”：三维画像 + 最终形成的初心印记 ——
+  motivation: MotivationProfile;
+  initialMotivation: MotivationKind | null;
+  initialAnswer: InitialAnswer | null;
+  era0: Era0Progress;
+  // —— 时代3：规培与硕博并轨进度（旧档由 save.ts 补默认值）——
+  era3: Era3Progress;
+  // —— 贯穿全生命周期的身体、财务和政策状态 ——
+  health: HealthState;
+  finance: FinanceState;
+  policy: PolicyState;
+  legal: LegalState;
+  research: ResearchState;
+  mentorFaction: MentorFactionState;
+  colleagues: ColleagueState;
+  family: FamilyState;
+  love: LoveMarriageState;
+  spirit: SpiritState;
+  publicImage: PublicImageState;
+  leisure: LeisureState;
+  // —— 时代6-8：传承、退休与归途 ——
+  lateLife: LateLifeState;
+  // —— 时代1：职业认同、学业危机、退学思考与休学状态 ——
+  undergrad: UndergradProgress;
   // —— 家庭条件（由 attrs.family 决定，旧档兼容）——
   familyWealth: FamilyWealth;
   // —— 理财策略（R 菜单可调，每季自动按此分配收入/支出/结余）——
@@ -101,6 +159,25 @@ export function createInitialState(): GameState {
     guipeiCity: '', newsLog: [], flags: new Set(), endingId: null,
     gender: 'male',
     attrs: { ...attrs },
+    motivation: { ...DEFAULT_MOTIVATION },
+    initialMotivation: null,
+    initialAnswer: null,
+    era0: { ...DEFAULT_ERA0_PROGRESS },
+    era3: { ...DEFAULT_ERA3_PROGRESS, mentor: { ...DEFAULT_ERA3_PROGRESS.mentor }, residency: { ...DEFAULT_ERA3_PROGRESS.residency }, research: { ...DEFAULT_ERA3_PROGRESS.research } },
+    health: { ...DEFAULT_HEALTH_STATE, addiction: { ...DEFAULT_HEALTH_STATE.addiction }, chronicDiseases: [], majorIncidents: [] },
+    finance: { ...DEFAULT_FINANCE_STATE, income: { ...DEFAULT_FINANCE_STATE.income }, expense: { ...DEFAULT_FINANCE_STATE.expense }, majorPurchases: [] },
+    policy: { ...DEFAULT_POLICY_STATE, drg: { ...DEFAULT_POLICY_STATE.drg }, procurement: { ...DEFAULT_POLICY_STATE.procurement, rounds: [], productsAffected: [] }, hospital: { ...DEFAULT_POLICY_STATE.hospital, inspectionHistory: [] }, policyViolations: [] },
+    legal: { ...DEFAULT_LEGAL_STATE, records: { ...DEFAULT_LEGAL_STATE.records, violations: [] }, disputes: { ...DEFAULT_LEGAL_STATE.disputes } },
+    research: { ...DEFAULT_RESEARCH_STATE, papers: { published: [], inProgress: null }, grants: { applied: [], active: [] }, misconduct: { violations: [], investigationStatus: 'none', penalty: { fundingBan: 0, paperRetraction: false, reputationLoss: 0 } } },
+    mentorFaction: { ...DEFAULT_MENTOR_FACTION_STATE, faction: { ...DEFAULT_MENTOR_FACTION_STATE.faction, resources: { ...DEFAULT_MENTOR_FACTION_STATE.faction.resources } }, benefactors: [], rivals: [], alignmentHistory: [] },
+    colleagues: { ...DEFAULT_COLLEAGUE_STATE, peers: [], nurses: { headNurse: { ...DEFAULT_COLLEAGUE_STATE.nurses.headNurse }, seniorNurses: [] }, students: [], conflicts: [] },
+    family: { ...DEFAULT_FAMILY_STATE, origin: { parents: { ...DEFAULT_FAMILY_STATE.origin.parents }, siblings: { ...DEFAULT_FAMILY_STATE.origin.siblings } }, spouse: { ...DEFAULT_FAMILY_STATE.spouse }, children: [], events: { ...DEFAULT_FAMILY_STATE.events, familyTragedies: [] }, conflict: { ...DEFAULT_FAMILY_STATE.conflict } },
+    love: { ...DEFAULT_LOVE_STATE, spouse: { ...DEFAULT_LOVE_STATE.spouse }, datingHistory: [], crises: [], temptations: { ...DEFAULT_LOVE_STATE.temptations } },
+    spirit: { ...DEFAULT_SPIRIT_STATE, purpose: { ...DEFAULT_SPIRIT_STATE.purpose, history: [] }, meaningSources: { ...DEFAULT_SPIRIT_STATE.meaningSources }, meaningHistory: [50], flashbacks: { ...DEFAULT_SPIRIT_STATE.flashbacks }, resiliencePillars: { ...DEFAULT_SPIRIT_STATE.resiliencePillars }, crises: [] },
+    publicImage: { ...DEFAULT_PUBLIC_IMAGE_STATE, incidents: [], onlineHarassment: { ...DEFAULT_PUBLIC_IMAGE_STATE.onlineHarassment, platforms: [] }, socialMedia: { ...DEFAULT_PUBLIC_IMAGE_STATE.socialMedia }, privacy: { ...DEFAULT_PUBLIC_IMAGE_STATE.privacy, pastViolations: [] }, crisisHistory: [] },
+    leisure: { ...DEFAULT_LEISURE_STATE, hobbies: [], sideBusiness: { ...DEFAULT_LEISURE_STATE.sideBusiness }, social: { ...DEFAULT_LEISURE_STATE.social, circles: DEFAULT_LEISURE_STATE.social.circles.map(c => ({ ...c })), opportunities: [] }, leisureHistory: [] },
+    lateLife: { ...DEFAULT_LATE_LIFE_STATE, bucketList: { ...DEFAULT_LATE_LIFE_STATE.bucketList }, echoesConsumed: [] },
+    undergrad: { ...DEFAULT_UNDERGRAD_PROGRESS },
     familyWealth: wealthFromFamily(attrs.family),
     financeStrategy: 'stable',
     assets: 0,
@@ -141,6 +218,22 @@ export function incCounter(key: string, by = 1): number {
 // 局部更新状态（用于人生事件改变婚姻/家庭等字段）。
 export function patchState(partial: Partial<GameState>) {
   _state = { ..._state, ...partial };
+}
+
+const MIN_STAGE_AGE: Partial<Record<LifeStage, number>> = {
+  career: 35, pinnacle: 50, retirement: 65, eternity: 70,
+};
+
+/** 仅在真正跨阶段时重置局部回合；同阶段读档不会丢进度。 */
+export function enterStage(stage: LifeStage) {
+  if (_state.stage === stage) return;
+  const minAge = MIN_STAGE_AGE[stage] ?? _state.stats.age;
+  _state = {
+    ..._state,
+    stage,
+    turnsInStage: 0,
+    stats: { ..._state.stats, age: Math.max(_state.stats.age, minAge) },
+  };
 }
 
 /** 改变可成长开局属性，并把变化写入新闻历史，范围固定为 0..5。 */

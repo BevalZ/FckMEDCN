@@ -4,6 +4,70 @@ import type { GameEvent } from './events';
 // 每个事件都用 requireFlag 精确门控，确保只在玩家确实做过该选择时才出现。
 // 这是把"死 flag"接成真实事件链的最后一块拼图（对应 ② 选择后果链）。
 export const ECHO_EVENTS: GameEvent[] = [
+  {
+    id: 'echo_remember_initial', stage: ['master', 'career'], title: '你说过“我会记得”',
+    body: '最疲惫的时候，你想起入学前夜收拾行李的自己。十八岁的你说过：“我会记得。”',
+    category: 'mental', weight: 45, once: true, requireFlag: 'remember_初心', minTurn: 2,
+    choices: [{ text: '记得不等于不累，但可以再走一步', delta: { sanity: 10, stamina: 5 }, consequence: '初心没有替你解决问题，但它替你挡住了一次彻底放弃。' }],
+  },
+  {
+    id: 'echo_uncertain_initial', stage: 'career', title: '你当年就没有把话说满',
+    body: '职业迷茫来临时，你并不意外。入学前夜你说的是“谁知道呢”——怀疑不是背叛，它一直是这条路的一部分。',
+    category: 'mental', weight: 42, once: true, requireFlag: 'uncertain_初心', minTurn: 2,
+    choices: [{ text: '允许自己重新选择留下的理由', delta: { sanity: 7, knowledge: 2 }, consequence: '你不再逼十八岁的自己替今天做决定。' }],
+  },
+  {
+    id: 'echo_afraid_initial', stage: 'guipei', title: '恐惧重现',
+    body: '第一次独立值班，电话响起前的几秒异常安静。你想起入学前夜那句：“其实我有点害怕。”',
+    category: 'mental', weight: 48, once: true, requireFlag: 'afraid_初心', minTurn: 1,
+    choices: [{ text: '害怕也可以按流程做事', delta: { sanity: 6, clinical: 3 }, consequence: '你没有等恐惧消失，而是先核对信息、再叫上级。' }],
+  },
+  // —— 时代1早期身份选择：白大衣与解剖课在后来的职业期回响 ——
+  {
+    id: 'echo_proud_whitecoat', stage: 'career', title: '那句誓词还在',
+    body: '职业倦怠最重的一个夜班，你忽然想起大一白大衣仪式上喊出的那句誓词。那时你还相信，穿上它意味着责任，而不只是加班。',
+    category: 'mental', weight: 42, once: true, requireFlag: 'proud_whitecoat', minTurn: 2,
+    choices: [{ text: '把这份信念传给新人', delta: { sanity: 8, relations: 4, reputation: 2 }, consequence: '你没有立刻变得轻松，但第二天愿意再带一个学生查房。' }],
+  },
+  {
+    id: 'echo_doubting_whitecoat', stage: ['master', 'career'], title: '你早就问过这个问题',
+    body: '有人问你为什么还在医院。你想起大一白大衣仪式上的那个念头：这真的适合我吗？原来疑问一直没有消失，只是被日程表盖住了。',
+    category: 'mental', weight: 40, once: true, requireFlag: 'doubting_whitecoat', minTurn: 1,
+    choices: [{ text: '认真回答自己一次', delta: { sanity: 5, knowledge: 2 }, consequence: '你把“留下”从惯性里捞出来，重新看成了一次选择。' }],
+  },
+  {
+    id: 'echo_showoff_whitecoat', stage: 'career', title: '那张白大衣自拍',
+    body: '手机相册自动弹出一张旧照片：大一开学，你把白大衣拍得像一张入职海报。照片里的你还没有见过真正的病房。',
+    category: 'personal', weight: 35, once: true, requireFlag: 'showoff_whitecoat', minTurn: 1,
+    choices: [{ text: '留下照片，也留下距离感', delta: { sanity: 4, reputation: 2 }, consequence: '你笑了。那不是虚荣，只是十八岁时想证明自己已经长大。' }],
+  },
+  {
+    id: 'echo_respected_cadaver', stage: 'career', title: '无言良师',
+    body: '医院举行遗体捐献纪念活动。你想起大一解剖课上第一次向大体老师鞠躬的那个上午。',
+    category: 'clinical', weight: 38, once: true, requireFlag: 'respected_cadaver', minTurn: 2,
+    choices: [{ text: '向家属认真道谢', delta: { reputation: 4, sanity: 6 }, consequence: '你知道，医生面对的从来不只是器官和指标。' }],
+  },
+  {
+    id: 'echo_cadaver_anxiety', stage: ['guipei', 'career'], title: '福尔马林的气味',
+    body: '第一次独立操作前，你闻到消毒水里混着一点熟悉的气味。大一解剖课时的恶心和恐惧，短暂地回来了。',
+    category: 'mental', weight: 45, once: true, requireFlag: 'fainted_cadaver', minTurn: 1,
+    choices: [
+      { text: '告诉带教，先做几次呼吸', delta: { sanity: 8, clinical: 2 }, consequence: '你没有逞强。缓过来以后，手反而稳了。' },
+      { text: '假装没事，硬着头皮上', delta: { sanity: -8, stamina: -5 }, consequence: '你完成了操作，但知道这件事还没有真正过去。' },
+    ],
+  },
+  {
+    id: 'echo_avoided_cadaver', stage: 'career', title: '你曾经站在后排',
+    body: '解剖教学纪念馆里，学生们围着一具人体模型提问。你忽然想起自己大一站在后排、尽量不看的那一节课。',
+    category: 'mental', weight: 32, once: true, requireFlag: 'avoided_cadaver', minTurn: 2,
+    choices: [{ text: '承认那时害怕过', delta: { sanity: 6, reputation: 2 }, consequence: '恐惧没有让你失去成为医生的资格，它只是提醒你曾经也是个普通人。' }],
+  },
+  {
+    id: 'echo_clinical_anxiety', stage: ['guipei', 'career'], title: '门边的位置',
+    body: '新来的学生总是站在病房门边，不敢靠近患者。你认得那个位置——你大二第一次进病房时也站在那里。',
+    category: 'clinical', weight: 40, once: true, requireFlag: 'clinical_anxiety', minTurn: 1,
+    choices: [{ text: '先让他观察，再请他做最小的一步', delta: { relations: 6, reputation: 3, sanity: 5 }, consequence: '你没有催他成为一个不存在的“完美医生”。' }],
+  },
   // —— 本科埋下的回声 ——
   {
     id: 'echo_failed_physiology',

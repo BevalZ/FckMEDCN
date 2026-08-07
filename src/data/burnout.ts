@@ -2,6 +2,7 @@ import { getState, updateStats } from './gameState';
 import { advanceQuarter } from './turnFlow';
 import type { IntegrityOutcome } from './integrity';
 import type { QuarterEconomy } from './economy';
+import { burnoutStaminaThreshold } from './motivation';
 
 // 倦怠机制：体力到底（≤0）时崩溃，错过一整个季度，并大幅回血。
 // 设计意图见计划文件 §1：在体力归零瞬间触发，比"睡觉才发现"更有戏剧性，
@@ -10,9 +11,13 @@ import type { QuarterEconomy } from './economy';
 /** 倦怠触发后回复的体力点数 */
 export const BURNOUT_RECOVER = 50;
 
-/** 是否处于倦怠触发条件：体力已到底 */
+/** 是否处于倦怠触发条件：初心印记会轻微改变玩家承认“撑不住了”的时点。 */
 export function isBurnout(): boolean {
-  return getState().stats.stamina <= 0;
+  const state = getState();
+  const threshold = state.initialMotivation
+    ? burnoutStaminaThreshold(state.initialMotivation)
+    : 0;
+  return state.stats.stamina <= threshold;
 }
 
 /**

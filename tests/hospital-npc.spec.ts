@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { advanceByEnterUntilScene } from './helpers';
 
 // B2 剩余人工项的自动化（docs/HANDOFF.md）：实习场景 NPC 走近按 E 能对话。
 // npc-placement.spec.ts 已断言落格合法，这里补行为级验证：
@@ -90,7 +91,7 @@ test('B2 实习场景：林主治/刘护士长可走近按 E 对话', async ({ p
   await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 20000 });
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(700); }
+  await advanceByEnterUntilScene(page, 'CampusScene');
   await waitForScene(page, 'CampusScene');
   await dismissPopups(page, 'CampusScene');
 
