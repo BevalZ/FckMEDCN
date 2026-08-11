@@ -36,13 +36,21 @@ if (failures.length > 0) {
     !record.accessedAt && 'accessedAt',
     !record.reviewedBy && 'reviewedBy',
   ].filter(Boolean).join(', ') || 'none';
+  const externalEvidence = evidence.filter(record => record.scope === 'external');
+  const outstandingExternal = externalEvidence.filter(record => record.status !== 'verified');
+  const sourceComplete = outstandingExternal.filter(record => (
+    record.status !== 'verified'
+    && record.publishedAt
+    && record.accessedAt
+    && isDirectHttpUrl(record.url)
+  ));
 
   console.log('# Release review workpack');
   console.log('');
   console.log('Generated from the four release manifests. This report is a queue, not an approval record. Do not change `pending` to `verified` without the named reviewer, date, evidence reference, and written conclusion.');
   console.log('');
   console.log(`- Medical records: ${medical.length} total; ${medical.filter(record => record.status !== 'verified').length} outstanding`);
-  console.log(`- External evidence: ${evidence.filter(record => record.scope === 'external').length} total; ${evidence.filter(record => record.scope === 'external' && record.status !== 'verified').length} outstanding`);
+  console.log(`- External evidence: ${externalEvidence.length} total; ${outstandingExternal.length} outstanding (${sourceComplete.length} source-complete awaiting reviewer, ${outstandingExternal.length - sourceComplete.length} source-incomplete)`);
   console.log(`- Manual acceptance checks: ${acceptance.length} total; ${acceptance.filter(record => record.status !== 'verified').length} outstanding`);
   console.log('');
 
@@ -61,7 +69,7 @@ if (failures.length > 0) {
   console.log('');
   console.log('| id | title | organization | status | missing / weak fields | current URL |');
   console.log('|---|---|---|---|---|---|');
-  for (const record of evidence.filter(item => item.scope === 'external')) {
+  for (const record of externalEvidence) {
     console.log(`| ${cell(record.id)} | ${cell(record.title)} | ${cell(record.organization)} | ${cell(record.status)} | ${cell(missingEvidence(record))} | ${cell(record.url || '—')} |`);
   }
   console.log('');

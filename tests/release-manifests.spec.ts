@@ -28,6 +28,30 @@ test('医学事实清单完整保留当前 78 个复核对象，流程预审不�
     record.preReviewStatus === 'flow_checked' && record.status === 'verified')).toEqual([]);
 });
 
+test('候选外部来源使用直接链接但保持 pending，等待真人复核', () => {
+  const evidence = readJson('sources/evidence.json').entries;
+  const retainedExternalIds = [
+    '国家卫健委',
+    '多项职业心理健康研究',
+    '科学撤稿时滞研究',
+    '普通高等学校学生管理规定',
+    '科研诚信案件调查处理规则',
+    '职称制度改革文件',
+    '教育部历年统计',
+    '人社部职业技能提升计划',
+  ];
+  expect(Object.entries(evidence)
+    .filter(([, record]: any) => record.scope === 'external')
+    .map(([id]) => id)
+    .sort()).toEqual(retainedExternalIds.toSorted());
+  for (const id of retainedExternalIds) {
+    expect(evidence[id].status).toBe('pending');
+    expect(evidence[id].reviewedBy).toBe('');
+    expect(evidence[id].publishedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(new URL(evidence[id].url).pathname).not.toBe('/');
+  }
+});
+
 test('release:check 的退出码与结构化清单中的未闭环状态一致', () => {
   const evidence = readJson('sources/evidence.json');
   const medical = readJson('sources/medical-fact-audit.json');
@@ -61,5 +85,6 @@ test('release:review 生成完整的人工复核工作包，不改变 pending �
   expect(output).toContain('# Release review workpack');
   expect(output).toContain('clinical-pharmacist');
   expect(output).toContain('External evidence queue');
+  expect(output).toContain('8 source-complete awaiting reviewer, 0 source-incomplete');
   for (const record of manifest.records) expect(output).toContain(record.id);
 });
