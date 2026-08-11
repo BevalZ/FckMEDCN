@@ -13,11 +13,13 @@ test('结局事实卡全部引用注册证据，外部 pending 声明不会进�
   const audit = await page.evaluate(() => {
     const { en, evidence } = (window as any).__mod;
     const refs = evidence.EVIDENCE_REFS as Record<string, { status: string; organization: string }>;
-    const missing = en.ENDINGS.flatMap((ending: any) => ending.realDataCard)
-      .map((card: any) => card.evidenceId)
+    const usedIds = en.ENDINGS.flatMap((ending: any) => ending.realDataCard)
+      .map((card: any) => card.evidenceId as string);
+    const missing = usedIds
       .filter((id: string) => !refs[id]);
     return {
       missing,
+      unused: Object.keys(refs).filter(id => !usedIds.includes(id)),
       pending: Object.values(refs).filter(ref => ref.status === 'pending').length,
       verified: Object.values(refs).filter(ref => ref.status === 'verified').length,
       hotlineCards: en.ENDINGS.flatMap((ending: any) => ending.realDataCard)
@@ -27,6 +29,7 @@ test('结局事实卡全部引用注册证据，外部 pending 声明不会进�
   });
 
   expect(audit.missing).toEqual([]);
+  expect(audit.unused, '证据注册表不应保留无事实卡引用的死记录').toEqual([]);
   expect(audit.pending, '外部事实应保持 pending，等待人工闭环').toBeGreaterThan(0);
   expect(audit.verified, '本局状态派生证据可以展示').toBeGreaterThan(0);
   expect(audit.hotlineCards).toEqual([
