@@ -20,12 +20,20 @@ test('结局事实卡全部引用注册证据，外部 pending 声明不会进�
       missing,
       pending: Object.values(refs).filter(ref => ref.status === 'pending').length,
       verified: Object.values(refs).filter(ref => ref.status === 'verified').length,
+      hotlineCards: en.ENDINGS.flatMap((ending: any) => ending.realDataCard)
+        .filter((card: any) => card.evidenceId === '国家卫健委')
+        .map((card: any) => card.value),
     };
   });
 
   expect(audit.missing).toEqual([]);
   expect(audit.pending, '外部事实应保持 pending，等待人工闭环').toBeGreaterThan(0);
   expect(audit.verified, '本局状态派生证据可以展示').toBeGreaterThan(0);
+  expect(audit.hotlineCards).toEqual([
+    '全国统一号码：12356',
+    '全国统一号码：12356',
+    '全国统一号码：12356',
+  ]);
 
   await page.evaluate(() => {
     (window as any).game.scene.start('EndingScene', { endingId: 'quit_guipei' });
@@ -40,5 +48,6 @@ test('结局事实卡全部引用注册证据，外部 pending 声明不会进�
     return scene.children.list.filter((item: any) => item.type === 'Text').map((item: any) => item.text as string);
   });
   expect(texts.some((text: string) => text.includes('400-161-9995'))).toBe(false);
+  expect(texts.some((text: string) => text.includes('12356'))).toBe(false);
   expect(texts.some((text: string) => /来源：国家卫生健康委员会/.test(text))).toBe(false);
 });

@@ -7,6 +7,7 @@ This directory stores review evidence and redistribution records. It must not co
 - `evidence.json`: the single runtime and release-gate registry for ending fact cards. External entries require a traceable publication title, organization, publication date, direct URL, access date, and reviewer before `verified` is allowed.
 - `medical-fact-audit.json`: the machine-readable source of truth for all medical review items. `flow_checked` records are still `pending` until the appropriate clinician or pharmacist completes final review and records evidence.
 - `medical-news-sources.md`: working notes only. A generic portal URL does not make a claim verified.
+- `research/`: reproducible candidate-source retrieval logs. These files help reviewers repeat searches but are not approvals by themselves.
 - `src/data/evidence.ts`: typed runtime adapter for `evidence.json`; do not duplicate evidence records in TypeScript.
 - `docs/release-review-runbook.md` and `npm run release:review`: reviewer workflow and a generated queue for all pending medical, evidence, and acceptance records.
 

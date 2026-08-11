@@ -16,8 +16,7 @@ export const ENDINGS: Ending[] = [
     desc: '规培第二年，你递交了退出申请。这不是逃跑。这是你做过的最艰难的决定之一。',
     stats: { finalAge: 26, finalMoney: 15000, totalYears: 8, title: '（未完成规培）', hospital: '——', verdict: '你的人生还有很多可能' },
     realDataCard: [
-      { label: '心理援助热线', value: '全国：400-161-9995', evidenceId: '国家卫健委' },
-      { label: '退培后再就业', value: '可转公卫/器械/考公', evidenceId: '行业经验' },
+      { label: '心理援助热线', value: '全国统一号码：12356', evidenceId: '国家卫健委' },
     ],
   },
   {
@@ -26,8 +25,7 @@ export const ENDINGS: Ending[] = [
     desc: '你35岁了。主治医师，编外。工资到账后，房贷和生活开支很快把数字压了下去。',
     stats: { finalAge: 35, finalMoney: -50000, totalYears: 17, title: '主治医师（编外）', hospital: '省会三甲', verdict: '学历最高，但最沉默的那群人' },
     realDataCard: [
-      { label: '主治医师平均税后月薪（编外）', value: '¥7,000-12,000', evidenceId: '丁香园薪酬调查2024' },
-      { label: '医生职业倦怠检出率', value: '约 50%-70%', evidenceId: '多项职业心理健康研究' },
+      { label: '中国医生职业倦怠总体检出率', value: '系统综述汇总为 75.48%', evidenceId: '多项职业心理健康研究' },
     ],
   },
   {
@@ -35,20 +33,14 @@ export const ENDINGS: Ending[] = [
     tone: 'resigned', bgColor: 0x1a2a2a,
     desc: '副主任医师，省会城市三甲医院，编制内。',
     stats: { finalAge: 45, finalMoney: 300000, totalYears: 27, title: '副主任医师', hospital: '省会三甲（编制）', verdict: '大多数人能达到的终点' },
-    realDataCard: [
-      { label: '副主任医师平均晋升年龄', value: '39.7岁', evidenceId: '中国医师协会2023年报' },
-      { label: '三甲副主任医师年薪', value: '¥25万-50万', evidenceId: '丁香园薪酬调查2024' },
-    ],
+    realDataCard: [],
   },
   {
     id: 'chief_at_45', title: '主任医师的日常', subtitle: '正高在手，后面跟着一串年轻医生',
     tone: 'hopeful', bgColor: 0x14282a,
     desc: '主任医师，省会城市三甲医院，编制内。查房时你走在最前面；年轻医生看你的眼神，像极了当年你看老主任。',
     stats: { finalAge: 45, finalMoney: 500000, totalYears: 27, title: '主任医师', hospital: '省会三甲（编制）', verdict: '金字塔靠上的那一层' },
-    realDataCard: [
-      { label: '主任医师平均晋升年龄', value: '约45岁以上', evidenceId: '中国医师协会2023年报' },
-      { label: '三甲主任医师年薪', value: '¥40万-80万（含绩效）', evidenceId: '丁香园薪酬调查2024' },
-    ],
+    realDataCard: [],
   },
   // —— 以下为扩展结局（M4）——
   {
@@ -56,40 +48,28 @@ export const ENDINGS: Ending[] = [
     tone: 'bittersweet', bgColor: 0x102030,
     desc: '你站上手术台，像站在自己的王国。年轻医生叫你"老师"，患者把命交给你。',
     stats: { finalAge: 42, finalMoney: 800000, totalYears: 24, title: '外科主任医师', hospital: '顶尖三甲', verdict: '手起刀落，也割走了自己的青春' },
-    realDataCard: [
-      { label: '三甲主任医师平均年薪', value: '¥40万-80万（含绩效）', evidenceId: '丁香园薪酬调查2024' },
-      { label: '头部外科医生年均手术量', value: '200-400台', evidenceId: '行业公开数据' },
-    ],
+    realDataCard: [],
   },
   {
     id: 'community_doctor', title: '社区里的熟人', subtitle: '全科医生，邻里都找你',
     tone: 'resigned', bgColor: 0x1a2a1a,
     desc: '你没去拼三甲。社区卫生服务中心里，谁家高血压、谁家孩子发烧，你门儿清。',
     stats: { finalAge: 38, finalMoney: 120000, totalYears: 20, title: '社区全科医生', hospital: '社区卫生服务中心', verdict: '没有惊天动地，但被需要' },
-    realDataCard: [
-      { label: '基层全科医生平均月薪', value: '¥6,000-10,000', evidenceId: '卫健委基层薪酬监测' },
-      { label: '家庭医生签约覆盖率', value: '>40%', evidenceId: '国家卫健委2023' },
-    ],
+    realDataCard: [],
   },
   {
     id: 'medical_affairs', title: '脱下白大褂', subtitle: '药企医学联络官 / 医药代表',
     tone: 'escape', bgColor: 0x2a1a2a,
     desc: '你换了一种方式留在医疗圈。西装代替了刷手服，KPI 代替了病历。',
     stats: { finalAge: 36, finalMoney: 350000, totalYears: 18, title: '医学联络官', hospital: '某药企', verdict: '你用另一种语言，继续和疾病打交道' },
-    realDataCard: [
-      { label: '医学联络官平均年薪', value: '¥15万-30万', evidenceId: '行业薪酬报告' },
-      { label: '考虑转行医疗行业的医生', value: '约 1/5', evidenceId: '行业调研' },
-    ],
+    realDataCard: [],
   },
   {
     id: 'overseas_doctor', title: '太平洋彼岸的执照', subtitle: '考过执业考试，海外行医',
     tone: 'escape', bgColor: 0x102a2a,
     desc: '语言关、考试关、资格关，你都过了。另一个国家的病房里，没人知道你曾想退培。',
     stats: { finalAge: 40, finalMoney: 600000, totalYears: 22, title: 'Attending Physician', hospital: '海外医院', verdict: '离乡背井，但也远离了某些东西' },
-    realDataCard: [
-      { label: '海外执业医生平均年薪', value: '$150k-$300k', evidenceId: 'Medscape 医师薪酬报告' },
-      { label: '海外行医主要门槛', value: '执业考试+学历认证', evidenceId: '公开报考指南' },
-    ],
+    realDataCard: [],
   },
   {
     id: 'burnout_early', title: '35岁以前的倦怠', subtitle: '没辞职，但也没了光',
@@ -97,8 +77,7 @@ export const ENDINGS: Ending[] = [
     desc: '你还在岗。只是清晨穿白大褂时，不再有那点隐秘的骄傲。',
     stats: { finalAge: 34, finalMoney: -20000, totalYears: 16, title: '主治医师（勉强）', hospital: '市级三甲', verdict: '你撑住了，代价是热爱' },
     realDataCard: [
-      { label: '医生职业倦怠检出率', value: '约 50%-70%', evidenceId: '多项职业心理健康研究' },
-      { label: '青年医生离职意向', value: '显著上升', evidenceId: '近年行业调研' },
+      { label: '中国医生职业倦怠总体检出率', value: '系统综述汇总为 75.48%', evidenceId: '多项职业心理健康研究' },
     ],
   },
   {
@@ -106,20 +85,14 @@ export const ENDINGS: Ending[] = [
     tone: 'bittersweet', bgColor: 0x1a1020,
     desc: '你的名字出现在很多参考文献里。同行引用你，学生仰望你，体检报告也提醒你。',
     stats: { finalAge: 41, finalMoney: 500000, totalYears: 23, title: '研究员/副主任医师', hospital: '高校附属医院', verdict: '论文堆里，藏着多少个不眠夜' },
-    realDataCard: [
-      { label: '临床医生头部年均发文量', value: '5-15篇', evidenceId: '学术平台统计' },
-      { label: '国自然面上项目中标率', value: '约 15%-20%', evidenceId: '国家自然科学基金委' },
-    ],
+    realDataCard: [],
   },
   {
     id: 'grassroots_hero', title: '县城里的主心骨', subtitle: '基层医院的顶梁柱',
     tone: 'bittersweet', bgColor: 0x1a2a1a,
     desc: '你让县城的人不用奔波去省城。一台阑尾炎、一次心肺复苏，你都接得住。',
     stats: { finalAge: 39, finalMoney: 180000, totalYears: 21, title: '基层副主任医师', hospital: '县城医院', verdict: '被需要，是一种踏实' },
-    realDataCard: [
-      { label: '县域医院骨干医生月薪', value: '¥8,000-12,000', evidenceId: '县域医改报告' },
-      { label: '部分地区基层人才年流失率', value: '>10%', evidenceId: '行业调研' },
-    ],
+    realDataCard: [],
   },
   {
     id: 'left_undergrad', title: '没读完的白大褂', subtitle: '你在成为医生之前，先离开了',
@@ -127,9 +100,8 @@ export const ENDINGS: Ending[] = [
     desc: '退学申请签字那天，你把教材摞在宿舍楼下的旧书摊。有人挑走了那本《系统解剖学》，扉页上还留着你写的笔记。后来你换了条路走。偶尔看见白大褂，会想起解剖楼的味道，但不再心慌。',
     stats: { finalAge: 21, finalMoney: 8000, totalYears: 3, title: '（肄业）', hospital: '——', verdict: '止损也是一种勇气' },
     realDataCard: [
-      { label: '医学类本科退学/转专业', value: '比例低，但真实存在', evidenceId: '各校学生手册与年度报告' },
       { label: '学业警示后可选路径', value: '重修 / 转专业 / 休学 / 退学', evidenceId: '普通高等学校学生管理规定' },
-      { label: '心理援助热线', value: '全国：400-161-9995', evidenceId: '国家卫健委' },
+      { label: '心理援助热线', value: '全国统一号码：12356', evidenceId: '国家卫健委' },
     ],
   },
   {
@@ -138,7 +110,6 @@ export const ENDINGS: Ending[] = [
     desc: '那年夏天，你去了另一座城市，读了另一个专业。后来偶尔在新闻里看到医生的消息，心里会轻轻动一下，然后继续往前走。人生没有如果；没有选择学医，也不等于选择错了。',
     stats: { finalAge: 18, finalMoney: 5000, totalYears: 0, title: '另一专业的新生', hospital: '——', verdict: '你选择了更适合当时自己的路' },
     realDataCard: [
-      { label: '专业选择影响因素', value: '兴趣、家庭、就业与培养成本共同作用', evidenceId: '高校专业选择相关研究' },
       { label: '转专业与重新选择', value: '选择并非一次性定终身', evidenceId: '普通高等学校学生管理规定' },
     ],
   },
@@ -147,10 +118,7 @@ export const ENDINGS: Ending[] = [
     tone: 'bitter', bgColor: 0x25211f,
     desc: '分数出来的那个晚上，你离医学院只差一段看得见、却跨不过去的距离。后来你去了另一所学校。很多年后再想起，那个夏天像一场梦——你差一点就成为医生了。差一点。',
     stats: { finalAge: 18, finalMoney: 5000, totalYears: 0, title: '未被医学院录取', hospital: '——', verdict: '一次考试改变了路线，却没有定义你的一生' },
-    realDataCard: [
-      { label: '本科录取竞争', value: '不同省份、年份与专业差异显著', evidenceId: '教育考试院公开数据' },
-      { label: '医学培养入口', value: '本科、定向、专升本等路径并存', evidenceId: '高校招生简章' },
-    ],
+    realDataCard: [],
   },
   {
     id: 'era0_escape_white_tower', title: '逃离白色巨塔', subtitle: '你把“学医”留在了那个夏天',
@@ -158,8 +126,7 @@ export const ENDINGS: Ending[] = [
     desc: '那晚之后，你再也没有主动提起过“学医”。你去了另一座城市，读了另一个专业，过着另一种生活。偶尔在深夜里，你会想起那个曾经想成为医生的自己——但你已经走得很远了。',
     stats: { finalAge: 18, finalMoney: 5000, totalYears: 0, title: '重新选择方向', hospital: '——', verdict: '离开也是一种对自己的保护' },
     realDataCard: [
-      { label: '生涯决策', value: '重大落差后宜避免在情绪峰值仓促决定', evidenceId: '生涯规划与心理健康常识' },
-      { label: '心理援助热线', value: '全国：400-161-9995', evidenceId: '国家卫健委' },
+      { label: '心理援助热线', value: '全国统一号码：12356', evidenceId: '国家卫健委' },
     ],
   },
   {
@@ -168,9 +135,7 @@ export const ENDINGS: Ending[] = [
     desc: '撤稿、撤销学位、五年内禁止申报课题。通报挂在官网上，搜索你的名字，第一条就是它。你还能穿白大褂，但很多扇门在同一天关上了。',
     stats: { finalAge: 40, finalMoney: -80000, totalYears: 22, title: '（职称已撤销）', hospital: '——', verdict: '那几篇论文，最终标价是一整个职业生涯' },
     realDataCard: [
-      { label: '近年集中撤稿规模', value: '单次可达上百篇', evidenceId: '国际期刊撤稿公告' },
       { label: '学术不端处理方式', value: '撤稿/撤销学位/取消申报资格', evidenceId: '科研诚信案件调查处理规则' },
-      { label: '论文工厂报价区间', value: '数万元/篇', evidenceId: '公开报道' },
     ],
   },
   {
@@ -179,8 +144,7 @@ export const ENDINGS: Ending[] = [
     desc: '那几篇东西还挂在数据库里，没人查、没人问。你评上了职称，带了学生，成了别人口中的"李老师"。\n只是每次有人提起"学术规范"，你都会走一下神；每次学生来要原始数据，你都要找个借口。',
     stats: { finalAge: 42, finalMoney: 400000, totalYears: 24, title: '主任医师', hospital: '省会三甲', verdict: '侥幸不是清白，只是还没轮到你' },
     realDataCard: [
-      { label: '被撤稿论文的平均潜伏期', value: '数年，个别超过十年', evidenceId: 'Retraction Watch 数据库' },
-      { label: '主动撤稿占比', value: '远低于被动撤稿', evidenceId: '学术出版研究' },
+      { label: 'PubMed 撤稿论文平均时滞', value: '2047 篇分析：32.91 个月', evidenceId: '科学撤稿时滞研究' },
     ],
   },
   {
@@ -190,7 +154,6 @@ export const ENDINGS: Ending[] = [
     stats: { finalAge: 41, finalMoney: 260000, totalYears: 23, title: '主任医师（临床型）', hospital: '市级三甲', verdict: '手上的功夫，写不进影响因子' },
     realDataCard: [
       { label: '晋升评价中论文权重', value: '长期偏高，近年开始调整', evidenceId: '职称制度改革文件' },
-      { label: '临床能力评价试点', value: '多地探索"以临床为主"通道', evidenceId: '卫健委相关政策' },
     ],
   },
   {
@@ -199,7 +162,7 @@ export const ENDINGS: Ending[] = [
     desc: '你没走上那条最长的路。高中毕业后进了厂、去了工地，或者做了销售。钱不多，但每月按时到账，家里人踏实。\n偶尔刷到当年的同学成了医生，你替他们高兴，也替自己松了口气——至少你睡得早。',
     stats: { finalAge: 38, finalMoney: 60000, totalYears: 20, title: '（打工者）', hospital: '——', verdict: '不是每条路都要读那么久' },
     realDataCard: [
-      { label: '我国高等教育毛入学率', value: '约 60%，仍有四成青年未读大学', evidenceId: '教育部历年统计' },
+      { label: '我国高等教育毛入学率', value: '2023 年为 60.2%', evidenceId: '教育部历年统计' },
       { label: '技能工种缺口', value: '制造业 / 服务业长期存在', evidenceId: '人社部职业技能提升计划' },
     ],
   },
@@ -208,10 +171,7 @@ export const ENDINGS: Ending[] = [
     tone: 'dark', bgColor: 0x231a16,
     desc: '没有文凭兜底，你来来回回换过几份工。工厂、外卖、零工——哪一单停了，哪一天就没进项。\n你比同龄人更早懂了"手停口停"，也更早学会了在活儿多时先存一笔应急钱。',
     stats: { finalAge: 38, finalMoney: -5000, totalYears: 20, title: '（打工者）', hospital: '——', verdict: '学历不是唯一出路，但确实是缓冲' },
-    realDataCard: [
-      { label: '灵活就业人员规模', value: '超 2 亿', evidenceId: '国家统计局' },
-      { label: '零工经济的风险', value: '收入不稳、缺社保', evidenceId: '公开研究报告' },
-    ],
+    realDataCard: [],
   },
   {
     id: 'great_healer', title: '大医精诚', subtitle: '归途完整，承诺兑现',
