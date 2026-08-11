@@ -11,7 +11,7 @@
 
 ---
 
-## A. 本会话试玩暴露、已修待验
+## A. 试玩与回归暴露的问题（均已修已验）
 
 ### A1. 行动点耗尽后卡死 ｜ 严重 ｜ 已修已验
 - **现象**：一个季度 3 个行动点用完后，画面冻结，无法操作。
@@ -41,7 +41,7 @@
   剩余纯目视项（各字号实际观感）只能人工，建议下次试玩扫一眼大标题/HUD 小字。
 
 ### A3. 进入对话无法退出 ｜ 中 ｜ 已修已验- **现象**：进对话后只能选一项才能出来，没有取消途径。
-- **修复**：EventCard 加可选 `onCancel`，ESC 触发；三个可行走场景传入 `cancelEvent(ev)`，
+- **修复**：EventCard 加可选 `onCancel`，支持点击“点击 / ESC 离开”；三个可行走场景传入 `cancelEvent(ev)`，
   干净回滚（撤销 once 标记、退还 NPC 可聊资格并重新点亮感叹号、不消耗行动点、解冻角色）。
   卡片右上角显示 `ESC 离开`。
 - **设计边界**：卡片式阶段（硕博/求职/职业，BaseStageScene）**不**提供 ESC 取消——
@@ -61,6 +61,44 @@
   ① skills 点存在、门口非实心、含 clinical；② 分类池 200 抽内命中
   clinical_skills_lab 且挂 `minigame:'suture'`；③ 传送到门口按 E 能交互。
   spot-coverage 显示 skills 点零空转、单回合最少 15 种可抽。全量 43 passed。
+
+### A5. 删除存档后标题页仍显示“继续游戏” ｜ 中 ｜ 已修已验
+- **现象**：进入过有存档的标题页后删除存档并重建场景，继续按钮仍残留可见；场景多次重建还会累积 DOM 监听。
+- **根因**：标题 DOM 覆盖层跨 Phaser 场景保留，克隆出来的新节点继承旧的 `show` 类；性别按钮和面板监听未完整解绑。
+- **修复**：`TitleScene.create()` 每次按当前有效存档重置继续按钮与性别面板状态，shutdown 时清理本场景注册的 DOM、键盘监听。
+- **已验**（2026-08-09）：`tests/restart-game.spec.ts` 覆盖有存档时显示、删档重建后隐藏，以及 Space/G/M 不重复绑定。
+
+### A6. 损坏存档仍可继续并可能在读档后崩溃 ｜ 高 ｜ 已修已验
+- **现象**：只要 localStorage 中存在存档 key，标题页就显示继续；除 `state:null` 外，嵌套集合被篡改
+  也会在 `applySave()` 展开时崩溃，例如 `state.leisure.social.circles = 5` 会触发“不可迭代”异常并白屏。
+- **根因**：`hasSave()` 只检查 key 是否存在，`loadSave()` 只检查版本号，没有验证迁移器会遍历或展开的结构。
+- **修复**：统一通过 `loadSave()` 判断可继续；除 sceneKey/state/stage/stats/flags 和 fired 数组外，
+  `matchesOptionalShape()` 对当前迁移依赖的嵌套数组、记录和数值记录做可选形状校验。旧档可缺新增字段，未知字段仍保留。
+- **已验**（2026-08-09）：`tests/save-compat.spec.ts` 覆盖顶层损坏和 19 条嵌套集合路径；均不显示继续按钮，
+  浏览器 pageerror/console error 为 0。
+
+### A7. 低帧率下快速按 E 会丢失交互 ｜ 中 ｜ 已修已验
+- **现象**：在低帧率或软件 WebGL 环境中，快速按下并松开 E 可能无法触发地点/NPC 交互。
+- **根因**：Phaser 的 `JustDown` 状态会在 keyup 时立即清除；keydown/keyup 都落在两帧之间时，update 轮询看不到输入。
+- **修复**：四类行走场景在 E keydown 时写入一次性虚拟交互缓冲，由 update 消费；busy 或小游戏期间不缓存，避免关闭 UI 后误触。
+- **已验**（2026-08-09）：校园、ESC 取消、规培链和医院 NPC 共 7 条原失败路径全部通过；全量 201 项无重试通过。
+
+### A8. 可取消确认弹窗在触屏上只能确认、不能反悔 ｜ 中 ｜ 已修已验
+- **现象**：`escape:'cancel'` 的重新开档和季度推进确认只给 ESC 取消路径；触屏玩家一旦打开只能确认危险操作。
+- **根因**：`ConsequencePopup` 只把确认区域设为 interactive，没有可见的取消控件，也没有触控取消回调。
+- **修复**：可取消弹窗新增“取消 [ 点击 / ESC ]”交互文本和 `onCancel` 回调；确认区与取消区水平分离。
+- **已验**（2026-08-09）：`tests/restart-game.spec.ts` 覆盖取消重开后状态保留、再次确认后重置；
+  `tests/mobile-layout.spec.ts` 覆盖季度推进的取消/确认均可点、区域不重叠。桌面 WebGL 与手机 Canvas 截图无越界。
+
+### A9. 低帧率下菜单按键偶发执行两次 ｜ 高 ｜ 已修已验
+- **现象**：性别选择、理财策略和传承页面中，方向键、数字键或 Tab 偶发执行两次；二选一菜单会绕回原项，
+  造成画面选择与最终提交状态不一致。
+- **根因**：Phaser 的全局键盘队列只在 `POST_STEP` 清空。低帧率下一个渲染帧包含多个 update step 时，
+  同一组 `keydown`/`keyup` 原生事件会被重放；Phaser 仅比较上一条事件，夹在中间的 `keyup` 会绕过去重。
+- **修复**：`src/ui/keyboardPatch.ts` 在创建 `Phaser.Game` 前安装补丁，按 KeyboardPlugin、原生事件对象和事件名去重；
+  保留具体事件（如 `keydown-SPACE`）与通用 `keydown` 各触发一次，也不阻断事件向其他活动 Scene 传播。
+- **已验**（2026-08-09）：`tests/keyboard-dedup.spec.ts` 机制级回归由修复前确定性计数 2 降为 1；
+  性别菜单 15/15、理财策略 10/10、传承页 5/5 通过，全量 **201 passed**（`--retries=0`，无 flaky）。
 
 ---
 
@@ -197,9 +235,9 @@
 
 ## D. 设计如此（非 bug，记录以免反复改）
 
-### D1. 卡片式阶段无 ESC 取消
-硕博/求职/职业（BaseStageScene）每回合自动弹一个事件，事件即本回合。若允许 ESC 取消，
-回合无法推进，会造成新的"卡死"。故 ESC 取消**只给可行走场景**。见 [A3]。
+### D1. 卡片式阶段 ESC 是“跳过本回合事件”，不是无成本关闭
+硕博/求职/职业（BaseStageScene）每回合自动弹一个事件，事件即本回合。单纯关闭会让回合无法推进；
+当前 `skipCurrentEvent()` 会回滚 once 标记、不提交任何选项，并按“本回合无事件”继续结算。见 [A3]。
 
 ### D2. 造假一次也可能不被查
 `integrity.ts` 是概率引擎：小造假约 23% 被查，不是必被查。玩家一次侥幸过关是**设计意图**
@@ -209,12 +247,14 @@
 本科阶段 income(3000) < cost(3800) 是刻意设计（学制长、花费大）。负债是真实后果，
 不是数值配错。
 
-### D4. balance-sim 首跑超时是环境成本，非游戏逻辑
-全量回归常报 `balance-sim 1 flaky`（重试即过）。已逐层排除：
- vite 服务器秒回（curl 实测 <0.1s）、该用例无断言、杀了 7-27 残留的 vite 进程也无改善。
-真因是 Windows 上每轮首次启动 Chromium + 解析 Phaser 1.4MB 的环境成本（杀软扫描），
-偶超 120s 卡在 `waitForScene('TitleScene')`；retry 时环境已热，秒过。
-`retries:1` 是为此设的兜底，exit 恒为 0，看到 "1 flaky" 不必排查。
+### D4. 首次 headless WebGL 初始化失败 ｜ 测试环境 ｜ 已稳定规避并保留冒烟
+分段探针确认 Vite 响应和模块加载均正常：失败轮次约 2.3s 已有 canvas 与 `__mod`，但 Phaser 未进入
+`TitleScene`，唯一 pageerror 为 `Framebuffer status: Framebuffer Unsupported`；同进程后续 WebGL 启动约 1s。
+修复为检测到 `navigator.webdriver` 时默认 `Phaser.CANVAS`，因此开发与生产子路径预览都不依赖偶发失效的
+headless WebGL；真实用户仍使用 `Phaser.AUTO`。`?renderer=webgl` 保留真实 WebGL 冒烟，
+`tests/renderer.spec.ts` 与 `tests/production-subpath.spec.ts` 分别锁定显式 WebGL 和生产 Canvas 路径。
+配置中的 `retries:1` 仅保留为普通执行的环境噪声兜底；最终基线显式使用 `--retries=0`，
+不靠重试掩盖 framebuffer 或输入竞态。
 另：`reuseExistingServer:true` 会复用 5173 上残留的旧 dev server——
 若行为异常先查端口占用（曾发现 3 天前的 vite 还在跑）。
 
@@ -225,7 +265,7 @@
 ```
 npx tsc --noEmit                       # 零错误
 npm run build                          # 构建通过
-npx playwright test --reporter=line    # 冷启动可能超时，retries:1 已配
+npx playwright test --retries=0 --reporter=line  # 2026-08-09 全量 201 passed
 ```
 
 试玩必测路径：

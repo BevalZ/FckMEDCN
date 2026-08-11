@@ -3,8 +3,8 @@
 ## 当前状态
 
 - 星露谷化 M1-M5 主线已完成；`OPTIMIZATION-ROADMAP.md` 仍有 P1/P2 功能待办，不能再视为“全部闭环”。
-- **known-issues 全部清零**：A1/A2/A3、B2/B3/B4/B6/B7 已修已验，B1/B5 设计如此/已验证，
-  D1-D4 为设计记录。
+- **当前登记 bug 均已修已验**：A1-A9、B2/B3/B4/B6/B7 已修已验，B1/B5 设计如此/已验证，
+  D1-D4 为设计记录；产品内容与发布准备的剩余不足另见下文，不能据此宣称“全部完成”。
 - 2026-08-04 已完成事件池阶段索引：`getAvailableEvents` 不再逐回合扫描整个 `ALL_EVENTS`；
   索引与旧扫描顺序完全一致，职业池平均筛选约 0.061ms（门槛 <2ms）。
 - 新增 `event-pool-diversity.spec.ts`：运行时阶段索引等价、ID 去重率、职业期 24 抽标题唯一率
@@ -26,20 +26,23 @@
   针刺伤 +1 运气、隐瞒 -1，职业期每 4 季夜班磨损外貌 -1；`attr-growth.spec.ts` 覆盖事件解释和上下限。
 - M9.4 结局财务卡已接入 `careerFinancialSnapshot()`：按地区/职称计算季度收入、支出、可支配现金流，
   明确显示现金、资产、房贷估算余额和季度还款；购房建立首付 4 倍本金估算，提前还贷同步降低余额。
-- M9 资产/属性/财务专项回归均通过，`npx tsc --noEmit` 与 `npm run build` 通过；M10 诊断/用药安全/临床工作流
-  专项也已通过。2026-08-05 全量 Playwright 共 118 项，116 项通过，`balance-sim.spec.ts` 与 `hospital.spec.ts`
-  各有一次冷启动波动后 retry 通过，最终 exit=0（2 flaky，总耗时约 11.8 分钟）；失败均发生在 Phaser/WebGL
-  场景启动等待，不是新增事件断言。
+- 季度财务快照现于诚信处罚和患者安全赔付之后落账，`finance.cash` 与季度末真实现金一致；重大患者安全事故
+  的 ¥15,000 赔付已有回归验证，副业固定随机序列也不再制造伪失败。
+- M9 资产/属性/财务与 M10 诊断/用药安全/临床工作流专项均通过。2026-08-09 最终门禁为
+  `npx tsc --noEmit`、`npm run build` 通过，Playwright 显式 `--retries=0` 全量 **201 passed**（约 10.2 分钟），
+  无 failed、flaky 或 retry。开发自动化默认 Canvas 后，首次 headless WebGL framebuffer 冷启动失败不再污染主回归；
+  `?renderer=webgl` 仍保留真实 WebGL 冒烟路径。
+- Phaser 低帧率下会在多个 update step 重放同一组原生键盘事件，曾导致性别、理财和传承菜单一次按键执行两次；
+  `src/ui/keyboardPatch.ts` 现按 KeyboardPlugin、原生事件对象和事件名去重，`keyboard-dedup.spec.ts` 锁定机制级回归。
 - 下一阶段执行顺序已写入 `DEVPLAN.md` 的 M9–M13：先做经济/资产/属性闭环，再做医学真实性、
   诉讼长期后果、人物互动，最后进行发布硬化；每批均要求专项回归、tsc、build 和全量 Playwright。
 - M9 代码、专项回归、整套 tsc/build 和 Playwright 均完成；当前进入 M10 医学事实审计（先核对
   `docs/MEDICAL-FACT-AUDIT.md`，诊断链已作为首个可审计增量接入）。
-- M10 已接入两条可审计医学流程链：`events_diagnostic.ts` 覆盖检查单→报告/鉴别诊断→复查/复盘；
-  `events_medication.ts` 覆盖用药核对→抗菌药物指征复评→疑似不良反应升级→出院 teach-back，均有高低知识/带教路径或后续回声。
-  `diagnostic-chain.spec.ts` 与 `medication-safety-chain.spec.ts` 检查事件可达、审计登记、消费者闭环和剂量/处方化措辞禁用。
-- M10 医学人工复核尚未完成：三条链在 `docs/MEDICAL-FACT-AUDIT.md` 均明确标为“待核对”，不得勾选
-  “医学认证”或把 M10 整批标记完成；排班、分级查房、病程记录和会诊流程链已接入，下一步是医生/药师逐条审阅，
-  再统一核对 `eventGen.ts` 的术语。
+- M10 已接入三条可审计医学流程链：`events_diagnostic.ts` 覆盖检查单→报告/鉴别诊断→复查/复盘，
+  `events_medication.ts` 覆盖用药核对→抗菌药物指征复评→疑似不良反应升级→出院 teach-back，
+  `events_clinical_workflow.ts` 覆盖排班交接、分级查房、病程记录和会诊闭环；三条链均有专项回归。
+- M10 医学人工复核尚未完成：三条新增链仅完成 AI 辅助的“流程复核”，临床医师/药师终审待补；
+  患者档案、生成临床模板和教育性题目仍有大量“待核对”项。不得标记为“医学认证”或把 M10 整批标记完成。
 - 当前工作树包含用户已有的两份审查报告修改和新建医学事实清单，均需保留；本轮代码与文档也尚未提交。
 
 ## 下次会话的起点
@@ -101,24 +104,26 @@ attr-allocation 回归守默认值/调整/划档。
 attr-allocation 补贷款开关用例。
 剩余可选项（与用户确认后再动）：
 1. **用户试玩**：回归清单的 5 条试玩路径（known-issues 末尾），顺手确认 A2 文字观感与图鉴/传承手感。
-2. **移动端**：评估结论——底子比预想的好，但**不建议现在做**（详见下节）。
+2. **移动端真机验收**：横竖屏切换、刘海安全区和长时间游玩手感仍需在真实设备确认。
 
-## 移动端可行性评估（2026-07-30，只出方案未改代码）
+## 移动端可行性评估（2026-08-09 更新）
 
-**已具备（触屏开箱即用）**：EventCard 选项 pointerdown 可点、ConsequencePopup 点击关闭、
-考试小游戏选项可点、HUD 部分可点、Scale.FIT 自适应 + user-scalable=no。
+**已具备（触屏主流程可玩）**：EventCard 选项、ConsequencePopup、考试选项和 HUD 部分控件可点；
+`VirtualControls` 提供四向移动与交互按钮，并已接入 Campus / Hospital / GuipeiWalk / WalkStage；
+缝合、CPR、夜班小游戏分别提供“落针”“按压”和床位点击；Scale.FIT 自适应且禁止页面缩放。
+行走场景提供任务/帮助/菜单入口，卡片场景提供导师/帮助/菜单入口；帮助标题可点按关闭，
+菜单行与危险确认弹窗的取消/确认均可触控。`tests/mobile-layout.spec.ts` 覆盖这些入口和三种小游戏。
 
-**缺口（按阻塞程度排序）**：
-1. **移动/交互**：Walker 只读键盘（`createWalkerKeys` 已预留"接摇杆从这里改"的口子）；
-   三场景的 E 交互走 `JustDown(interactKey)`，需抽 `interactPressed()` 供触屏复用。
-2. **三类小游戏是纯键盘**：缝合时机条（按键定帧）、CPR（节奏按键）、夜班（1-5 数字键）
-   ——每个都要单独设计触屏区（点按代替按键不难，但要逐个做+逐个回归）。
-3. ESC 取消、Q 任务清单、T 导师对话：次要，可在 UI 加小按钮。
+**剩余缺口**：事件/对话卡已提供“点击 / ESC 离开”入口；移动设备的真机尺寸、横竖屏切换、刘海安全区和长时间游玩手感仍需人工验收。
 
-**最小可行方案**（若要做）：`VirtualJoystick`（左下四向吸附摇杆 + 右下 E 钮，
-仅 `maxTouchPoints>0` 时显示）→ `walker.setExternalDir()` → 三场景 interact 抽取。
-但小游戏触屏化是绕不开的大头，**移动版体验完整度取决于它**。
-建议：本项目定位桌面键盘体验，移动端等用户明确提出再立项。
+## 尚未完成 / 发布前不足
+
+- **医学终审**：`MEDICAL-FACT-AUDIT.md` 的患者、科室、急症和教育内容尚未完成临床医师/药师终审；
+  AI 辅助流程复核不能替代专业审核。
+- **首屏体积**：生产构建已完成 Phaser 拆包，游戏包约 939.50 kB、Phaser 包约 1,199.04 kB，且无超大 chunk 警告。
+- **触屏收尾**：事件/对话卡取消入口已补齐；仍需真机验证刘海安全区、横竖屏切换和长时间操作手感。
+- **玩法深度**：求职后的医院事件池仍需按三甲/基层/私立等路线进一步差异化；普通策略的结局可达性和图鉴线索仍待验证；
+  编制/合同制、病假调休、公积金仍未完全覆盖；多点执业与线上问诊已接入持续副业结算并有专项验证。权威任务表见 `REVIEW-PLAYABILITY.md`。
 
 ## 场景转换测试经验（写新测试前先读）
 
@@ -132,7 +137,7 @@ attr-allocation 补贷款开关用例。
 ```bash
 npx tsc --noEmit                          # 零错误（include 仅 src，tests/ 不在覆盖范围）
 npm run build                             # 构建通过
-npx playwright test --reporter=line       # 全量 114 项；本轮 attr-allocation 冷启动首跑 flaky，retry 后 exit=0
+npx playwright test --retries=0 --reporter=line  # 2026-08-09 全量 201 passed（无重试）
 ```
 
 ## 已知陷阱（沿用，前几轮踩过）
