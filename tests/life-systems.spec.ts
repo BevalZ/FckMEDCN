@@ -127,22 +127,106 @@ test('副业收入只结算一次：现金变化等于季度净额', async ({ pa
   await boot(page);
   const result = await page.evaluate(() => {
     const { gs, ev, tf } = (window as any).__mod;
-    gs.resetGame();
-    gs.patchState({ stage: 'career', turnsInStage: 8, stats: { ...gs.getState().stats, money: 100000 } });
-    const side = ev.ALL_EVENTS.find((e: any) => e.id === 'le_salary_cut_choice');
-    tf.commitChoice(side.choices[0], side);
-    const beforeMoney = gs.getState().stats.money;
-    const quarter = tf.advanceQuarter('career');
-    const afterMoney = gs.getState().stats.money;
-    return {
-      net: quarter.econ.net,
-      income: quarter.econ.income,
-      cashDelta: afterMoney - beforeMoney,
-      note: quarter.econ.financeNote,
-    };
+    const originalRandom = Math.random;
+    Math.random = () => 0.999999;
+    try {
+      gs.resetGame();
+      gs.patchState({ stage: 'career', turnsInStage: 8, stats: { ...gs.getState().stats, money: 100000 } });
+      const side = ev.ALL_EVENTS.find((e: any) => e.id === 'le_salary_cut_choice');
+      tf.commitChoice(side.choices[0], side);
+      const beforeMoney = gs.getState().stats.money;
+      const quarter = tf.advanceQuarter('career');
+      const afterMoney = gs.getState().stats.money;
+      return {
+        net: quarter.econ.net,
+        income: quarter.econ.income,
+        cashDelta: afterMoney - beforeMoney,
+        note: quarter.econ.financeNote,
+        patientSafety: quarter.patientSafety.level,
+      };
+    } finally {
+      Math.random = originalRandom;
+    }
   });
 
   expect(result.income).toBeGreaterThanOrEqual(5000);
   expect(result.note).toContain('副业');
+  expect(result.patientSafety).toBe('none');
   expect(result.cashDelta).toBe(result.net);
+});
+
+test('多点执业与线上问诊接入持续副业结算而非一次性发钱', async ({ page }) => {
+  await boot(page);
+  const result = await page.evaluate(() => {
+    const { gs, ev, tf } = (window as any).__mod;
+    const originalRandom = Math.random;
+    Math.random = () => 0.999999;
+    const exercise = (eventId: string) => {
+      gs.resetGame();
+      gs.patchState({ stage: 'career', stats: { ...gs.getState().stats, money: 100000 } });
+      const event = ev.ALL_EVENTS.find((item: any) => item.id === eventId);
+      const beforeChoice = gs.getState().stats.money;
+      tf.commitChoice(event.choices[0], event);
+      const afterChoice = gs.getState();
+      const quarter = tf.advanceQuarter('career');
+      const afterQuarter = gs.getState();
+      return {
+        type: afterChoice.leisure.sideBusiness.type,
+        active: afterChoice.leisure.sideBusiness.active,
+        quarterlyIncome: afterChoice.leisure.sideBusiness.quarterlyIncome,
+        timeCost: afterChoice.leisure.sideBusiness.timeCost,
+        immediateCash: afterChoice.stats.money - beforeChoice,
+        note: quarter.econ.financeNote,
+        quarterCash: afterQuarter.stats.money - afterChoice.stats.money,
+        quarterNet: quarter.econ.net,
+      };
+    };
+    try {
+      return {
+        multiSite: exercise('multi_site_practice'),
+        online: exercise('internet_med'),
+      };
+    } finally {
+      Math.random = originalRandom;
+    }
+  });
+
+  expect(result.multiSite).toMatchObject({
+    type: 'multi_site', active: true, quarterlyIncome: 4000, timeCost: 4, immediateCash: 0,
+  });
+  expect(result.online).toMatchObject({
+    type: 'online_consultation', active: true, quarterlyIncome: 2000, timeCost: 3, immediateCash: 0,
+  });
+  expect(result.multiSite.note).toContain('副业 +¥4,000');
+  expect(result.online.note).toContain('副业 +¥2,000');
+  expect(result.multiSite.quarterCash).toBe(result.multiSite.quarterNet);
+  expect(result.online.quarterCash).toBe(result.online.quarterNet);
+});
+
+test('季度财务快照记录患者安全事件后的最终现金', async ({ page }) => {
+  await boot(page);
+  const result = await page.evaluate(() => {
+    const { gs, tf } = (window as any).__mod;
+    const originalRandom = Math.random;
+    Math.random = () => 0;
+    try {
+      gs.resetGame();
+      gs.patchState({
+        stage: 'career',
+        stats: { ...gs.getState().stats, money: 100000, clinical: 0, stamina: 20 },
+      });
+      const quarter = tf.advanceQuarter('career');
+      const state = gs.getState();
+      return {
+        patientSafety: quarter.patientSafety.level,
+        cash: state.stats.money,
+        financeCash: state.finance.cash,
+      };
+    } finally {
+      Math.random = originalRandom;
+    }
+  });
+
+  expect(result.patientSafety).toBe('major');
+  expect(result.financeCash).toBe(result.cash);
 });

@@ -2,6 +2,8 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
+  // 生产子路径用例由 playwright.preview.config.ts 在 dist + /FckMedCN/ 下单独执行。
+  testIgnore: 'production-subpath.spec.ts',
   // 冷启动首个用例要现场转译 Phaser（~1.4MB），机器繁忙时 60s 不够，
   // balance-sim（字母序第一）曾连续两轮全量因此 flaky。放宽到 120s；
   // 正常用例几秒即过，超时上限只约束真挂死。

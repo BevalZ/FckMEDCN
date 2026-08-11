@@ -14,6 +14,14 @@ async function boot(page: import('@playwright/test').Page) {
   await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 60000 });
 }
 
+async function waitForScene(page: import('@playwright/test').Page, key: string, timeout = 30000) {
+  await page.waitForFunction(
+    (k) => ((window as any).game?.scene?.getScenes(true) ?? [])
+      .some((s: any) => s.sys.settings.key === k),
+    key, { timeout },
+  );
+}
+
 // —— 1) 学了不掉 ——
 test('知识衰减：本季学过则季度结算不掉', async ({ page }) => {
   await boot(page);
@@ -97,4 +105,39 @@ test('留级 recovery 事件：ms_/phd_holdback_life 置对应 recovered flag', 
   expect(res.ms.setsRecovered, 'ms 事件应置 ms_holdback_recovered').toBe(true);
   expect(res.phd.exists, '应存在 phd_holdback_life').toBe(true);
   expect(res.phd.setsRecovered, 'phd 事件应置 phd_holdback_recovered').toBe(true);
+});
+
+test('留级判定隔离：本科留级 flag 不应屏蔽硕士留级', async ({ page }) => {
+  await boot(page);
+  await waitForScene(page, 'TitleScene');
+  const res = await page.evaluate(() => {
+    const { gs } = (window as any).__mod;
+    gs.patchState({
+      stage: 'master',
+      turnsInStage: 1,
+      stats: { ...gs.getState().stats, knowledge: 10 },
+    });
+    gs.setFlag('ug_holdback');
+    (window as any).game.scene.getScene('TitleScene').scene.start('MasterWalkScene');
+    return true;
+  });
+  expect(res).toBe(true);
+  await waitForScene(page, 'MasterWalkScene');
+
+  const flags = await page.evaluate(() => {
+    const scene: any = (window as any).game.scene.getScene('MasterWalkScene');
+    const triggered = scene.maybeExamCrisis();
+    const st = (window as any).__state();
+    return {
+      triggered,
+      ug: st.flags.has('ug_holdback'),
+      ms: st.flags.has('ms_holdback'),
+      phd: st.flags.has('phd_holdback'),
+    };
+  });
+
+  expect(flags.triggered, '硕士低知识应触发本阶段学业警示').toBe(true);
+  expect(flags.ug, '既有本科留级 flag 保留').toBe(true);
+  expect(flags.ms, '硕士应独立置 ms_holdback').toBe(true);
+  expect(flags.phd).toBe(false);
 });

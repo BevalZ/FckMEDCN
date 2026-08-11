@@ -85,7 +85,8 @@ test('全生命周期经济：普通家境存活、拮据可贷款缓解、买�
           if (gs.getState().stats.sanity < 15) gs.updateStats({ sanity: 25 } as any);
         }
       }
-      return gs.getState().stats.money;
+      const final = gs.getState();
+      return final.stats.money + (final.assets ?? 0);
     }
 
     return {
@@ -96,9 +97,37 @@ test('全生命周期经济：普通家境存活、拮据可贷款缓解、买�
     };
   }, PLAN);
 
-  console.log('  全生命周期最终存款:', JSON.stringify(r));
+  console.log('  全生命周期最终总财富:', JSON.stringify(r));
   expect(r.middle, '普通家境最终存款应健康为正').toBeGreaterThan(0);
   expect(r.rich, '殷实家境应明显更好').toBeGreaterThan(r.middle);
   expect(r.tight, '拮据家庭不该直接负债崩死').toBeGreaterThan(-30000);
-  expect(r.tightLoan, '助学贷款应让拮据家庭明显更好').toBeGreaterThan(r.tight + 5000);
+  expect(r.tightLoan, '助学贷款应让拮据家庭的完整人生不比无贷款更差').toBeGreaterThan(r.tight);
+});
+
+test('助学贷款覆盖完整在读阶段，并在工作后进入偿还期', async ({ page }) => {
+  await boot(page);
+  const result = await page.evaluate(() => {
+    const { gs, ec } = (window as any).__mod;
+    const stages = ['undergrad', 'internship', 'guipei', 'master', 'phd', 'career'];
+    const rows: Record<string, number> = {};
+    const originalRandom = Math.random;
+    Math.random = () => 0.5;
+    for (const stage of stages) {
+      gs.resetGame();
+      const withoutLoan = ec.getQuarterEconomy(stage).net;
+      gs.setFlag('student_loan');
+      const withLoan = ec.getQuarterEconomy(stage).net;
+      rows[stage] = withLoan - withoutLoan;
+    }
+    Math.random = originalRandom;
+    return rows;
+  });
+  expect(result).toEqual({
+    undergrad: 1500,
+    internship: 1500,
+    guipei: 1500,
+    master: 1500,
+    phd: 1500,
+    career: -1500,
+  });
 });

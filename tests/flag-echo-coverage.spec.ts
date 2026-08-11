@@ -57,9 +57,15 @@ const NARRATIVE_ONLY = new Set([
   'ug_baoyan_grind', 'ug_whistleblower_anon', 'ug_reported_bullying', 'ug_confronted',
   'ug_barely_passed', 'ug_stayed_after_urge', 'ug_class_rep', 'ug_exchange', 'ug_chongzhan',
   'ug_saw_violence_news', 'ug_tuition_waiver', 'ug_fake_cleaned',
+  'ug_baoyan_intent', 'ug_choose_guipei_after_no_exam',
+  'kaoyan_adjusted', 'kaoyan_fail_to_work', 'kaoyan_repeater_iv_fail',
+  'ug_thesis_secured', 'ug_thesis_kaoyan_crunch', 'ug_thesis_job_crunch',
   // 硕博：研究状态标记
   'phd_team', 'phd_ok', 'phd_persist', 'phd_settle', 'phd_independent', 'phd_network', 'phd_delay',
-  'will_phd', 'topic_hot', 'mt_skill_certified', 'mt_grant_won',
+  'will_phd', 'topic_hot', 'mt_skill_certified', 'mt_grant_won', 'long_sys_stayed_after_exit_offer',
+  'phd_target_top_advisor', 'phd_target_home_advisor', 'phd_reapply', 'phd_second_choice',
+  'ms_thesis_secured', 'ms_thesis_phd_crunch', 'ms_thesis_job_crunch',
+  'phd_dissertation_secured', 'phd_dissertation_job_crunch', 'phd_dissertation_referral_crunch',
   // 求职：选择了哪条线（由 offer_* / took_* 等后续承接）
   'signed', 'took_hospital_a', 'took_hospital_b', 'took_public', 'offer_sanjia', 'jh_chase_bianzhi',
   'jh_platform', 'jh_phd_apply', 'jh_research_platform', 'jh_clinical_ace', 'jh_dual_role',

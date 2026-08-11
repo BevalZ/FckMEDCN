@@ -16,7 +16,15 @@ async function waitForScene(page: Page, key: string, timeout = 120000) {
 async function toAttrPhase(page: Page) {
   await page.goto(BASE, { waitUntil: 'load' });
   await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 60000 });
-  await waitForScene(page, 'TitleScene');
+  try {
+    await waitForScene(page, 'TitleScene', 10000);
+  } catch {
+    // Windows 下首次转译 Phaser 偶尔先完成模块暴露、后卡住场景启动；热重载一次即可恢复。
+    await page.reload({ waitUntil: 'load' });
+    await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 60000 });
+    await waitForScene(page, 'TitleScene', 60000);
+  }
+  await page.waitForFunction(() => document.getElementById('title-overlay')?.dataset.ready === 'true');
   await page.evaluate(() => (document.getElementById('title-start') as HTMLButtonElement)?.click());
   await waitForScene(page, 'GaokaoScene');
   await page.keyboard.press('Enter'); // 选男生

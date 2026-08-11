@@ -20,7 +20,7 @@ test('M10 用药安全链：核对→复核→升级→出院沟通，高低知�
   await boot(page);
   const report = await page.evaluate((ids) => {
     const { ev, tf, gs, stats: statModule } = (window as any).__mod;
-    const all = new Map(ev.ALL_EVENTS.map((event: any) => [event.id, event]));
+    const all = new Map<string, any>(ev.ALL_EVENTS.map((event: any) => [event.id, event]));
     const base = statModule.createDefaultStats();
     const pool = (stage: string, flags: string[], stats: any, turn: number) =>
       ev.getAvailableEvents(stage, new Set(flags), stats, new Set(), turn, 'single').map((event: any) => event.id);

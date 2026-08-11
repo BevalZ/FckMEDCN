@@ -34,7 +34,7 @@ function stageTurns(file: string): number[] {
 }
 
 // 管线顺序（固定）：文件 → 该文件内的阶段序列
-const PIPELINE: Array<[string, string]> = [
+const PUBLIC_PIPELINE: Array<[string, string]> = [
   ['CampusScene.ts', 'undergrad'],
   ['HospitalScene.ts', 'internship'],
   ['GuipeiWalkScene.ts', 'guipei'],
@@ -43,11 +43,15 @@ const PIPELINE: Array<[string, string]> = [
   ['CareerScene.ts', 'career'],
 ];
 
+const LATE_PIPELINE: Array<[string, string]> = [
+  ['LateEraScene.ts', 'pinnacle+retirement+eternity'],
+];
+
 const START_YEAR = 2024, START_QUARTER = 3;
 
-function pipelineEnd(): { year: number; quarter: number; total: number } {
+function pipelineEnd(pipeline: Array<[string, string]>): { year: number; quarter: number; total: number } {
   let total = 0;
-  for (const [file] of PIPELINE) {
+  for (const [file] of pipeline) {
     const turns = stageTurns(file);
     expect(turns.length, `${file} 应能读到 MAX_TURNS/maxTurns`).toBeGreaterThan(0);
     total += turns.reduce((a, b) => a + b, 0);
@@ -59,7 +63,7 @@ function pipelineEnd(): { year: number; quarter: number; total: number } {
 test('新闻逐年不断粮：覆盖到管线终点年份', () => {
   const news = readNews();
   expect(news.length, 'news.ts 应能解析出新闻条目').toBeGreaterThan(0);
-  const end = pipelineEnd();
+  const end = pipelineEnd(PUBLIC_PIPELINE);
   const byYear = new Map<number, number>();
   for (const n of news) byYear.set(n.year, (byYear.get(n.year) ?? 0) + 1);
 
@@ -67,10 +71,16 @@ test('新闻逐年不断粮：覆盖到管线终点年份', () => {
   for (let y = START_YEAR; y <= end.year; y++) {
     if (!byYear.has(y)) gaps.push(y);
   }
-  console.log(`管线 ${PIPELINE.map(([f, s]) => `${s}:${stageTurns(f).join('+')}`).join(' → ')}`
+  console.log(`公共新闻管线 ${PUBLIC_PIPELINE.map(([f, s]) => `${s}:${stageTurns(f).join('+')}`).join(' → ')}`
     + ` 共 ${end.total} 季，${START_YEAR}Q${START_QUARTER} → ${end.year}Q${end.quarter}；`
     + `ticker 覆盖 ${byYear.size} 年`);
   expect(gaps, `以下可到达年份无任何新闻：${gaps.join(', ')}`).toEqual([]);
+});
+
+test('晚年三个阶段共 28 季，改由个人回声承接', () => {
+  const turns = LATE_PIPELINE.flatMap(([file]) => stageTurns(file));
+  expect(turns).toEqual([8, 8, 12]);
+  expect(turns.reduce((sum, value) => sum + value, 0)).toBe(28);
 });
 
 test('季节锚点词季度正确（两会Q1/医师节Q3/考研季Q4）', () => {
@@ -98,4 +108,21 @@ test('新闻 id 无重复、quarter 合法', () => {
   expect([...new Set(dup)], `重复 id：${[...new Set(dup)].join(', ')}`).toEqual([]);
   const badQ = news.filter(n => n.quarter < 1 || n.quarter > 4);
   expect(badQ.map(n => n.id), 'quarter 须在 1..4').toEqual([]);
+});
+
+test('负面新闻保持匿名脱敏', () => {
+  const news = readNews();
+  const blocked = ['旺填朝', '张昱', '余鹰', '刘晋', '湘雅', '协哈'];
+  const leaks = news
+    .filter(item => blocked.some(term => item.headline.includes(term)))
+    .map(item => `${item.id}:${item.headline}`);
+  expect(leaks).toEqual([]);
+});
+
+test('访问学者违法新闻位于新局必经的2024Q4', () => {
+  const items = readNews().filter(item => item.headline.includes('医学访问学者'));
+  expect(items).toHaveLength(1);
+  expect(items[0].year).toBe(2024);
+  expect(items[0].quarter).toBe(4);
+  expect(items[0].headline).toContain('司法机关处理');
 });

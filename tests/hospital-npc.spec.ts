@@ -30,16 +30,16 @@ async function dismissPopups(page: Page, sceneKey: string) {
 }
 
 /** 走到指定 NPC 旁按 E 开对话，提交第 1 项并关掉后果弹窗 */
-async function talkToNpc(page: Page, npcId: string, expectName: string) {
+async function talkToNpc(page: Page, npcId: string, role: string) {
   const opened = await page.evaluate((id) => {
     const s: any = (window as any).game.scene.getScene('HospitalScene');
     const npc = (s.npcs as any[]).find(n => n.def.id === id);
     if (!npc) return null;
     s.walker.sprite.setPosition(npc.x + 20, npc.y);
-    return { name: npc.def.name };
+    return { name: npc.def.name, expected: (window as any).__mod.npc.getNpcName(id) };
   }, npcId);
-  expect(opened, `${expectName}（${npcId}）本季应在场`).toBeTruthy();
-  expect(opened!.name).toBe(expectName);
+  expect(opened, `${role}（${npcId}）本季应在场`).toBeTruthy();
+  expect(opened!.name).toBe(opened!.expected);
   await page.waitForTimeout(300);
 
   const actionsBefore = await page.evaluate(
@@ -70,8 +70,8 @@ async function talkToNpc(page: Page, npcId: string, expectName: string) {
       talked: [...s.talkedThisQuarter] as string[],
     };
   }, npcId);
-  expect(after.actionsLeft, `${expectName}对话应扣 1 行动点`).toBe(actionsBefore - 1);
-  expect(after.talked, `${expectName}应记为本季已聊`).toContain(npcId);
+  expect(after.actionsLeft, `${role}对话应扣 1 行动点`).toBe(actionsBefore - 1);
+  expect(after.talked, `${role}应记为本季已聊`).toContain(npcId);
 }
 
 test('B2 实习场景：林主治/刘护士长可走近按 E 对话', async ({ page }) => {

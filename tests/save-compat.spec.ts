@@ -21,11 +21,13 @@ async function waitForScene(page: Page, key: string, timeout = 60000) {
 /** 启动到标题页并注入一份存档，然后点"继续" */
 async function continueWithSave(
   page: Page,
-  opts: { sceneKey: string; stage: string; turnsInStage: number; year: number; quarter: number },
+  opts: {
+    sceneKey: string; stage: string; turnsInStage: number; year: number; quarter: number;
+    flags?: string[]; track?: string; degree?: string; era3Path?: string;
+  },
 ) {
   await page.goto(BASE, { waitUntil: 'domcontentloaded' });
   await page.evaluate(() => localStorage.clear());
-  await page.reload({ waitUntil: 'load' });
   await waitForScene(page, 'TitleScene');
   await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 20000 });
 
@@ -36,13 +38,17 @@ async function continueWithSave(
       stage: o.stage, turnsInStage: o.turnsInStage,
       year: o.year, quarter: o.quarter,
       school: { id: 'x', name: 'x', realHint: '', tier: 3, minScore: 0, city: 'x', bonus: {} },
+      ...(o.track ? { track: o.track } : {}),
+      ...(o.degree ? { degree: o.degree } : {}),
     });
+    for (const flag of o.flags ?? []) gs.setFlag(flag);
     const s = gs.getState();
+    const era3 = o.era3Path ? { ...s.era3, path: o.era3Path } : s.era3;
     const blob = {
       version: 1,
       sceneKey: o.sceneKey,
       savedAt: Date.now(),
-      state: { ...s, flags: [...s.flags] },
+      state: { ...s, era3, flags: [...s.flags] },
       firedEvents: ['ug_fake_paper'], // 标记：读档后应恢复进场景 firedEvents
       firedNews: [],
     };
@@ -148,3 +154,218 @@ test('B4 旧档 sceneKey 已删除：安全降级到该阶段现行场景', asyn
 
   expect(errors, `运行时报错：\n${errors.join('\n')}`).toEqual([]);
 });
+
+test('旧档长学制已下车：残留八年制 flag 不应继续直博', async ({ page }) => {
+  await continueWithSave(page, {
+    sceneKey: 'CampusScene',
+    stage: 'undergrad',
+    turnsInStage: 19,
+    year: 2029,
+    quarter: 4,
+    flags: ['long_system', 'track_eight_year', 'long_sys_transferred'],
+  });
+
+  await waitForScene(page, 'CampusScene', 15000);
+  await page.evaluate(() => {
+    const s: any = (window as any).game.scene.getScene('CampusScene');
+    s.transitionToNext();
+  });
+  await waitForScene(page, 'HospitalScene', 15000);
+
+  const active = await page.evaluate(() =>
+    (window as any).game.scene.getScenes(true).map((s: any) => s.sys.settings.key));
+  expect(active).toContain('HospitalScene');
+  expect(active).not.toContain('PhdWalkScene');
+});
+
+test('旧 UndergradScene 长学制结束仍按长学制路由', async ({ page }) => {
+  await continueWithSave(page, {
+    sceneKey: 'UndergradScene',
+    stage: 'undergrad',
+    turnsInStage: 19,
+    year: 2029,
+    quarter: 4,
+    flags: ['track_five_plus_three', 'long_system'],
+    track: 'five_plus_three',
+    degree: 'master_pro',
+  });
+
+  await waitForScene(page, 'UndergradScene', 15000);
+  await page.evaluate(() => {
+    const s: any = (window as any).game.scene.getScene('UndergradScene');
+    s.transitionToNext();
+  });
+  await waitForScene(page, 'MasterScene', 15000);
+  const active = await page.evaluate(() =>
+    (window as any).game.scene.getScenes(true).map((s: any) => s.sys.settings.key));
+  expect(active).toContain('MasterScene');
+  expect(active).not.toContain('InternshipScene');
+});
+
+test('旧档 era3 路径：已下车时不保留 eight_year_phd 残留路径', async ({ page }) => {
+  await continueWithSave(page, {
+    sceneKey: 'CampusScene',
+    stage: 'undergrad',
+    turnsInStage: 10,
+    year: 2027,
+    quarter: 1,
+    flags: ['track_eight_year', 'long_sys_transferred'],
+    track: 'eight_year',
+    degree: 'bachelor',
+    era3Path: 'eight_year_phd',
+  });
+
+  await waitForScene(page, 'CampusScene', 15000);
+  const path = await page.evaluate(() => (window as any).__state().era3.path);
+  expect(path).toBe('specialist_master');
+});
+
+test('损坏存档不显示继续入口，也不会让标题页崩溃', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(String(error)));
+
+  await page.goto(BASE, { waitUntil: 'load' });
+  await page.evaluate(() => {
+    localStorage.setItem('fckmedcn_save_v1', JSON.stringify({
+      version: 1,
+      sceneKey: 'CampusScene',
+      state: null,
+    }));
+  });
+  await page.reload({ waitUntil: 'load' });
+  await waitForScene(page, 'TitleScene');
+  await page.waitForFunction(() => document.getElementById('title-overlay')?.dataset.ready === 'true');
+
+  await expect(page.locator('#title-continue')).not.toHaveClass(/show/);
+  expect(errors, `损坏存档不应导致运行时错误：\n${errors.join('\n')}`).toEqual([]);
+});
+
+test('嵌套集合形状损坏的存档不显示继续入口', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(String(error)));
+
+  await page.goto(BASE, { waitUntil: 'load' });
+  await page.evaluate(() => localStorage.clear());
+  await page.reload({ waitUntil: 'load' });
+  await waitForScene(page, 'TitleScene');
+  await page.waitForFunction(() => !!(window as any).__state, null, { timeout: 20000 });
+
+  await page.evaluate(() => {
+    const state = (window as any).__state();
+    localStorage.setItem('fckmedcn_save_v1', JSON.stringify({
+      version: 1,
+      sceneKey: 'CampusScene',
+      savedAt: Date.now(),
+      state: {
+        ...state,
+        flags: [...state.flags],
+        leisure: {
+          ...state.leisure,
+          social: { ...state.leisure.social, circles: 5 },
+        },
+      },
+      firedEvents: [],
+      firedNews: [],
+    }));
+  });
+  await page.reload({ waitUntil: 'load' });
+  await waitForScene(page, 'TitleScene');
+  await page.waitForFunction(() => document.getElementById('title-overlay')?.dataset.ready === 'true');
+
+  await expect(page.locator('#title-continue')).not.toHaveClass(/show/);
+  expect(errors, `坏档不应进入 applySave：\n${errors.join('\n')}`).toEqual([]);
+});
+
+test('核心字段为 null 或缺失的存档被拒绝，不进入场景白屏', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(String(error)));
+
+  await page.goto(BASE, { waitUntil: 'load' });
+  await waitForScene(page, 'TitleScene');
+  await page.waitForFunction(() => !!(window as any).__state, null, { timeout: 20000 });
+
+  for (const corruption of [
+    { field: 'newsLog', value: null },
+    { field: 'year', value: null },
+    { field: 'quarter', value: null },
+    { field: 'turnsInStage', value: null },
+    { field: 'newsLog', omit: true },
+  ]) {
+    await page.evaluate((patch) => {
+      const state = (window as any).__state();
+      const corrupted = { ...state, flags: [...state.flags], [patch.field]: patch.value };
+      if (patch.omit) delete corrupted[patch.field];
+      localStorage.setItem('fckmedcn_save_v1', JSON.stringify({
+        version: 1,
+        sceneKey: 'CampusScene',
+        savedAt: Date.now(),
+        state: corrupted,
+        firedEvents: [],
+        firedNews: [],
+      }));
+    }, corruption);
+    await page.reload({ waitUntil: 'load' });
+    await waitForScene(page, 'TitleScene');
+    await page.waitForFunction(() => document.getElementById('title-overlay')?.dataset.ready === 'true');
+    await expect(page.locator('#title-continue'), `${corruption.field} 损坏时不得显示继续入口`)
+      .not.toHaveClass(/show/);
+  }
+
+  expect(errors, `损坏存档不应触发运行时异常：\n${errors.join('\n')}`).toEqual([]);
+});
+
+test('部分损坏的 attrs 会逐字段补默认值并限制到 0..5', async ({ page }) => {
+  await page.goto(BASE, { waitUntil: 'load' });
+  await waitForScene(page, 'TitleScene');
+  await page.waitForFunction(() => !!(window as any).__state, null, { timeout: 20000 });
+  await page.evaluate(() => {
+    const state = (window as any).__state();
+    localStorage.setItem('fckmedcn_save_v1', JSON.stringify({
+      version: 1,
+      sceneKey: 'CampusScene',
+      savedAt: Date.now(),
+      state: {
+        ...state,
+        stage: 'undergrad',
+        school: { id: 'x', name: 'x', realHint: '', tier: 3, minScore: 0, city: 'x', bonus: {} },
+        attrs: { family: -2, academic: null, luck: 99 },
+        flags: [...state.flags],
+      },
+      firedEvents: [],
+      firedNews: [],
+    }));
+  });
+  await page.reload({ waitUntil: 'load' });
+  await page.waitForFunction(() => document.getElementById('title-overlay')?.dataset.ready === 'true');
+  await expect(page.locator('#title-continue')).toHaveClass(/show/);
+  await page.locator('#title-continue').click();
+  await waitForScene(page, 'CampusScene', 15000);
+  const attrs = await page.evaluate(() => (window as any).__state().attrs);
+  expect(attrs).toEqual({ family: 0, academic: 5, luck: 5, looks: 2 });
+});
+
+for (const invalid of [
+  { name: '非法阶段', version: 1, statePatch: { stage: 'future_stage' } },
+  { name: '非法婚姻状态', version: 1, statePatch: { marital: 'complicated' } },
+  { name: '未来版本', version: 2, statePatch: {} },
+]) {
+  test(`${invalid.name}存档被安全拒绝`, async ({ page }) => {
+    await page.goto(BASE, { waitUntil: 'load' });
+    await waitForScene(page, 'TitleScene');
+    await page.waitForFunction(() => !!(window as any).__state, null, { timeout: 20000 });
+    await page.evaluate(({ version, statePatch }) => {
+      const state = (window as any).__state();
+      localStorage.setItem('fckmedcn_save_v1', JSON.stringify({
+        version,
+        sceneKey: 'CampusScene',
+        savedAt: Date.now(),
+        state: { ...state, ...statePatch, flags: [...state.flags] },
+        firedEvents: [],
+        firedNews: [],
+      }));
+    }, invalid);
+    await page.reload({ waitUntil: 'load' });
+    await page.waitForFunction(() => document.getElementById('title-overlay')?.dataset.ready === 'true');
+    await expect(page.locator('#title-continue')).not.toHaveClass(/show/);
+  });
+}

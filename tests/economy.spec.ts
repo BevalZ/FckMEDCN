@@ -97,6 +97,11 @@ test('R 菜单可调整理财策略并持久化', async ({ page }) => {
   await page.keyboard.press('Enter'); // 关简报
   await page.waitForTimeout(400);
 
+  const stableCost = await page.evaluate(() => {
+    const { ec } = (window as any).__mod;
+    return ec.getQuarterEconomy('undergrad').cost;
+  });
+
   // R → 理财策略（第 4 项）→ 当前"稳健"（第 2 项）→ ↑ 到"节流" → 回车
   await page.keyboard.press('r');
   await page.waitForTimeout(400);
@@ -107,15 +112,20 @@ test('R 菜单可调整理财策略并持久化', async ({ page }) => {
   await page.waitForTimeout(400);
 
   const state = await page.evaluate(() => {
-    const { gs } = (window as any).__mod;
+    const { gs, ec } = (window as any).__mod;
     const raw = localStorage.getItem('fckmedcn_save_v1');
+    const scene = (window as any).game.scene.getScene('CampusScene') as any;
     return {
       strategy: gs.getState().financeStrategy,
       saved: raw ? JSON.parse(raw).state.financeStrategy : null,
+      expectedCost: ec.getQuarterEconomy('undergrad').cost,
+      displayedFinance: scene.hud?.attrsLabel?.text ?? '',
     };
   });
   expect(state.strategy, 'R 菜单应把策略改为 thrifty').toBe('thrifty');
   expect(state.saved, '存档应同步 thrifty').toBe('thrifty');
+  expect(state.expectedCost, '节流策略应立即降低本季支出').toBeLessThan(stableCost);
+  expect(state.displayedFinance, '修改策略后 HUD 应立即刷新').toContain('理财:节流');
 });
 
 test('R 菜单资产账户可应急提现并持久化流水', async ({ page }) => {

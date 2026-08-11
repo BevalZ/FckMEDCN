@@ -48,19 +48,21 @@ test('relations 门槛事件随人际高低可用性不同', async ({ page }) =>
 test('硕博导师绩效风格随机影响补助收入', async ({ page }) => {
   await boot(page);
   const r = await page.evaluate(() => {
-    const { gs, tf } = (window as any).__mod;
+    const { gs, ec } = (window as any).__mod;
+    const originalRandom = Math.random;
+    Math.random = () => 0.5;
     const netOf = (style: string, stage: string) => {
       gs.resetGame();
       gs.patchState({ mentorStyle: style, financeStrategy: 'stable', familyWealth: 'middle' });
-      const m = gs.getState().stats.money;
-      tf.advanceQuarter(stage);
-      return gs.getState().stats.money - m;
+      return ec.getQuarterEconomy(stage).net;
     };
-    return {
+    const result = {
       generous: netOf('generous', 'master'), // 3600×1.25×(0.9~1.1) - 2800
       tight: netOf('tight', 'master'),       // 3600×0.5×(0.9~1.1) - 2800
       pyramid: netOf('pyramid', 'phd'),      // 4600×0.65×(0.9~1.1) - 3000
     };
+    Math.random = originalRandom;
+    return result;
   });
   console.log('  导师风格净结余:', JSON.stringify(r));
   expect(r.generous, '慷慨导师应明显高于抠门导师').toBeGreaterThan(r.tight + 1000);

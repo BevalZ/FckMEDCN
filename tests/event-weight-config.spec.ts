@@ -3,7 +3,8 @@ import type { Page } from '@playwright/test';
 
 // 事件权重配置单元测试：审计 ALL_EVENTS 的配置合法性。
 // 1) id 唯一、无重复；
-// 2) 权重为有限正数且在合理区间 [1,200]（防加权抽取坏掉）；
+// 2) 随机事件权重为有限正数且在合理区间 [1,200]（防加权抽取坏掉）；
+//    manualOnly 事件不进入抽取池，允许用 0 表达“无随机权重”；
 // 3) minTurn <= maxTurn（都配置时）；
 // 4) 各阶段池非空、手写(非 gen_)与生成事件都存在、权重总和与手写权重健康。
 
@@ -20,6 +21,8 @@ test('事件权重配置合法', async ({ page }) => {
   const report = await page.evaluate(() => {
     const { ev } = (window as any).__mod;
     const all: any[] = ev.ALL_EVENTS;
+    const randomEvents = all.filter((e) => !e.manualOnly);
+    const manualEvents = all.filter((e) => e.manualOnly);
     const ids = all.map((e) => e.id);
 
     // 1) 重复 id
@@ -27,8 +30,11 @@ test('事件权重配置合法', async ({ page }) => {
     const dupIds = ids.filter((id) => seen.has(id) ? true : (seen.add(id), false));
 
     // 2) 非法权重（非正有限数，或超出 [1,200]）
-    const badWeight = all
+    const badWeight = randomEvents
       .filter((e) => !(typeof e.weight === 'number' && Number.isFinite(e.weight) && e.weight >= 1 && e.weight <= 200))
+      .map((e) => e.id);
+    const badManualWeight = manualEvents
+      .filter((e) => !(typeof e.weight === 'number' && Number.isFinite(e.weight) && e.weight >= 0 && e.weight <= 200))
       .map((e) => e.id);
 
     // 3) minTurn > maxTurn
@@ -39,7 +45,7 @@ test('事件权重配置合法', async ({ page }) => {
     // 4) 各阶段池统计
     const STAGES = ['undergrad', 'internship', 'guipei', 'master', 'phd', 'jobhunt', 'career'];
     const stageInfo = STAGES.map((st) => {
-      const pool = all.filter((e) => (Array.isArray(e.stage) ? e.stage : [e.stage]).includes(st));
+      const pool = randomEvents.filter((e) => (Array.isArray(e.stage) ? e.stage : [e.stage]).includes(st));
       const hand = pool.filter((e) => !e.id.startsWith('gen_'));
       const gen = pool.length - hand.length;
       const handW = hand.reduce((s, e) => s + e.weight, 0);
@@ -48,16 +54,17 @@ test('事件权重配置合法', async ({ page }) => {
     });
 
     // 5) 稀有事件（家庭/人生类，weight <= 20）只应存在于个人类事件，不该混进高频池
-    const rareWeights = all
+    const rareWeights = randomEvents
       .filter((e) => e.weight <= 20)
       .map((e) => `${e.id}:w${e.weight}`);
 
-    return { total: all.length, dupIds, badWeight, badTurn, stageInfo, rareWeights };
+    return { total: all.length, dupIds, badWeight, badManualWeight, badTurn, stageInfo, rareWeights };
   });
 
   expect(report.total, '事件总数应非空').toBeGreaterThan(50);
   expect(report.dupIds, '不应有重复事件 id').toEqual([]);
   expect(report.badWeight, '不应有非法权重').toEqual([]);
+  expect(report.badManualWeight, '手动事件权重应为有限非负数').toEqual([]);
   expect(report.badTurn, 'minTurn 不应大于 maxTurn').toEqual([]);
 
   for (const s of report.stageInfo) {

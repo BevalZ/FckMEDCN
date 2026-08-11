@@ -130,6 +130,30 @@ test('C. 规培临床轨（无 track_research）→ 求职', async ({ page }) =>
   expect(ok, '临床轨应直接进入求职（不再被强制读硕博）').toBe(true);
 });
 
+test('C2. 规培双轨残留时临床优先，不应误入硕士', async ({ page }) => {
+  await startScene(page, 'GuipeiWalkScene', 'guipei', 11);
+  await page.evaluate(() => {
+    (window as any).__setFlag('track_research');
+    (window as any).__setFlag('track_clinical');
+  });
+  await sleepNow(page, 'GuipeiWalkScene');
+  await waitForScene(page, 'JobHuntScene', 20000);
+  const ok = await page.evaluate(() =>
+    (window as any).game.scene.getScenes(true).some((s: any) => s.sys.settings.key === 'JobHuntScene'));
+  expect(ok, '双轨残留时不应仅因 track_research 存在而进入硕士').toBe(true);
+});
+
+test('C3. 旧 GuipeiScene 也按科研轨进入硕士，否则默认求职', async ({ page }) => {
+  await startScene(page, 'GuipeiScene', 'guipei', 11);
+  const defaultNext = await page.evaluate(() => (window as any).__mod.tr.nextSceneAfterGuipei('card'));
+  expect(defaultNext, '旧 GuipeiScene 默认也应进入求职').toBe('JobHuntScene');
+
+  await startScene(page, 'GuipeiScene', 'guipei', 11);
+  await page.evaluate(() => (window as any).__setFlag('track_research'));
+  const researchNext = await page.evaluate(() => (window as any).__mod.tr.nextSceneAfterGuipei('card'));
+  expect(researchNext, '旧 GuipeiScene 的科研轨也应进入硕士').toBe('MasterScene');
+});
+
 test('D. 职业可行走场景读满学制 → 巅峰阶段', async ({ page }) => {
   await startScene(page, 'CareerWalkScene', 'career', 19);
   await sleepNow(page, 'CareerWalkScene');
@@ -138,4 +162,15 @@ test('D. 职业可行走场景读满学制 → 巅峰阶段', async ({ page }) =
     (window as any).game.scene.getScenes(true).map((s: any) => s.sys.settings.key));
   expect(active, '职业读满应进入巅峰阶段').toContain('PinnacleScene');
   expect(active, '职业读满后不应跳过晚年阶段直接结局').not.toContain('EndingScene');
+});
+
+test('E. 职业期 left_med 应在季末退出，不应继续职业路线', async ({ page }) => {
+  await startScene(page, 'CareerWalkScene', 'career', 5);
+  await page.evaluate(() => (window as any).__setFlag('left_med'));
+  await sleepNow(page, 'CareerWalkScene');
+  await waitForScene(page, 'EndingScene', 20000);
+  const active = await page.evaluate(() =>
+    (window as any).game.scene.getScenes(true).map((s: any) => s.sys.settings.key));
+  expect(active, '选择离开医疗行业后应进入结局').toContain('EndingScene');
+  expect(active, '不应继续留在职业可行走场景').not.toContain('CareerWalkScene');
 });

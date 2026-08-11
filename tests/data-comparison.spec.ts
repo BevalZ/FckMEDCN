@@ -4,7 +4,7 @@ import type { Page } from '@playwright/test';
 // 结局"数据对比系统"回归：
 // 1) compareEnding 判定（偏低/区间内/偏高）与格式化；
 // 2) 全部 15 个结局都有对比表；未知 endingId 降级到默认表；
-// 3) EndingScene 渲染逐项对比（你的数据 vs 真实数据 + 判定标签）。
+// 3) 未经证据复核的对比数据不进入 EndingScene。
 
 const BASE = 'http://127.0.0.1:5173/';
 
@@ -53,7 +53,7 @@ test('数据对比：判定/格式化/覆盖/降级', async ({ page }) => {
   expect(r.missing, '每个结局都应有对比表').toEqual([]);
 });
 
-test('数据对比：EndingScene 渲染逐项对比表', async ({ page }) => {
+test('数据对比：EndingScene 隐藏未复核参照，只显示本局记录', async ({ page }) => {
   await boot(page);
 
   // 构造"处于区间内"的状态后直接进入结局页
@@ -73,9 +73,10 @@ test('数据对比：EndingScene 渲染逐项对比表', async ({ page }) => {
     return scene.children.list.filter((o: any) => o.type === 'Text').map((o: any) => o.text as string);
   });
   expect(texts.some((t: string) => t.includes('你的数据')), '左列头').toBe(true);
-  expect(texts.some((t: string) => t.includes('真实数据')), '右列头').toBe(true);
+  expect(texts.some((t: string) => t.includes('本局记录'))).toBe(true);
+  expect(texts.some((t: string) => t.includes('真实数据')), '未复核右列头不得显示').toBe(false);
   expect(texts.some((t: string) => t.includes('¥500,000')), '你的存款值').toBe(true);
-  expect(texts.some((t: string) => t.includes('在参考区间内')), '区间判定标签').toBe(true);
-  expect(texts.some((t: string) => t.includes('三甲副主任同龄存款')), '真实参照文本').toBe(true);
+  expect(texts.some((t: string) => t.includes('在参考区间内')), '未复核判定标签不得显示').toBe(false);
+  expect(texts.some((t: string) => t.includes('三甲副主任同龄存款')), '未复核参照文本不得显示').toBe(false);
   expect(texts.some((t: string) => t.includes('家人/子女')), '信息行仍保留').toBe(true);
 });

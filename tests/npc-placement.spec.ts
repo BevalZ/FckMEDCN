@@ -36,6 +36,8 @@ test('NPC 站位：三张地图上每个 NPC 每季都落在可行走格', async
       { map: 'campus', stage: 'undergrad', spec: cm.CAMPUS_SPEC, spots: cm.CAMPUS_SPOTS },
       { map: 'hospital', stage: 'internship', spec: hm.HOSPITAL_SPEC, spots: hm.HOSPITAL_SPOTS },
       { map: 'guipei', stage: 'guipei', spec: gm.GUIPEI_SPEC, spots: gm.GUIPEI_SPOTS },
+      { map: 'career', stage: 'career', spec: (window as any).__mod.crm.CAREER_SPEC, spots: (window as any).__mod.crm.CAREER_SPOTS },
+      { map: 'pinnacle', stage: 'pinnacle', spec: (window as any).__mod.crm.CAREER_SPEC, spots: (window as any).__mod.crm.CAREER_SPOTS },
     ];
 
     const problems: Problem[] = [];

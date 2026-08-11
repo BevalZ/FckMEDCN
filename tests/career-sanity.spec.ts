@@ -17,6 +17,8 @@ test('儿科 20 季纯被动心理不崩溃', async ({ page }) => {
   await boot(page);
   const r = await page.evaluate(() => {
     const { gs, tf, stats: st } = (window as any).__mod;
+    const originalRandom = Math.random;
+    Math.random = () => 0.999999;
     const run = (sub: string) => {
       gs.resetGame();
       gs.patchState({
@@ -33,11 +35,13 @@ test('儿科 20 季纯被动心理不崩溃', async ({ page }) => {
       }
       return { final: gs.getState().stats.sanity, min };
     };
-    return {
+    const result = {
       peds: run('sub_pediatrics'),
       surgery: run('sub_surgery'),
       internal: run('sub_internal'),
     };
+    Math.random = originalRandom;
+    return result;
   });
   console.log('  儿科纯被动20季:', JSON.stringify(r.peds), '| 外科:', JSON.stringify(r.surgery), '| 内科:', JSON.stringify(r.internal));
   expect(r.peds.final, '儿科纯被动 20 季最终 sanity 应保持在 60 以上').toBeGreaterThan(60);

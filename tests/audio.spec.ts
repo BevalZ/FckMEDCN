@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-// 音频集成冒烟：文件化 BGM（两首 MP3）+ 采样点击/按键音，交互不应抛错；
-// 资源应可被 dev server 提供（200）。
+// 音频集成冒烟：点击、按键、环境 BGM 均由 Web Audio 运行时合成，
+// 不应请求或分发来源不明的外部音频文件。
 
 const BASE = 'http://127.0.0.1:5173/';
 
@@ -13,24 +13,25 @@ async function boot(page: import('@playwright/test').Page) {
   return errors;
 }
 
-test('音频资源可加载（BGM + 点击采样均 200）', async ({ request }) => {
-  for (const f of [
-    'audio/bgm_absolutesound.mp3',
-    'audio/bgm_alexmorgan.mp3',
-    'audio/sfx/click.mp3',
-    'audio/sfx/click2.mp3',
-  ]) {
-    const r = await request.get(`${BASE}${f}`);
-    expect(r.status(), `${f} 应可加载`).toBe(200);
-    expect(r.headers()['content-type'] ?? '', `${f} 应为音频`).toMatch(/audio/);
-  }
-});
-
-test('全局按键音 + 场景 BGM 不抛错', async ({ page }) => {
+test('合成按键音 + 场景 BGM 不抛错且不请求媒体文件', async ({ page }) => {
+  const mediaRequests: string[] = [];
+  page.on('request', request => {
+    if (/\.(mp3|wav|ogg|m4a)(?:$|\?)/i.test(request.url())) mediaRequests.push(request.url());
+  });
   const errors = await boot(page);
   // 全局 keydown → sound.keytick()
   await page.keyboard.press('a');
   await page.keyboard.press('Enter');
+  const synth = await page.evaluate(async () => {
+    const { sound } = await import('/src/audio/sound.ts');
+    sound.startBgm();
+    sound.unlockAudio();
+    return {
+      contextState: (sound as any).ctx?.state ?? null,
+      oscillatorCount: (sound as any).bgmNodes?.length ?? 0,
+      mood: (sound as any).currentBgmMood ?? null,
+    };
+  });
   // 进入可行走场景（会调用 setBgmMood + 多处 sound.click）
   await page.evaluate(() => {
     const gs = (window as any).__mod.gs;
@@ -41,5 +42,9 @@ test('全局按键音 + 场景 BGM 不抛错', async ({ page }) => {
   // 触发一次交互点击音
   await page.keyboard.press('Space');
   await page.waitForTimeout(500);
+  expect(synth.contextState).not.toBeNull();
+  expect(synth.oscillatorCount).toBe(3);
+  expect(synth.mood).toBe('bright');
+  expect(mediaRequests, '合成音频模式不应请求预录媒体').toEqual([]);
   expect(errors, `音频代码不应抛错：${errors.join(' | ')}`).toEqual([]);
 });

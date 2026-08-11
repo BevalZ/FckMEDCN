@@ -73,10 +73,29 @@ test('游戏菜单：重新开档 → 确认 → 回新档且状态重置', asyn
   await page.keyboard.press('6');
   await page.waitForTimeout(400);
   const confirmShown = await page.evaluate(() => {
-    const scene = (window as any).game.scene.getScene('CampusScene');
-    return scene.children.list.some((o: any) => o.type === 'Text' && (o.text as string).includes('重新开档'));
+    const scene: any = (window as any).game.scene.getScene('CampusScene');
+    return scene.consequence?.busy === true
+      && scene.consequence.container?.list.some((o: any) =>
+        o.type === 'Text' && String(o.text).includes('确定放弃本局'));
   });
   expect(confirmShown, '选重新开档应弹确认').toBe(true);
+
+  const touchCancelWorks = await page.evaluate(() => {
+    const scene: any = (window as any).game.scene.getScene('CampusScene');
+    const cancel = scene.consequence.container?.list.find((o: any) =>
+      o.type === 'Text' && String(o.text) === '取消 [ 点击 / ESC ]');
+    const clickable = cancel?.input?.enabled === true;
+    cancel?.emit('pointerdown');
+    return clickable;
+  });
+  expect(touchCancelWorks, '危险操作确认弹窗应提供触控取消').toBe(true);
+  await page.waitForFunction(() => !(window as any).game.scene.getScene('CampusScene').consequence.busy);
+
+  // 取消后仍可重新打开并确认。
+  await page.keyboard.press('r');
+  await page.waitForTimeout(200);
+  await page.keyboard.press('6');
+  await page.waitForFunction(() => (window as any).game.scene.getScene('CampusScene').consequence.busy);
 
   // 空格确认 → 回到全新 GaokaoScene
   await page.keyboard.press('Space');
@@ -132,4 +151,47 @@ test('卡片阶段事件卡按 ESC 跳过：不选择、推进本回合', async 
   );
   const after = await page.evaluate(() => ((window as any).__mod.gs.getState().turnsInStage));
   expect(after, 'ESC 跳过应推进本回合').toBeGreaterThan(before);
+});
+
+test('标题场景重建后不残留已删除存档的入口', async ({ page }) => {
+  await page.goto(BASE, { waitUntil: 'load' });
+  await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 60000 });
+  await waitForScene(page, 'TitleScene');
+
+  // 先模拟存在存档并重建标题场景，让继续/修改性别入口进入可见状态。
+  await page.evaluate(() => {
+    const s = (window as any).__mod.gs.getState();
+    localStorage.setItem('fckmedcn_save_v1', JSON.stringify({
+      version: 1,
+      sceneKey: 'CampusScene',
+      savedAt: Date.now(),
+      state: { ...s, flags: [...s.flags] },
+      firedEvents: [],
+      firedNews: [],
+    }));
+    (window as any).game.scene.getScene('TitleScene').scene.restart();
+  });
+  await page.waitForFunction(() => document.getElementById('title-overlay')?.dataset.ready === 'true');
+  await expect(page.locator('#title-continue')).toHaveClass(/show/);
+  await expect(page.locator('#title-gender-edit')).toHaveClass(/show/);
+
+  // 存档被清除后再次进入标题页，两项都必须消失，不能成为幽灵按钮。
+  await page.evaluate(() => {
+    localStorage.removeItem('fckmedcn_save_v1');
+    (window as any).game.scene.getScene('TitleScene').scene.restart();
+  });
+  await page.waitForFunction(() => document.getElementById('title-overlay')?.dataset.ready === 'true');
+  await expect(page.locator('#title-continue')).not.toHaveClass(/show/);
+  await expect(page.locator('#title-gender-edit')).not.toHaveClass(/show/);
+  await expect(page.locator('#gender-edit-panel')).not.toHaveClass(/show/);
+
+  const listenerCounts = await page.evaluate(() => {
+    const keyboard = (window as any).game.scene.getScene('TitleScene').input.keyboard;
+    return {
+      space: keyboard.listenerCount('keydown-SPACE'),
+      gallery: keyboard.listenerCount('keydown-G'),
+      mute: keyboard.listenerCount('keydown-M'),
+    };
+  });
+  expect(listenerCounts, '标题页重建不应累积键盘监听').toEqual({ space: 1, gallery: 1, mute: 1 });
 });

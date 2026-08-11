@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node", "vite/client"],
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "paths": {
+      "/src/*": ["./src/*"]
+    }
+  },
+  "include": ["playwright.config.ts", "playwright.preview.config.ts", "tests/**/*.ts"]
+}

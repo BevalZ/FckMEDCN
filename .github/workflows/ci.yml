@@ -1,21 +1,19 @@
-name: Release to GitHub Pages
+name: CI and Preview Artifact
 
 on:
   push:
-    tags: ['v*']
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,17 +30,8 @@ jobs:
       - run: npm run test:preview:subpath
       - run: npm run audit:prod
       - run: npm run test:ci
-      - run: npm run release:check
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
+          name: preview-dist-${{ github.sha }}
           path: dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/deploy-pages@v4
-        id: deployment
+          retention-days: 7
