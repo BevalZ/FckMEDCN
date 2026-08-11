@@ -25,6 +25,7 @@ import { ADVISOR_EVENTS } from './events_advisor';
 import { ECHO_EVENTS } from './events_echoes';
 // —— NPC 好感度门控事件：关系决定你在随机事件里的处境（REVIEW-INTERACTION P0）——
 import { NPC_AFFINITY_EVENTS } from './events_npc_affinity';
+import { NPC_LIFE_ECHO_EVENTS } from './events_npc_life_echo';
 import { DIAGNOSTIC_EVENTS } from './events_diagnostic';
 import { MEDICATION_EVENTS } from './events_medication';
 import { CLINICAL_WORKFLOW_EVENTS } from './events_clinical_workflow';
@@ -33,6 +34,12 @@ import { HEALTH_EVENTS, FINANCE_POLICY_EVENTS } from './events_systems';
 import { LATE_ERA_EVENTS } from './events_late';
 import { LEGAL_EVENTS } from './events_legal';
 import { LIFE_SYSTEM_EVENTS } from './events_life_systems';
+import { PANDEMIC_EVENTS } from './events_pandemic';
+import { WORK_NPC_EVENTS } from './events_work_npc';
+import { PROGRESSION_EVENTS } from './events_progression';
+import { NPC_HIDDEN_EVENTS } from './events_npc_hidden';
+import { NPC_ROMANCE_EVENTS } from './npcRomance';
+import { MENTORHOOD_EVENTS } from './events_mentorhood';
 import type { MotivationKind } from './motivation';
 
 export type EventCategory = 'study' | 'clinical' | 'social' | 'financial' | 'mental' | 'career' | 'news' | 'system' | 'personal';
@@ -40,6 +47,8 @@ export type EventCategory = 'study' | 'clinical' | 'social' | 'financial' | 'men
 // 选项副作用：声明式描述（纯数据，可序列化），实现见 effects.ts。
 export type ChoiceEffect =
   | { kind: 'startDating' }
+  | { kind: 'attemptDating' }
+  | { kind: 'startNpcRomance'; npcId: string }
   | { kind: 'breakup' }
   | { kind: 'marry' }
   | { kind: 'childborn' }
@@ -49,11 +58,14 @@ export type ChoiceEffect =
   | { kind: 'selfReport' }
   | { kind: 'buyHouse' }
   | { kind: 'changeAttr'; attr: 'luck' | 'looks'; amount: number; reason: string }
+  | { kind: 'changeAffinity'; npcId: string; amount: number }
   | { kind: 'changeMotivation'; motive: MotivationKind; amount: number }
   | { kind: 'changeProfessionalIdentity'; amount: number }
   | { kind: 'addCrisisCredits'; amount: number }
   | { kind: 'changeDropoutThoughts'; amount: number }
   | { kind: 'setUndergradLeave'; value: boolean }
+  | { kind: 'transferLongSystem' }
+  | { kind: 'setTrainingTrack'; track: 'clinical' | 'research' }
   // —— 时代3：临床/科研双重身份与规培进度 ——
   | { kind: 'changeEra3Pressure'; axis: 'clinical' | 'research'; amount: number }
   | { kind: 'changeEra3Mentor'; amount: number }
@@ -89,7 +101,10 @@ export type ChoiceEffect =
   | { kind: 'retractResearchPaper' }
   | { kind: 'changeMentorFaction'; mentorBond?: number; factionLoyalty?: number; reputation?: number; rivalry?: number }
   | { kind: 'setFaction'; name: string; factionType: 'academic' | 'clinical' | 'administrative' | 'none' }
+  | { kind: 'establishOwnFaction'; name: string; factionType: 'academic' | 'clinical' | 'administrative'; research?: number; clinical?: number; administrative?: number; rivalry?: number }
   | { kind: 'changeColleagues'; peerBond?: number; nurseAlliance?: number; peerEnvy?: number; studentLoyalty?: number }
+  | { kind: 'recruitStudent'; id: string; name: string; studentType: 'protege' | 'utilitarian' | 'spy'; loyalty: number; betrayalRisk?: number }
+  | { kind: 'mentorStudents'; loyalty?: number; betrayalRisk?: number; researchSkill?: number; clinicalSkill?: number; ethics?: number; autonomy?: number }
   | { kind: 'recordColleagueConflict'; event: string; opponent: string; resolution: 'win' | 'lose' | 'compromise' | 'ongoing' }
   | { kind: 'changeFamily'; familyOrigin?: number; spouseBond?: number; childBond?: number; conflict?: number }
   | { kind: 'setSpouseType'; spouseType: 'physician' | 'nurse' | 'civil_servant' | 'teacher' | 'full_time' | 'other'; name?: string }
@@ -129,7 +144,8 @@ export type ChoiceEffect =
   | { kind: 'breachUnit'; unitId: string }
   // setFlag：通用"仅置一个 flag"副作用（如博士后标记/违约记录）。用 effect 置位不进 flagSet，
   // 因此不会触发 flag-echo-coverage 的死 flag 检查，适合引擎内部状态改写。
-  | { kind: 'setFlag'; flag: string };
+  | { kind: 'setFlag'; flag: string }
+  | { kind: 'clearFlag'; flag: string };
 
 export interface EventChoice {
   text: string; delta: StatDelta; flagSet?: string; flagRequire?: string; flagExclude?: string;
@@ -184,6 +200,7 @@ export const ALL_EVENTS: GameEvent[] = [
   ...ECHO_EVENTS,
   // —— NPC 好感度门控事件：trust_xxx/distant_xxx 决定事件走向 ——
   ...NPC_AFFINITY_EVENTS,
+  ...NPC_LIFE_ECHO_EVENTS,
   ...DIAGNOSTIC_EVENTS,
   ...MEDICATION_EVENTS,
   ...CLINICAL_WORKFLOW_EVENTS,
@@ -193,6 +210,12 @@ export const ALL_EVENTS: GameEvent[] = [
   ...LATE_ERA_EVENTS,
   ...LEGAL_EVENTS,
   ...LIFE_SYSTEM_EVENTS,
+  ...PANDEMIC_EVENTS,
+  ...WORK_NPC_EVENTS,
+  ...PROGRESSION_EVENTS,
+  ...NPC_HIDDEN_EVENTS,
+  ...NPC_ROMANCE_EVENTS,
+  ...MENTORHOOD_EVENTS,
   // —— 以下为原有示例事件，保留以兼容旧流程 ——
   {
     id: 'anatomy_first_day', stage: 'undergrad', title: '解剖课第一天',

@@ -34,7 +34,7 @@ export const CURATED_M2_EVENTS: GameEvent[] = [
     body: '专硕竞争白热化。报名人数年年新高，分数线像坐了火箭。室友已经开始背考研词汇。',
     category: 'study',
     choices: [
-      { text: '加入考研大军', delta: { knowledge: 5, stamina: -6, sanity: -3 }, flagSet: 'ug_kaoyan', nextEventId: 'm2_ug_kaoyan_exam', consequence: '你占好了图书馆的座位。' },
+      { text: '加入考研大军', delta: { knowledge: 5, stamina: -6, sanity: -3 }, flagSet: 'ug_kaoyan_intent', consequence: '你占好了图书馆的座位，但真正报名和考试还要等到大四下、大五上。' },
       { text: '保研拼绩点', delta: { knowledge: 3, relations: 2, stamina: -4 }, consequence: '你把每一门课都当final来刷。' },
     ],
   },
@@ -44,11 +44,11 @@ export const CURATED_M2_EVENTS: GameEvent[] = [
     category: 'study',
     choices: [
       { text: '泡实验室攒经历', delta: { knowledge: 6, papers: 1, stamina: -5 }, flagSet: 'ug_research', consequence: '你的名字第一次出现在组会PPT上。' },
-      { text: '两手准备也考研', delta: { knowledge: 4, stamina: -8, sanity: -4 }, flagSet: 'ug_kaoyan', nextEventId: 'm2_ug_kaoyan_exam', consequence: '你把自己掰成两半。' },
+      { text: '两手准备也考研', delta: { knowledge: 4, stamina: -8, sanity: -4 }, flagSet: 'ug_kaoyan_intent', consequence: '你把自己掰成两半：白天实验室，晚上英语和西综。' },
     ],
   },
   {
-    id: 'm2_ug_kaoyan_exam', stage: 'undergrad', title: '考研考场', requireFlag: 'ug_kaoyan', minTurn: 6, maxTurn: 14, once: true, weight: 70,
+    id: 'm2_ug_kaoyan_exam', stage: 'undergrad', title: '考研考场', requireFlag: 'ug_kaoyan_intent', minTurn: 16, maxTurn: 18, once: true, weight: 35,
     body: '考研这天，考场外全是穿得厚厚的医学生。最后一门专业课，你手心出汗。',
     category: 'study',
     choices: [
@@ -57,7 +57,7 @@ export const CURATED_M2_EVENTS: GameEvent[] = [
     ],
   },
   {
-    id: 'm2_ug_kaoyan_result', stage: 'undergrad', title: '出分了', requireFlag: 'ug_kaoyan_done', once: true, weight: 60,
+    id: 'm2_ug_kaoyan_result', stage: 'undergrad', title: '出分了', requireFlag: 'ug_kaoyan_done', minTurn: 17, maxTurn: 19, once: true, weight: 35,
     body: '国家线公布。你对着成绩单，分数在复试线边缘反复横跳。',
     category: 'career',
     choices: [
@@ -66,7 +66,7 @@ export const CURATED_M2_EVENTS: GameEvent[] = [
     ],
   },
   {
-    id: 'm2_ug_plan_b', stage: 'undergrad', title: 'Plan B', requireFlag: 'ug_kaoyan_fail', once: true, weight: 50,
+    id: 'm2_ug_plan_b', stage: 'undergrad', title: 'Plan B', requireFlag: 'ug_kaoyan_fail', minTurn: 17, maxTurn: 19, once: true, weight: 35,
     body: '"规培合格当年按应届同等对待"——你看到这条政策。先规培再考，也许是条路。',
     category: 'career',
     choices: [

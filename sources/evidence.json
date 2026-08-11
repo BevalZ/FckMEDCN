@@ -1,0 +1,395 @@
+{
+  "schemaVersion": 1,
+  "entries": {
+    "国家卫健委": {
+      "scope": "external",
+      "title": "心理援助热线联系方式",
+      "organization": "国家卫生健康委员会",
+      "publishedAt": "",
+      "url": "https://www.nhc.gov.cn/",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "行业经验": {
+      "scope": "external",
+      "title": "退培后的再就业路径",
+      "organization": "行业经验",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "丁香园薪酬调查2024": {
+      "scope": "external",
+      "title": "2024 医务人员薪酬调查",
+      "organization": "丁香园",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "多项职业心理健康研究": {
+      "scope": "external",
+      "title": "医生职业倦怠研究汇总",
+      "organization": "多项职业心理健康研究",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "中国医师协会2023年报": {
+      "scope": "external",
+      "title": "中国医师协会 2023 年报",
+      "organization": "中国医师协会",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "行业公开数据": {
+      "scope": "external",
+      "title": "外科医生手术量公开数据",
+      "organization": "行业公开数据",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "卫健委基层薪酬监测": {
+      "scope": "external",
+      "title": "基层卫生人员薪酬监测",
+      "organization": "国家卫生健康委员会",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "国家卫健委2023": {
+      "scope": "external",
+      "title": "2023 年家庭医生签约数据",
+      "organization": "国家卫生健康委员会",
+      "publishedAt": "",
+      "url": "https://www.nhc.gov.cn/",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "行业薪酬报告": {
+      "scope": "external",
+      "title": "医学联络官薪酬报告",
+      "organization": "行业薪酬报告",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "行业调研": {
+      "scope": "external",
+      "title": "医疗行业人员流动调研",
+      "organization": "行业调研",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "Medscape 医师薪酬报告": {
+      "scope": "external",
+      "title": "Medscape Physician Compensation Report",
+      "organization": "Medscape",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "公开报考指南": {
+      "scope": "external",
+      "title": "海外执业考试与学历认证指南",
+      "organization": "公开报考指南",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "近年行业调研": {
+      "scope": "external",
+      "title": "青年医生离职意向调研",
+      "organization": "近年行业调研",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "学术平台统计": {
+      "scope": "external",
+      "title": "临床医生发文量统计",
+      "organization": "学术平台统计",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "国家自然科学基金委": {
+      "scope": "external",
+      "title": "医学科学部项目资助统计",
+      "organization": "国家自然科学基金委员会",
+      "publishedAt": "",
+      "url": "https://www.nsfc.gov.cn/",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "县域医改报告": {
+      "scope": "external",
+      "title": "县域医院人才与薪酬报告",
+      "organization": "县域医改报告",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "各校学生手册与年度报告": {
+      "scope": "external",
+      "title": "医学生转专业与退学年度数据",
+      "organization": "各校学生手册与年度报告",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "普通高等学校学生管理规定": {
+      "scope": "external",
+      "title": "普通高等学校学生管理规定",
+      "organization": "中华人民共和国教育部",
+      "publishedAt": "",
+      "url": "https://www.moe.gov.cn/",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "高校专业选择相关研究": {
+      "scope": "external",
+      "title": "高校专业选择影响因素研究",
+      "organization": "高校专业选择相关研究",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "教育考试院公开数据": {
+      "scope": "external",
+      "title": "医学专业录取公开数据",
+      "organization": "教育考试院公开数据",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "高校招生简章": {
+      "scope": "external",
+      "title": "医学类专业招生简章",
+      "organization": "高校招生简章",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "生涯规划与心理健康常识": {
+      "scope": "external",
+      "title": "重大落差后的生涯决策建议",
+      "organization": "生涯规划与心理健康常识",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "国际期刊撤稿公告": {
+      "scope": "external",
+      "title": "医学论文集中撤稿公告",
+      "organization": "国际期刊撤稿公告",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "科研诚信案件调查处理规则": {
+      "scope": "external",
+      "title": "科研失信行为调查处理规则",
+      "organization": "中华人民共和国科学技术部",
+      "publishedAt": "",
+      "url": "https://www.most.gov.cn/",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "公开报道": {
+      "scope": "external",
+      "title": "论文工厂价格相关公开报道",
+      "organization": "公开报道",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "Retraction Watch 数据库": {
+      "scope": "external",
+      "title": "Retraction Watch Database",
+      "organization": "Retraction Watch",
+      "publishedAt": "",
+      "url": "https://retractiondatabase.org/",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "学术出版研究": {
+      "scope": "external",
+      "title": "主动与被动撤稿比例研究",
+      "organization": "学术出版研究",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "职称制度改革文件": {
+      "scope": "external",
+      "title": "卫生专业技术人员职称制度改革文件",
+      "organization": "职称制度改革文件",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "卫健委相关政策": {
+      "scope": "external",
+      "title": "临床能力评价试点政策",
+      "organization": "国家卫生健康委员会",
+      "publishedAt": "",
+      "url": "https://www.nhc.gov.cn/",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "教育部历年统计": {
+      "scope": "external",
+      "title": "全国教育事业发展统计公报",
+      "organization": "中华人民共和国教育部",
+      "publishedAt": "",
+      "url": "https://www.moe.gov.cn/",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "人社部职业技能提升计划": {
+      "scope": "external",
+      "title": "职业技能提升行动方案",
+      "organization": "人力资源和社会保障部",
+      "publishedAt": "",
+      "url": "https://www.mohrss.gov.cn/",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "国家统计局": {
+      "scope": "external",
+      "title": "灵活就业人员规模统计",
+      "organization": "国家统计局",
+      "publishedAt": "",
+      "url": "https://www.stats.gov.cn/",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "公开研究报告": {
+      "scope": "external",
+      "title": "零工经济就业风险研究报告",
+      "organization": "公开研究报告",
+      "publishedAt": "",
+      "url": "",
+      "accessedAt": "2026-08-11",
+      "status": "pending",
+      "reviewedBy": ""
+    },
+    "本局生涯记录": {
+      "scope": "session",
+      "title": "本局生涯记录",
+      "organization": "FckMedCN 本局状态",
+      "publishedAt": "2026-08-11",
+      "url": "urn:fckmedcn:game-state",
+      "accessedAt": "2026-08-11",
+      "status": "verified",
+      "reviewedBy": "游戏状态派生规则"
+    },
+    "本局选择汇总": {
+      "scope": "session",
+      "title": "本局选择汇总",
+      "organization": "FckMedCN 本局状态",
+      "publishedAt": "2026-08-11",
+      "url": "urn:fckmedcn:game-state",
+      "accessedAt": "2026-08-11",
+      "status": "verified",
+      "reviewedBy": "游戏状态派生规则"
+    },
+    "时代6-8选择": {
+      "scope": "session",
+      "title": "时代 6-8 选择记录",
+      "organization": "FckMedCN 本局状态",
+      "publishedAt": "2026-08-11",
+      "url": "urn:fckmedcn:game-state",
+      "accessedAt": "2026-08-11",
+      "status": "verified",
+      "reviewedBy": "游戏状态派生规则"
+    },
+    "全局选择汇总": {
+      "scope": "session",
+      "title": "全局选择汇总",
+      "organization": "FckMedCN 本局状态",
+      "publishedAt": "2026-08-11",
+      "url": "urn:fckmedcn:game-state",
+      "accessedAt": "2026-08-11",
+      "status": "verified",
+      "reviewedBy": "游戏状态派生规则"
+    },
+    "健康模块记录": {
+      "scope": "session",
+      "title": "本局健康模块记录",
+      "organization": "FckMedCN 本局状态",
+      "publishedAt": "2026-08-11",
+      "url": "urn:fckmedcn:game-state",
+      "accessedAt": "2026-08-11",
+      "status": "verified",
+      "reviewedBy": "游戏状态派生规则"
+    },
+    "时代8最终选择": {
+      "scope": "session",
+      "title": "时代 8 最终选择",
+      "organization": "FckMedCN 本局状态",
+      "publishedAt": "2026-08-11",
+      "url": "urn:fckmedcn:game-state",
+      "accessedAt": "2026-08-11",
+      "status": "verified",
+      "reviewedBy": "游戏状态派生规则"
+    }
+  }
+}

@@ -8,21 +8,23 @@ export const LIFE_EVENTS: GameEvent[] = [
   // —— 1. 遇见心动的人（仅单身时）——
   {
     id: 'life_meet_love',
-    stage: ['undergrad', 'internship', 'guipei', 'master', 'phd', 'jobhunt', 'career'],
-    title: '心动的信号',
-    body: '轮转/实验/门诊间隙，你遇见了一个让你心跳加速的人。要不要迈出那一步？',
-    category: 'personal', weight: 16, requireMarital: 'single',
+    stage: ['undergrad', 'internship', 'guipei', 'master', 'phd', 'jobhunt', 'career', 'pinnacle'],
+    title: '认识新的人',
+    body: '朋友组了一个饭局，也有人给你介绍了合适的对象。要不要认真认识一下？',
+    category: 'personal', weight: 80, requireMarital: 'single', requireFlag: 'dating_opportunity',
     choices: [
       {
-        text: '勇敢表白，开始恋爱',
-        delta: { relations: 12, sanity: 8, money: -600, knowledge: -4, stamina: -4 },
-        consequence: '一段甜（也费钱）的恋爱开始了。',
-        effect: { kind: 'startDating' },
+        text: '认真赴约，看看能否继续发展',
+        delta: { stamina: -3 },
+        consequence: '结果取决于你的外貌、经济基础和当下状态。',
+        effect: { kind: 'attemptDating' },
       },
       {
-        text: '先专注学业/事业，做朋友',
+        text: '暂时不考虑，婉拒介绍',
         delta: { knowledge: 5, relations: 3 },
-        consequence: '你把悸动压回了心底。',
+        flagSet: 'dating_opportunity_declined',
+        effect: { kind: 'clearFlag', flag: 'dating_opportunity' },
+        consequence: '这次机会过去了。',
       },
     ],
   },

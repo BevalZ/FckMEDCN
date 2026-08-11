@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "checks": [
+    {
+      "id": "desktop-lifecycle",
+      "label": "桌面 Chromium：新开局、旧档、临床、科研、退出、晚年和重开档",
+      "status": "pending",
+      "reviewedBy": "",
+      "reviewedAt": "",
+      "notes": ""
+    },
+    {
+      "id": "ios-safari-device",
+      "label": "iOS Safari 真机：竖横屏、安全区、触控、长时操作和音频解锁",
+      "status": "pending",
+      "reviewedBy": "",
+      "reviewedAt": "",
+      "notes": ""
+    },
+    {
+      "id": "android-chrome-device",
+      "label": "Android Chrome 真机：竖横屏、安全区、触控、长时操作和音频解锁",
+      "status": "pending",
+      "reviewedBy": "",
+      "reviewedAt": "",
+      "notes": ""
+    }
+  ]
+}

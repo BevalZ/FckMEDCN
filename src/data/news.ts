@@ -1,4 +1,6 @@
-// 新闻滚动条数据（M3）。按年份/季度组织的真实事件改编新闻，谐音化以规避法律风险。
+import { GENERATED_NEWS_TICKER } from './newsGenerated';
+
+// 新闻滚动条数据（M3）。按年份/季度组织公开报道主题的匿名综合改写。
 // 与 gameState.NewsItem 结构保持一致（year/quarter/headline/type），额外带 id 供去重。
 
 export type NewsType = 'event' | 'warning' | 'irony' | 'tragedy';
@@ -11,22 +13,60 @@ export interface NewsTickerItem {
   type: NewsType;
 }
 
-export const NEWS_TICKER: NewsTickerItem[] = [
+const CURATED_NEWS_TICKER: NewsTickerItem[] = [
+  // —— 公开裁判、监管通报与媒体报道主题的匿名综合改写 ——
+  { id: 'neg_med_2024_1', year: 2024, quarter: 3, headline: '【医疗损害案：病历多处补记且时间矛盾，医院举证陷入被动】', type: 'warning' },
+  { id: 'neg_med_2024_2', year: 2024, quarter: 4, headline: '【某医学访问学者在海外因猥亵、性侵女性被司法机关处理，派出单位启动追责】', type: 'tragedy' },
+  { id: 'neg_med_2025_1', year: 2025, quarter: 1, headline: '【急诊延误诊断争议宣判：法院围绕检查时机与因果关系分配责任】', type: 'warning' },
+  { id: 'neg_med_2025_2', year: 2025, quarter: 2, headline: '【患者术后死亡，知情同意书只签字未充分告知，医院承担相应责任】', type: 'tragedy' },
+  { id: 'neg_med_2025_3', year: 2025, quarter: 4, headline: '【输液剂量录入错误造成损害，医生、护士与系统审核流程同时被追问】', type: 'warning' },
+  { id: 'neg_med_2026_1', year: 2026, quarter: 1, headline: '【医疗美容纠纷增多：超范围诊疗、虚假宣传与麻醉风险成为争点】', type: 'warning' },
+  { id: 'neg_med_2026_2', year: 2026, quarter: 2, headline: '【产科急症处置引发诉讼，鉴定聚焦监护记录和手术决策时机】', type: 'tragedy' },
+  { id: 'neg_med_2026_3', year: 2026, quarter: 4, headline: '【多篇医学论文因图片重复被撤稿，作者单位启动科研诚信调查】', type: 'warning' },
+  { id: 'neg_med_2027_1', year: 2027, quarter: 1, headline: '【患者出院后失联恶化，医院与社区间转诊随访责任成庭审焦点】', type: 'warning' },
+  { id: 'neg_med_2027_2', year: 2027, quarter: 2, headline: '【手术器械遗留体内引发索赔，院方承认清点流程存在漏洞】', type: 'tragedy' },
+  { id: 'neg_med_2027_3', year: 2027, quarter: 4, headline: '【互联网问诊误判急症，平台资质与接诊医师责任边界进入诉讼】', type: 'warning' },
+  { id: 'neg_med_2028_1', year: 2028, quarter: 1, headline: '【检验危急值未及时闭环，一名患者错过最佳处置窗口】', type: 'tragedy' },
+  { id: 'neg_med_2028_2', year: 2028, quarter: 2, headline: '【抗菌药使用不规范被通报，科室绩效与处方权同步受限】', type: 'warning' },
+  { id: 'neg_med_2028_3', year: 2028, quarter: 4, headline: '【医院采购负责人收受回扣获刑，多名临床骨干接受调查】', type: 'warning' },
+  { id: 'neg_med_2029_1', year: 2029, quarter: 1, headline: '【儿童漏诊案进入鉴定：首诊记录过于简略成为关键证据缺口】', type: 'tragedy' },
+  { id: 'neg_med_2029_2', year: 2029, quarter: 3, headline: '【夜班医生连续工作后发生处置差错，排班制度被纳入责任审查】', type: 'warning' },
+  { id: 'neg_med_2030_1', year: 2030, quarter: 1, headline: '【AI辅助诊断漏报病灶，医院称“机器建议不能替代医师复核”】', type: 'warning' },
+  { id: 'neg_med_2030_2', year: 2030, quarter: 2, headline: '【患者隐私被上传社交平台，涉事医务人员停职并公开道歉】', type: 'warning' },
+  { id: 'neg_med_2030_3', year: 2030, quarter: 4, headline: '【未经充分评估转院途中患者恶化，两家机构互指交接不清】', type: 'tragedy' },
+  { id: 'neg_med_2031_1', year: 2031, quarter: 1, headline: '【罕见病误诊多年获赔，法院认定复查建议和风险提示不足】', type: 'warning' },
+  { id: 'neg_med_2031_2', year: 2031, quarter: 3, headline: '【医学论文代写链条曝光，多家医院撤销相关人员晋升资格】', type: 'warning' },
+  { id: 'neg_med_2032_1', year: 2032, quarter: 1, headline: '【术后并发症并非当然过错，但观察记录缺失令医院承担部分责任】', type: 'warning' },
+  { id: 'neg_med_2032_2', year: 2032, quarter: 4, headline: '【精神科患者院内意外死亡，安全评估与巡视记录接受调查】', type: 'tragedy' },
+  { id: 'neg_med_2033_1', year: 2033, quarter: 2, headline: '【院前急救调度延误案开庭，通话录音和车辆轨迹成为核心证据】', type: 'warning' },
+  { id: 'neg_med_2034_1', year: 2034, quarter: 1, headline: '【未经伦理审批使用病例数据，研究团队被要求撤稿并停止招生】', type: 'warning' },
+  { id: 'neg_med_2035_1', year: 2035, quarter: 3, headline: '【血型核对流程失守引发严重输血事故，多岗位被追责】', type: 'tragedy' },
+  { id: 'neg_med_2036_1', year: 2036, quarter: 2, headline: '【过度检查纠纷进入诉讼，患者质疑费用与诊疗必要性】', type: 'warning' },
+  { id: 'neg_med_2037_1', year: 2037, quarter: 1, headline: '【病理切片标识错误导致扩大手术，医院承担主要赔偿责任】', type: 'tragedy' },
+  { id: 'neg_med_2038_1', year: 2038, quarter: 2, headline: '【多学科会诊记录缺失，复杂病例责任在多个科室间反复拉扯】', type: 'warning' },
+  { id: 'neg_med_2039_1', year: 2039, quarter: 3, headline: '【医保飞检发现分解住院与虚假收费，涉事机构被暂停结算】', type: 'warning' },
+  { id: 'neg_med_2040_1', year: 2040, quarter: 2, headline: '【机器人手术故障造成损害，医生操作、设备维护和厂商说明同时受审查】', type: 'tragedy' },
+  { id: 'neg_med_2041_1', year: 2041, quarter: 3, headline: '【安宁疗护告知争议进入法院，家属对治疗边界意见严重分裂】', type: 'warning' },
+  { id: 'neg_med_2042_1', year: 2042, quarter: 2, headline: '【远程会诊建议未被执行，基层医院与上级专家责任如何划分引争议】', type: 'warning' },
+  { id: 'neg_med_2043_1', year: 2043, quarter: 1, headline: '【护士提醒未被采纳后患者恶化，团队沟通记录成为庭审关键】', type: 'tragedy' },
+  { id: 'neg_med_2044_1', year: 2044, quarter: 2, headline: '【医生直播展示病例细节被处罚，流量收益不足以覆盖赔偿】', type: 'irony' },
+  { id: 'neg_med_2045_1', year: 2045, quarter: 2, headline: '【基因检测报告解释错误引发预防性手术争议，实验室与医院共同应诉】', type: 'tragedy' },
+  { id: 'neg_med_2046_1', year: 2046, quarter: 2, headline: '【电子病历批量复制被鉴定机构质疑，诊疗过程难以还原】', type: 'warning' },
   // —— 2024 ——
   { id: 'n2024q3_1', year: 2024, quarter: 3, headline: '【教育部：2024年临床医学专业报考人数同比增长23%】', type: 'event' },
-  { id: 'n2024q3_2', year: 2024, quarter: 3, headline: '【协哈医学院分数线再创新高，八年制本博连读投档位次前移】', type: 'event' },
-  { id: 'n2024q4_2', year: 2024, quarter: 4, headline: '【旺填朝案宣判：某三甲医院院长受贿千万，获刑十二年】', type: 'warning' },
-  { id: 'n2024q4_3', year: 2024, quarter: 4, headline: '【张昱医生实名举报肿瘤治疗乱象，相关机构介入调查】', type: 'event' },
-  { id: 'n2024q4_4', year: 2024, quarter: 4, headline: '【余鹰医生公开辞职：急诊科太累了，我去开诊所】', type: 'irony' },
+  { id: 'n2024q3_2', year: 2024, quarter: 3, headline: '【某头部医学院分数线再创新高，八年制本博连读投档位次前移】', type: 'event' },
+  { id: 'n2024q4_2', year: 2024, quarter: 4, headline: '【某三甲医院原负责人因收受回扣获刑，采购与工程流程同步整改】', type: 'warning' },
+  { id: 'n2024q4_3', year: 2024, quarter: 4, headline: '【临床医生公开反映不规范诊疗问题，相关机构启动独立核查】', type: 'event' },
+  { id: 'n2024q4_4', year: 2024, quarter: 4, headline: '【一名急诊医生离职转向基层执业：长期高负荷让人重新选择生活】', type: 'irony' },
 
   // —— 2025 ——
   { id: 'n2025q1_1', year: 2025, quarter: 1, headline: '【2·23伤医事件后续：多地医院上线安检与警医联动】', type: 'tragedy' },
-  { id: 'n2025q1_2', year: 2025, quarter: 1, headline: '【刘晋急诊科专访：一晚上接诊百人，我也在吃救心丸】', type: 'irony' },
+  { id: 'n2025q1_2', year: 2025, quarter: 1, headline: '【急诊医生谈夜班压力：高峰期整夜接诊，医务人员自身健康也亮红灯】', type: 'irony' },
   { id: 'n2025q1_3', year: 2025, quarter: 1, headline: '【某院规培医师连续夜班后猝死，年仅26岁】', type: 'tragedy' },
   // 两会在 3 月（Q1）召开，提案类新闻应落在 Q1（原误置 2024Q4）
   { id: 'n2025q1_4', year: 2025, quarter: 1, headline: '【两会代表提案：建议规培生补助提升至8万元/年】', type: 'warning' },
   { id: 'n2025q2_1', year: 2025, quarter: 2, headline: '【执业医师资格考试改革：技能考试通过率降至六成】', type: 'warning' },
-  { id: 'n2025q2_2', year: 2025, quarter: 2, headline: '【湘雅某科室疑似数据造假，被期刊撤稿调查】', type: 'warning' },
+  { id: 'n2025q2_2', year: 2025, quarter: 2, headline: '【某高校附属医院论文被质疑数据异常，期刊与单位分别启动调查】', type: 'warning' },
   { id: 'n2025q3_1', year: 2025, quarter: 3, headline: '【107篇论文集中撤稿，涉及多家三甲医院与高校】', type: 'warning' },
   { id: 'n2025q3_2', year: 2025, quarter: 3, headline: '【医学生就业危机：部分三甲编制缩招，博士也内卷】', type: 'warning' },
   { id: 'n2025q4_1', year: 2025, quarter: 4, headline: '【国家发文规范互联网医疗：问诊须实名、可追溯】', type: 'event' },
@@ -113,4 +153,9 @@ export const NEWS_TICKER: NewsTickerItem[] = [
   { id: 'n2046q1_1', year: 2046, quarter: 1, headline: '【县域医院高级职称定向评价扩围，论文不再一刀切】', type: 'event' },
   { id: 'n2046q3_1', year: 2046, quarter: 3, headline: '【医师节调查：最想要的奖励仍是少值一个夜班】', type: 'irony' },
   { id: 'n2046q4_1', year: 2046, quarter: 4, headline: '【年终医疗观察：晋升更慢，责任更重，留下的人仍在坚守】', type: 'tragedy' },
+];
+
+export const NEWS_TICKER: NewsTickerItem[] = [
+  ...CURATED_NEWS_TICKER,
+  ...GENERATED_NEWS_TICKER,
 ];

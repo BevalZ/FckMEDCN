@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "delivery": {
+    "mode": "web-audio-synthesis",
+    "implementation": "src/audio/sound.ts",
+    "notes": "No externally sourced or prerecorded audio files are shipped. All sound is synthesized at runtime from project code."
+  },
+  "files": []
+}

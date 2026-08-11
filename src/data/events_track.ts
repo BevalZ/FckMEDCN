@@ -4,6 +4,19 @@ import type { GameEvent } from './events';
 // 标记在学校选定后于 GaokaoScene 写入：school_tier_1 ~ school_tier_4。
 export const TRACK_EVENTS: GameEvent[] = [
   {
+    id: 'long_sys_step_down',
+    stage: ['undergrad', 'master', 'phd'],
+    title: '中途下车',
+    body: '培养办发来一张表：长学制可以申请中途转出。你不会从零开始，但直通硕博的承诺也会随之消失。',
+    category: 'career', weight: 32, once: true, minTurn: 4,
+    requireFlag: 'long_system',
+    excludeFlag: 'long_sys_transferred',
+    choices: [
+      { text: '下车，转入普通培养路线', delta: { sanity: 8, reputation: -2 }, effect: { kind: 'transferLongSystem' }, consequence: '你交了申请。已经学到的知识和临床手感留下来，下一步改按短学制、规培和求职路线走。' },
+      { text: '继续扛住长学制', delta: { stamina: -8, knowledge: 4, sanity: -4 }, flagSet: 'long_sys_stayed_after_exit_offer', consequence: '你把表收进抽屉，重新打开教材。' },
+    ],
+  },
+  {
     id: 'track_tier1_pressure',
     stage: ['master', 'phd', 'career'],
     title: '同辈的压力',

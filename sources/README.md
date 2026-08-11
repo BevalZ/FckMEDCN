@@ -1,0 +1,13 @@
+# Release evidence
+
+This directory stores review evidence and redistribution records. It must not contain generated release bundles.
+
+- `audio-licenses.json`: one record per shipped prerecorded audio file. The current build ships none; sound is synthesized at runtime by `src/audio/sound.ts`. If prerecorded media is added later, record its author, original URL, license, explicit redistribution permission, reviewer, and review date before setting `verified`.
+- `release-acceptance.json`: manual desktop and real-device acceptance. A check needs a reviewer, date, and concise device/browser notes before it can be verified.
+- `evidence.json`: the single runtime and release-gate registry for ending fact cards. External entries require a traceable publication title, organization, publication date, direct URL, access date, and reviewer before `verified` is allowed.
+- `medical-fact-audit.json`: the machine-readable source of truth for all medical review items. `flow_checked` records are still `pending` until the appropriate clinician or pharmacist completes final review and records evidence.
+- `medical-news-sources.md`: working notes only. A generic portal URL does not make a claim verified.
+- `src/data/evidence.ts`: typed runtime adapter for `evidence.json`; do not duplicate evidence records in TypeScript.
+- `docs/release-review-runbook.md` and `npm run release:review`: reviewer workflow and a generated queue for all pending medical, evidence, and acceptance records.
+
+Run `npm run release:schema` while editing manifests and `npm run release:check` before deployment. Missing human review is a release blocker, not a warning to suppress. The Markdown audit is a readable checklist; release decisions use the JSON manifest.

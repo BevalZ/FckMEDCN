@@ -151,7 +151,16 @@ export const CAREER_EVENTS: GameEvent[] = [
     category: 'career',
     weight: 60,
     choices: [
-      { text: '周末去多点执业', delta: { money: 4000, stamina: -12, knowledge: 2 }, flagSet: 'multi_site', consequence: '你多了一份收入，少了一天休息。' },
+      {
+        text: '周末去多点执业',
+        delta: { stamina: -12, knowledge: 2 },
+        flagSet: 'multi_site',
+        effect: [
+          { kind: 'setSideBusiness', businessType: 'multi_site', quarterlyIncome: 4000, timeCost: 4, compliance: 'legal' },
+          { kind: 'changeLeisure', secondCurve: 8, lifeSatisfaction: -2 },
+        ],
+        consequence: '从这季度起，你每季多一份收入，也少了不少休息时间。',
+      },
       { text: '不折腾，专心本职', delta: { sanity: 3 }, consequence: '你怕惹麻烦，婉拒了。' },
     ],
   },
@@ -163,7 +172,16 @@ export const CAREER_EVENTS: GameEvent[] = [
     category: 'career',
     weight: 55,
     choices: [
-      { text: '开个线上诊室', delta: { money: 2000, reputation: 3, stamina: -6 }, flagSet: 'internet_doc', consequence: '你多了几百个"关注"。' },
+      {
+        text: '开个线上诊室',
+        delta: { reputation: 3, stamina: -6 },
+        flagSet: 'internet_doc',
+        effect: [
+          { kind: 'setSideBusiness', businessType: 'online_consultation', quarterlyIncome: 2000, timeCost: 3, compliance: 'legal' },
+          { kind: 'changeLeisure', secondCurve: 6 },
+        ],
+        consequence: '你多了几百个“关注”，线上问诊收入开始进入每季账单。',
+      },
       { text: '不碰，怕差评', delta: { sanity: 2 }, consequence: '你见过同行被一条差评搞崩心态。' },
     ],
   },

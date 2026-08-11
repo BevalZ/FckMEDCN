@@ -169,8 +169,8 @@ export const GUIPEI_EVENTS: GameEvent[] = [
     weight: 65,
     minTurn: 5,
     choices: [
-      { text: '啃文献，攒论文', delta: { papers: 1, knowledge: 4, stamina: -10, sanity: -4 }, flagSet: 'track_research', consequence: '你投出了第一篇综述，也更偏向科研这条线。' },
-      { text: '专注临床，别分心', delta: { knowledge: 5, stamina: -4 }, flagSet: 'track_clinical', consequence: '你把病人管得妥妥帖帖，也更偏向临床这条线。' },
+      { text: '啃文献，攒论文', delta: { papers: 1, knowledge: 4, stamina: -10, sanity: -4 }, effect: { kind: 'setTrainingTrack', track: 'research' }, consequence: '你投出了第一篇综述，也更偏向科研这条线。' },
+      { text: '专注临床，别分心', delta: { knowledge: 5, stamina: -4 }, effect: { kind: 'setTrainingTrack', track: 'clinical' }, consequence: '你把病人管得妥妥帖帖，也更偏向临床这条线。' },
     ],
   },
   {
