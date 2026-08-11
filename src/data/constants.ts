@@ -173,6 +173,24 @@ export interface Track {
   requiresTier: number; pros: string[]; cons: string[];
 }
 
+export const TRACK_MIN_SCORES: Record<TrackType, number> = {
+  eight_year: 650,
+  five_plus_three: 580,
+  five_year: 0,
+};
+
+export function requiredScoreForTrack(track: Track, school: School): number {
+  return Math.max(school.minScore, TRACK_MIN_SCORES[track.id]);
+}
+
+export function trackBlockReason(track: Track, school: School, score: number, ruralOriented = false): string | null {
+  if (ruralOriented && track.id !== 'five_year') return '定向培养只开放五年制路线';
+  if (school.tier > track.requiresTier) return `要求院校档次不低于第 ${track.requiresTier} 梯队`;
+  const requiredScore = requiredScoreForTrack(track, school);
+  if (score < requiredScore) return `要求高考分数 >= ${requiredScore} 分`;
+  return null;
+}
+
 export const TRACKS: Track[] = [
   { id: 'eight_year', name: '八年制本博连读', desc: '顶尖院校才有，毕业即博士', totalYears: 8, requiresTier: 1, pros: ['毕业即博士学位'], cons: ['第5年有分流筛选', '压力极大'] },
   { id: 'five_plus_three', name: '5+3一体化', desc: '本科直升专硕', totalYears: 8, requiresTier: 3, pros: ['跳过考研', '四证合一'], cons: ['地域锁定8年'] },

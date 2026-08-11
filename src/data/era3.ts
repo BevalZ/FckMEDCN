@@ -1,4 +1,4 @@
-import { getState, patchState, setFlag, hasFlag } from './gameState';
+import { getState, patchState, setFlag } from './gameState';
 import { updateStats } from './gameState';
 import type { GameState, MentorStyle } from './gameState';
 
@@ -43,9 +43,11 @@ export const DEFAULT_ERA3_PROGRESS: Era3Progress = {
 const clamp = (n: number, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, Math.round(n)));
 
 export function deriveEra3Path(state: GameState): Era3Path {
-  if (state.track === 'eight_year') return 'eight_year_phd';
-  if (state.track === 'five_plus_three' || state.degree === 'master_pro') return 'specialist_master';
-  return hasFlag('track_research') ? 'academic_phd' : 'specialist_master';
+  const flags = state.flags instanceof Set ? state.flags : new Set<string>();
+  if (!flags.has('long_sys_transferred') && state.track === 'eight_year') return 'eight_year_phd';
+  if (!flags.has('long_sys_transferred') && state.track === 'five_plus_three') return 'specialist_master';
+  if (state.degree === 'master_pro') return 'specialist_master';
+  return flags.has('track_research') && !flags.has('track_clinical') ? 'academic_phd' : 'specialist_master';
 }
 
 export function normalizeEra3(raw: Partial<Era3Progress> | undefined, state?: GameState): Era3Progress {
@@ -54,10 +56,15 @@ export function normalizeEra3(raw: Partial<Era3Progress> | undefined, state?: Ga
   const mentor = { ...base.mentor, ...(r.mentor ?? {}) };
   const residency = { ...base.residency, ...(r.residency ?? {}) };
   const research = { ...base.research, ...(r.research ?? {}) };
+  const flags = state?.flags instanceof Set ? state.flags : new Set<string>();
+  const derivedPath = state ? deriveEra3Path(state) : base.path;
+  const path = !r.path || flags.has('long_sys_transferred') || (flags.has('track_research') && flags.has('track_clinical'))
+    ? derivedPath
+    : r.path;
   return {
     ...base, ...r,
     initialized: Boolean(r.initialized),
-    path: r.path ?? (state ? deriveEra3Path(state) : base.path),
+    path,
     mentor, residency, research,
     elapsedQuarters: Math.max(0, r.elapsedQuarters ?? 0),
     year: Math.max(1, r.year ?? 1),

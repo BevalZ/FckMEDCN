@@ -283,9 +283,9 @@ export function getQuarterEconomy(stage: string): QuarterEconomy {
     income = Math.round(income * mf * (0.9 + Math.random() * 0.2));
   }
 
-  // —— 助学贷款（属性分配阶段可选）：上学期间 +1500/季 生活费，工作后 -1500/季 还贷 ——
+  // —— 助学贷款（属性分配阶段可选）：完整在读阶段 +1500/季，工作后 -1500/季还贷 ——
   if (getState().flags.has('student_loan')) {
-    if (stage === 'undergrad' || stage === 'internship') income += 1500;
+    if (SCHOOL_STAGES.has(stage)) income += 1500;
     if (stage === 'career') cost += 1500;
   }
 

@@ -43,6 +43,40 @@ export function changeMentorFaction(current: MentorFactionState, changes: Partia
   return next;
 }
 
+export function establishOwnFaction(
+  current: MentorFactionState,
+  input: { name: string; type: Exclude<FactionType, 'none'>; research?: number; clinical?: number; administrative?: number; rivalry?: number },
+): MentorFactionState {
+  const s = normalizeMentorFaction(current);
+  const resources = {
+    research: clamp(Math.max(s.faction.resources.research, input.research ?? 0)),
+    clinical: clamp(Math.max(s.faction.resources.clinical, input.clinical ?? 0)),
+    administrative: clamp(Math.max(s.faction.resources.administrative, input.administrative ?? 0)),
+  };
+  const resourcePower = resources.research + resources.clinical + resources.administrative;
+  const level: FactionLevel = resourcePower >= 190 && s.reputation >= 75 ? 'leader'
+    : resourcePower >= 130 ? 'core'
+      : resourcePower >= 70 ? 'member'
+        : 'fringe';
+  return {
+    ...s,
+    mentor: s.mentor,
+    factionLoyalty: clamp(Math.max(s.factionLoyalty, 55)),
+    reputation: clamp(Math.max(s.reputation, Math.round(resourcePower / 3))),
+    rivalry: clamp(s.rivalry + (input.rivalry ?? 8)),
+    faction: {
+      name: input.name,
+      type: input.type,
+      level,
+      resources,
+    },
+    alignmentHistory: [
+      ...s.alignmentHistory,
+      { event: '建立自己的导师组', choice: input.name, consequence: '你不再只是某位导师的学生，而开始拥有自己的学生、资源和风险。' },
+    ],
+  };
+}
+
 export function factionBonus(s: MentorFactionState): number {
   const level = { fringe: 0, member: 6, core: 14, leader: 22 }[s.faction.level];
   return Math.round(level + s.factionLoyalty * 0.12 + s.mentorBond * 0.08 - s.rivalry * 0.08);

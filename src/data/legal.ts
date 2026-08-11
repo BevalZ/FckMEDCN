@@ -55,6 +55,7 @@ export interface LegalTickContext {
   administrative: boolean;
   policyRisk: number;
   healthEnergy: number;
+  luck?: number;
 }
 
 export function tickLegalState(current: LegalState, ctx: LegalTickContext): LegalState {
@@ -63,7 +64,8 @@ export function tickLegalState(current: LegalState, ctx: LegalTickContext): Lega
   if (!active) return l;
   const specialty = ctx.specialtyRisk * (ctx.administrative ? 1.1 : 1);
   const workloadRisk = ctx.stamina < 30 || ctx.healthEnergy < 30 ? 3 : 1;
-  const riskGain = Math.max(1, Math.round(specialty * workloadRisk + ctx.policyRisk * 0.02));
+  const luckRisk = (2.5 - Math.max(0, Math.min(5, ctx.luck ?? 2.5))) * 0.35;
+  const riskGain = Math.max(0, Math.round(specialty * workloadRisk + ctx.policyRisk * 0.02 + luckRisk));
   const timelyLoss = ctx.stamina < 30 ? 3 : 1;
   const recordDefense = clamp(l.recordDefense - timelyLoss + (l.records.timeliness >= 80 ? 1 : 0));
   const legalRisk = clamp(l.legalRisk + riskGain - (l.recordDefense >= 70 ? 1 : 0));

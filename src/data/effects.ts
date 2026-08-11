@@ -1,4 +1,4 @@
-import { changeAttr, getState, patchState, setFlag, hasFlag, incCounter, updateStats } from './gameState';
+import { changeAttr, clearFlag, getState, patchState, setFlag, hasFlag, incCounter, updateStats } from './gameState';
 import { addFakeRisk, selfReport } from './integrity';
 import { payHouseDownPayment } from './economy';
 import { getUnit } from './jobhunt_units';
@@ -15,13 +15,17 @@ import { normalizePolicy } from './policy';
 import { normalizeLateLife } from './lateLife';
 import { applyLegalChange, normalizeLegal, recordViolation, resolveLegalPath } from './legal';
 import { changeResearchState, grantAmount, grantSuccessRate, normalizeResearch, publishPaper, recordMisconduct, retractLatestPaper, startResearchProject } from './research';
-import { changeMentorFaction, normalizeMentorFaction } from './mentorFaction';
-import { changeColleagues, normalizeColleagues } from './colleagues';
+import { changeMentorFaction, establishOwnFaction, normalizeMentorFaction } from './mentorFaction';
+import { changeColleagues, mentorStudents, normalizeColleagues, recruitStudent } from './colleagues';
 import { changeFamily, normalizeFamily } from './family';
 import { changeLove, normalizeLove } from './loveMarriage';
 import { changeSpirit, normalizeSpirit } from './spirit';
 import { changePublicImage, normalizePublicImage } from './publicImage';
 import { changeLeisure, normalizeLeisure } from './leisure';
+import { attemptDating, startNpcRomance } from './dating';
+import { changeAffinity } from './npc';
+import { transferLongSystem } from './longSystem';
+import { setTrainingTrack } from './trainingTrack';
 
 // 选项副作用的集中实现。
 // 事件数据里只写"声明式"的 effect 描述（纯数据、可序列化、可静态检查），
@@ -36,6 +40,18 @@ const LOST_FLAG: Record<'father' | 'mother' | 'grandparent', string> = {
 
 export function applyChoiceEffect(effect: ChoiceEffect) {
   switch (effect.kind) {
+    case 'attemptDating':
+      attemptDating();
+      return;
+    case 'startNpcRomance':
+      startNpcRomance(effect.npcId);
+      return;
+    case 'clearFlag':
+      clearFlag(effect.flag);
+      return;
+    case 'changeAffinity':
+      changeAffinity(effect.npcId, effect.amount);
+      return;
     case 'startDating':
       {
         const name = pickPartner();
@@ -99,6 +115,12 @@ export function applyChoiceEffect(effect: ChoiceEffect) {
       return;
     case 'setUndergradLeave':
       setUndergradLeave(effect.value);
+      return;
+    case 'transferLongSystem':
+      transferLongSystem();
+      return;
+    case 'setTrainingTrack':
+      setTrainingTrack(effect.track);
       return;
     case 'changeEra3Pressure':
       changeEra3Pressure(effect.axis, effect.amount);
@@ -286,6 +308,17 @@ export function applyChoiceEffect(effect: ChoiceEffect) {
     case 'changeMentorFaction':
       patchState({ mentorFaction: changeMentorFaction(getState().mentorFaction, effect) });
       return;
+    case 'establishOwnFaction':
+      patchState({ mentorFaction: establishOwnFaction(getState().mentorFaction, {
+        name: effect.name,
+        type: effect.factionType,
+        research: effect.research,
+        clinical: effect.clinical,
+        administrative: effect.administrative,
+        rivalry: effect.rivalry,
+      }) });
+      setFlag('own_faction');
+      return;
     case 'setFaction': {
       const s = normalizeMentorFaction(getState().mentorFaction, getState().stats.reputation);
       const mentor = effect.factionType === 'none' ? s.mentor : s.mentor ?? { name: '导师', type: effect.factionType, tier: 'senior' as const, relationship: s.mentorBond, favors: 0 };
@@ -294,6 +327,20 @@ export function applyChoiceEffect(effect: ChoiceEffect) {
     }
     case 'changeColleagues':
       patchState({ colleagues: changeColleagues(getState().colleagues, effect) });
+      return;
+    case 'recruitStudent':
+      patchState({ colleagues: recruitStudent(getState().colleagues, {
+        id: effect.id,
+        name: effect.name,
+        type: effect.studentType,
+        loyalty: effect.loyalty,
+        betrayalRisk: effect.betrayalRisk,
+      }) });
+      setFlag('mentored');
+      setFlag('has_students');
+      return;
+    case 'mentorStudents':
+      patchState({ colleagues: mentorStudents(getState().colleagues, effect) });
       return;
     case 'recordColleagueConflict': {
       const s = normalizeColleagues(getState().colleagues);

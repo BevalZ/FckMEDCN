@@ -35,6 +35,9 @@ import { DEFAULT_PUBLIC_IMAGE_STATE } from './publicImage';
 import type { PublicImageState } from './publicImage';
 import { DEFAULT_LEISURE_STATE } from './leisure';
 import type { LeisureState } from './leisure';
+import { generateNpcNames } from './npcIdentity';
+import { createPandemicState } from './pandemic';
+import type { PandemicState } from './pandemic';
 
 export type LifeStage = 'gaokao' | 'undergrad' | 'internship' | 'guipei' | 'master' | 'phd' | 'jobhunt' | 'career' | 'pinnacle' | 'retirement' | 'eternity' | 'ending';
 
@@ -130,6 +133,10 @@ export interface GameState {
   familyAlive: number;
   /** NPC 好感度 0..100（M3）。缺省视为 40，见 npc.ts */
   affinity: Record<string, number>;
+  /** 本存档的 NPC 随机姓名；角色 id/职业原型固定，姓名随新档重掷。 */
+  npcNames: Record<string, string>;
+  /** 约每 10-15 年出现一次的突发疫情，时间表随存档持久化。 */
+  pandemic: PandemicState;
   // —— 数值计数器（长学制连续低分季数等需要累加的状态，flag 只能布尔）——
   counters: Record<string, number>;
   // —— 求职写实：签三方的单位 id 与已拿到的 offer 列表（多 offer 抉择/违约用）——
@@ -139,6 +146,24 @@ export interface GameState {
 
 // 默认分配：成绩点满（保证 685+ 分数线可选），家境普通
 const DEFAULT_ATTRS: AttrAlloc = { family: 2, academic: 5, luck: 1, looks: 2 };
+
+function normalizeAttrValue(value: unknown, fallback: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return fallback;
+  return Math.max(0, Math.min(5, Math.round(value)));
+}
+
+/** Normalize legacy or partially corrupted attribute allocations without propagating NaN. */
+export function normalizeAttrAlloc(raw: unknown): AttrAlloc {
+  const input = raw !== null && typeof raw === 'object' && !Array.isArray(raw)
+    ? raw as Record<string, unknown>
+    : {};
+  return {
+    family: normalizeAttrValue(input.family, DEFAULT_ATTRS.family),
+    academic: normalizeAttrValue(input.academic, DEFAULT_ATTRS.academic),
+    luck: normalizeAttrValue(input.luck, DEFAULT_ATTRS.luck),
+    looks: normalizeAttrValue(input.looks, DEFAULT_ATTRS.looks),
+  };
+}
 
 // 硕博导师绩效风格随机：平均 / 金字塔 / 慷慨 / 抠门
 function rollMentorStyle(): MentorStyle {
@@ -186,6 +211,8 @@ export function createInitialState(): GameState {
     mentorStyle: rollMentorStyle(),
     marital: 'single', spouse: null, hasChild: false, familyAlive: 4,
     affinity: {},
+    npcNames: generateNpcNames(),
+    pandemic: createPandemicState(2024, 3),
     counters: {},
     signedUnitId: null,
     jobOffers: [],
@@ -201,6 +228,7 @@ export function updateStats(delta: StatDelta) {
 
 export function setFlag(flag: string) { _state.flags.add(flag); }
 export function hasFlag(flag: string): boolean { return _state.flags.has(flag); }
+export function clearFlag(flag: string) { _state.flags.delete(flag); }
 
 // 数值计数器：flag 只能表达布尔，连续计数（如长学制连续低分季）需要真值存储。
 export function getCounter(key: string): number {
@@ -228,11 +256,14 @@ const MIN_STAGE_AGE: Partial<Record<LifeStage, number>> = {
 export function enterStage(stage: LifeStage) {
   if (_state.stage === stage) return;
   const minAge = MIN_STAGE_AGE[stage] ?? _state.stats.age;
+  const nextAge = Math.max(_state.stats.age, minAge);
+  const elapsedYears = nextAge - _state.stats.age;
   _state = {
     ..._state,
     stage,
     turnsInStage: 0,
-    stats: { ..._state.stats, age: Math.max(_state.stats.age, minAge) },
+    year: _state.year + elapsedYears,
+    stats: { ..._state.stats, age: nextAge },
   };
 }
 

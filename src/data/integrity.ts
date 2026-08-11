@@ -28,7 +28,14 @@ const RISK_FLOOR = 3;
  *   一次小造假 → 约 21% 被查；一次重造假 → 约 48%；五次混合 → 约 97%（且多为最重等级）。
  * 目的是让"小造假可能一辈子没事、大造假几乎必爆"成立，保留真实的侥幸心理。
  */
-const TRIGGER_SCALE = 0.12;
+const TRIGGER_SCALE = 0.125;
+
+/** 低运气更容易撞上抽查、举报或批量撤稿；好运只能降低暴露率，不能消除造假风险。 */
+export function integrityExposureProbability(fakeRisk: number, luck: number): number {
+  const boundedLuck = Math.max(0, Math.min(5, luck));
+  const luckMultiplier = 1.5 - boundedLuck * 0.18;
+  return Math.max(0, Math.min(0.95, (Math.max(0, fakeRisk) / 100) * TRIGGER_SCALE * luckMultiplier));
+}
 
 /** 分级阈值 */
 const RUIN_AT = 55;
@@ -66,7 +73,7 @@ export function rollIntegrity(): IntegrityOutcome {
   const risk = getState().stats.fakeRisk;
   if (risk <= 0) return { level: 'none', message: '' };
 
-  const p = (risk / 100) * TRIGGER_SCALE;
+  const p = integrityExposureProbability(risk, getState().attrs?.luck ?? 0);
   if (Math.random() >= p) {
     // 没事发生：风险缓慢衰减，但保留底档
     const cur = getState().stats.fakeRisk;
