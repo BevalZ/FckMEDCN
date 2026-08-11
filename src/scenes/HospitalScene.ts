@@ -8,7 +8,7 @@ import { QuestLog, internshipQuests } from '../ui/QuestLog';
 import { bindGameMenu } from '../ui/gameMenu';
 import { HelpPanel } from '../ui/HelpPanel';
 import { showNewsToast } from '../ui/newsToast';
-import { Walker, createWalkerKeys } from '../ui/Walker';
+import { Walker, createWalkerKeys, consumeVirtualInteract, VirtualControls } from '../ui/Walker';
 import type { WalkerKeys } from '../ui/Walker';
 import { renderTileMap } from '../ui/tilemap';
 import { npcTileNear } from '../ui/npcPlacement';
@@ -19,7 +19,7 @@ import { drawStorylet, hasStorylet, commitChoice, advanceQuarter } from '../data
 import type { EventChoice, GameEvent } from '../data/events';
 import { ALL_EVENTS } from '../data/events';
 import type { StatDelta } from '../data/stats';
-import { NEWS_TICKER } from '../data/news';
+import { scheduleNewsForQuarter } from '../data/newsScheduler';
 import { STAT_LABELS, STAT_ICONS, HUD_STATS } from '../data/constants';
 import { applyStageEntry, describeStageEconomy } from '../data/economy';
 import { ACTIONS_PER_QUARTER, SLEEP_RECOVER } from '../data/campusMap';
@@ -34,6 +34,7 @@ import {
   npcsForStage, npcSpotAt, getTalk, getAffinity, changeAffinity, TRUST_AT, DISTANT_AT,
 } from '../data/npc';
 import type { NpcTalk } from '../data/npc';
+import { npcHiddenEventFor } from '../data/npcHiddenEvents';
 import { sound } from '../audio/sound';
 import { saveGame, consumePendingFired } from '../data/save';
 import { showQuarterAdvancePrompt } from '../ui/quarterAdvancePrompt';
@@ -103,6 +104,10 @@ export class HospitalScene extends Phaser.Scene {
     this.prompt = new InteractPrompt(this, STAGE, HOSPITAL_SPOTS, tileCenter);
     this.keys = createWalkerKeys(this);
     this.interactKey = this.input.keyboard!.addKey('E');
+    const bufferInteract = () => {
+      if (!this.busy && !this.minigame) this.keys.virtual.interact = true;
+    };
+    this.interactKey.on('down', bufferInteract);
 
     this.npcHint = this.add.text(0, 0, '', {
       fontFamily: '"Courier New", monospace', fontSize: '11px',
@@ -119,18 +124,27 @@ export class HospitalScene extends Phaser.Scene {
     sound.setBgmMood(STAGE);
     this.input.keyboard?.on('keydown-M', () => sound.toggleMute());
 
-    // 重新开档（R 键）
-    bindGameMenu(this, this.consequence, () => this.minigame !== null || this.eventCard.busy || this.consequence.busy);
-
-    // 操作帮助（H 键）
-    new HelpPanel(this, [
+    const coreBusy = () => this.minigame !== null || this.eventCard.busy || this.consequence.busy;
+    let menu!: ReturnType<typeof bindGameMenu>;
+    const helpPanel = new HelpPanel(this, [
       '移动 WASD/方向键 · 交互 E',
-      '任务清单 Q · 导师对话 T',
-      '重新开档 R · 帮助 H · 静音 M',
+      '任务清单 Q',
+      '游戏菜单 R · 帮助 H · 静音 M',
       'ESC 取消当前交互',
       '提示：行动点用完后可直接确认进入下一季度。',
       '练习 CPR / 值夜班 能完成实习任务。',
-    ], () => this.minigame !== null || this.eventCard.busy || this.consequence.busy);
+    ], () => coreBusy() || menu?.busy);
+    menu = bindGameMenu(
+      this,
+      this.consequence,
+      () => coreBusy() || helpPanel.busy,
+      () => this.hud.update(getState().stats, STAGE),
+    );
+    new VirtualControls(this, this.keys, bufferInteract, [
+      { label: '任务', onPress: () => { if (!coreBusy() && !helpPanel.busy && !menu.busy) this.questLog.toggle(); } },
+      { label: '帮助', onPress: () => helpPanel.toggle() },
+      { label: '菜单', onPress: () => menu.open() },
+    ]);
 
     this.presentStageBriefing();
   }
@@ -155,7 +169,7 @@ export class HospitalScene extends Phaser.Scene {
   private refreshInfoBar() {
     const s = getState();
     this.infoLabel.setText(
-      `第${s.year}年 Q${s.quarter} | ${s.stats.age}岁 | 实习第 ${s.turnsInStage}/${MAX_TURNS} 季  ·  移动 WASD/方向键 · 交互 E · 任务 Q · R 重新开档`,
+      `第${s.year}年 Q${s.quarter} | ${s.stats.age}岁 | 实习第 ${s.turnsInStage}/${MAX_TURNS} 季  ·  移动 WASD/方向键 · 交互 E · 任务 Q · R 游戏菜单`,
     );
     const left = Math.max(0, this.actionsLeft);
     const dots = '●'.repeat(left) + '○'.repeat(Math.max(0, ACTIONS_PER_QUARTER - left));
@@ -206,7 +220,15 @@ export class HospitalScene extends Phaser.Scene {
       );
       if (!tile) continue;
       const c = this.tileCenter(tile.col, tile.row);
-      const sprite = new NpcSprite(this, def, c.x, c.y);
+      const sprite = new NpcSprite(this, def, c.x, c.y, spotId, {
+        anchorCol: tile.col,
+        anchorRow: tile.row,
+        cols: HOSPITAL_SPEC.cols,
+        rows: HOSPITAL_SPEC.rows,
+        isBlocked: (col, row) => this.isSolid(col, row)
+          || (col === spot.door[0] && row === spot.door[1]),
+        tileCenter: this.tileCenter,
+      });
       sprite.setBang(this, true);
       this.npcs.push(sprite);
     }
@@ -227,12 +249,30 @@ export class HospitalScene extends Phaser.Scene {
       this.floatMessage(`${npc.def.name}：这季度已经聊过了`, '#b0bec5');
       return;
     }
-    const talk = getTalk(npc.def.id);
-    if (!talk) return;
-
     this.talkedThisQuarter.add(npc.def.id);
     npc.setBang(this, false);
     this.talkingWith = npc;
+
+    const hidden = npcHiddenEventFor({
+      npcId: npc.def.id,
+      stage: STAGE as LifeStage,
+      spotId: npc.spotId,
+      firedEvents: this.firedEvents,
+    });
+    if (hidden) {
+      this.talkChoices = [];
+      this.openEvent(hidden);
+      return;
+    }
+
+    const talk = getTalk(npc.def.id);
+    if (!talk) {
+      this.talkingWith = null;
+      this.talkedThisQuarter.delete(npc.def.id);
+      npc.setBang(this, true);
+      return;
+    }
+
     this.talkChoices = talk.choices;
     const ev: GameEvent = {
       id: `npc_talk_${npc.def.id}`,
@@ -275,8 +315,10 @@ export class HospitalScene extends Phaser.Scene {
 
   update() {
     if (this.leaving) return;
-    if (this.minigame) { this.minigame.update(this.time.now, this.game.loop.delta); return; }
-    this.walker.update(this.keys, this.game.loop.delta);
+    const delta = this.game.loop.delta;
+    for (const npc of this.npcs) npc.update(delta, this.busy);
+    if (this.minigame) { this.minigame.update(this.time.now, delta); return; }
+    this.walker.update(this.keys, delta);
 
     const spot = this.prompt.update(this.walker.x, this.walker.y, (s: Spot) => this.hintFor(s));
     const spotDist = spot
@@ -299,7 +341,8 @@ export class HospitalScene extends Phaser.Scene {
         .setVisible(true);
     }
 
-    if (!this.busy && Phaser.Input.Keyboard.JustDown(this.interactKey)) {
+    const interactPressed = consumeVirtualInteract(this.keys);
+    if (!this.busy && interactPressed) {
       if (npc && this.actionsLeft > 0) { this.talkTo(npc); return; }
       if (spot) this.interact(spot);
     }
@@ -341,6 +384,13 @@ export class HospitalScene extends Phaser.Scene {
   // ESC 取消对话：干净回滚，使这次交互像从未发生。
   private cancelEvent(ev: GameEvent) {
     if (ev.once) this.firedEvents.delete(ev.id);
+    if (this.talkingWith) {
+      const npc = this.talkingWith;
+      this.talkedThisQuarter.delete(npc.def.id);
+      npc.setBang(this, true);
+      this.talkingWith = null;
+      this.talkChoices = [];
+    }
     this.currentEvent = null;
     this.refreshAvailability();
     this.refreshInfoBar();
@@ -377,9 +427,12 @@ export class HospitalScene extends Phaser.Scene {
       this.talkChoices = [];
     }
 
-    commitChoice(choice, this.currentEvent ?? undefined);
+    const outcome = commitChoice(choice, this.currentEvent ?? undefined);
     this.playDeltaSound(choice.delta as StatDelta);
     this.showDeltaFloaters(choice.delta as StatDelta);
+    if (outcome.clinicalSatisfaction) {
+      this.floatNotice(`临床满足 · 心理 +${outcome.clinicalSatisfaction.sanityGain}`, '#69f0ae', 150);
+    }
     this.hud.update(getState().stats, STAGE);
     this.autoSave();
 
@@ -455,9 +508,13 @@ export class HospitalScene extends Phaser.Scene {
     const exhaust = internshipExhaustion(getState().stats.stamina);
     if (exhaust !== 0) { updateStats({ sanity: exhaust }); }
 
-    const { econ, grieving, integrity } = advanceQuarter(STAGE);
+    const { econ, grieving, integrity, affinity, datingOpportunity, pandemic, patientSafety } = advanceQuarter(STAGE);
     this.showQuarterBill(econ);
     if (grieving) this.floatMessage('思念 · 心理 -2', '#ff8a80', 150);
+    if (datingOpportunity) this.floatNotice('生活机会：有人想介绍你们认识', '#f8bbd0', 166, 120, 11);
+    this.showAffinityQuarter(affinity);
+    if (pandemic.started || pandemic.ended || pandemic.active) this.floatNotice(`疫情：${pandemic.message}`, pandemic.ended ? '#9fe6b0' : '#ffb74d', 182, 120, 11);
+    if (patientSafety.level !== 'none') this.floatNotice(`患者安全：${patientSafety.message}`, patientSafety.level === 'major' ? '#ff5252' : '#ff8a80', 198, 120, 11);
 
     const mapImg = this.children.list.find(
       (c: any) => c?.texture?.key === 'hospital_map',
@@ -502,16 +559,8 @@ export class HospitalScene extends Phaser.Scene {
   }
 
   private pumpNewsForQuarter() {
-    const { year, quarter } = getState();
-    let pool = NEWS_TICKER.filter(n => !this.firedNews.has(n.id) && n.year === year && n.quarter === quarter);
-    if (pool.length === 0) pool = NEWS_TICKER.filter(n => !this.firedNews.has(n.id) && n.year === year);
-    if (pool.length === 0) {
-      const unfired = NEWS_TICKER.filter(n => !this.firedNews.has(n.id));
-      if (unfired.length > 0) {
-        const maxY = unfired.reduce((m, n) => Math.max(m, n.year), 0);
-        if (maxY <= year + 1) pool = unfired.filter(n => n.year === maxY);
-      }
-    }
+    const { stage, year, quarter } = getState();
+    const pool = scheduleNewsForQuarter({ stage, year, quarter, firedIds: this.firedNews });
     let added = false;
     for (const n of pool) { addNews(n); this.firedNews.add(n.id); added = true; }
     if (added) { this.news.refresh(getState().newsLog.map(n => n.headline)); sound.news(); }
@@ -552,15 +601,29 @@ export class HospitalScene extends Phaser.Scene {
   }
 
   private floatMessage(text: string, color: string, depth = 120) {
+    this.floatNotice(text, color, 150, depth);
+  }
+
+  private floatNotice(text: string, color: string, y = 150, depth = 120, fontSize = 12) {
     const t = this.add.text(480, 150, text, {
-      fontFamily: '"Courier New", monospace', fontSize: '12px', color, fontStyle: 'bold',
+      fontFamily: '"Courier New", monospace', fontSize: `${fontSize}px`, color, fontStyle: 'bold',
     }).setOrigin(0.5, 0).setDepth(depth).setAlpha(0);
+    t.setY(y);
     this.tweens.add({
       targets: t, alpha: 1, duration: 200,
       onComplete: () => {
-        this.tweens.add({ targets: t, alpha: 0, y: 136, duration: 700, delay: 400, onComplete: () => t.destroy() });
+        this.tweens.add({ targets: t, alpha: 0, y: y - 14, duration: 700, delay: 400, onComplete: () => t.destroy() });
       },
     });
+  }
+
+  private showAffinityQuarter(affinity: { delta: StatDelta; messages: string[] }, y = 166) {
+    if (affinity.messages.length === 0) return;
+    const deltaText = Object.entries(affinity.delta)
+      .filter(([, v]) => typeof v === 'number' && v !== 0)
+      .map(([k, v]) => `${(STAT_LABELS as Record<string, string>)[k] ?? k}${(v as number) > 0 ? '+' : ''}${v}`)
+      .join(' ');
+    this.floatNotice(`关系网络：${affinity.messages.join('、')}${deltaText ? ` · ${deltaText}` : ''}`, '#c5cae9', y, 120, 11);
   }
 
   private showQuarterBill(e: { income: number; cost: number; net: number; financeNote?: string }) {

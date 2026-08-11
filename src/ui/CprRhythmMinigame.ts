@@ -43,7 +43,10 @@ export class CprRhythmMinigame {
     const title = scene.add.text(480, 140, opts?.title ?? '心肺复苏 · 跟着节拍按压', {
       fontFamily: '"Courier New", monospace', fontSize: '18px', color: '#ffffff', fontStyle: 'bold',
     }).setOrigin(0.5, 0);
-    const hint = scene.add.text(480, 172, `目标 ${BPM} 次/分（AHA 100–120）· 空格 / E 按压 · 共 ${TOTAL_BEATS} 次`, {
+    const touch = scene.sys.game.device.input.touch;
+    const hint = scene.add.text(480, 172, touch
+      ? `目标 ${BPM} 次/分（AHA 100–120）· 点击“按压” · 共 ${TOTAL_BEATS} 次`
+      : `目标 ${BPM} 次/分（AHA 100–120）· 空格 / E 按压 · 共 ${TOTAL_BEATS} 次`, {
       fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#9aa0b5',
     }).setOrigin(0.5, 0);
     this.root.add([title, hint]);
@@ -69,6 +72,15 @@ export class CprRhythmMinigame {
       fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#cfd8e8',
     }).setOrigin(0.5, 0);
     this.root.add([this.status, this.scoreText]);
+
+    if (touch) {
+      const touchButton = scene.add.text(480, 376, '按压', {
+        fontFamily: '"Microsoft YaHei", sans-serif', fontSize: '16px', color: '#ffffff',
+        backgroundColor: '#c62828', padding: { x: 30, y: 8 },
+      }).setOrigin(0.5).setInteractive({ cursor: 'pointer' });
+      touchButton.on('pointerdown', () => this.onPress());
+      this.root.add(touchButton);
+    }
 
     this.keyHandler = (e: KeyboardEvent) => {
       if (this.closed) return;

@@ -37,6 +37,7 @@ export class TitleScene extends Phaser.Scene {
     const overlay = document.getElementById('title-overlay');
     const main = document.getElementById('title-main');
     const sub = document.getElementById('title-sub');
+    const disclaimer = document.getElementById('title-disclaimer');
     const startBtn = document.getElementById('title-start') as HTMLButtonElement | null;
     const contBtn = document.getElementById('title-continue') as HTMLButtonElement | null;
     const galleryBtn = document.getElementById('title-gallery') as HTMLButtonElement | null;
@@ -46,6 +47,12 @@ export class TitleScene extends Phaser.Scene {
     const pickMale = document.getElementById('gender-pick-male') as HTMLButtonElement | null;
     const pickFemale = document.getElementById('gender-pick-female') as HTMLButtonElement | null;
     const genderCancel = document.getElementById('gender-edit-cancel') as HTMLButtonElement | null;
+    if (overlay) delete overlay.dataset.ready;
+    // HTML 覆盖层跨 Phaser 场景长期存在；每次进入标题页都从存档事实重建可见状态，
+    // 不能继承上一次标题场景留下的 show class，否则删档后会出现无效的“继续游戏”。
+    contBtn?.classList.remove('show');
+    genderEditBtn?.classList.remove('show');
+    genderPanel?.classList.remove('show');
 
     const fadeIn = (el: Element | null, delay: number) => {
       if (!el) return;
@@ -58,6 +65,7 @@ export class TitleScene extends Phaser.Scene {
     overlay?.classList.add('show');
     fadeIn(main, 200);
     fadeIn(sub, 800);
+    fadeIn(disclaimer, 1000);
 
     let leaving = false;
     const startGame = () => {
@@ -97,6 +105,7 @@ export class TitleScene extends Phaser.Scene {
       this.cameras.main.fadeOut(300, 0, 0, 0);
       this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('CollectionScene'));
     };
+    const toggleMute = () => sound.toggleMute();
 
     const canContinue = hasSave();
     if (canContinue) {
@@ -155,13 +164,23 @@ export class TitleScene extends Phaser.Scene {
     // 性别选择入口提示（新开局时可选性别）
     fadeIn(genderHint, 2100);
 
-    this.input.keyboard?.on('keydown-M', () => sound.toggleMute());
+    this.input.keyboard?.on('keydown-M', toggleMute);
+
+    // 自动化与辅助技术可据此确认 DOM 按钮监听已绑定，避免场景刚激活时的初始化竞态。
+    if (overlay) overlay.dataset.ready = 'true';
 
     // 离开该场景时清理：去掉 overlay、移除按钮监听
     this.events.once('shutdown', () => {
       overlay?.classList.remove('show');
+      if (overlay) delete overlay.dataset.ready;
       // cloneNode(true) 拿到一个干净的副本替换原节点，移除所有事件监听
-      [startBtn, contBtn, galleryBtn].forEach((b) => b?.replaceWith(b.cloneNode(true)));
+      [startBtn, contBtn, galleryBtn, genderEditBtn, genderPanel]
+        .forEach((b) => b?.replaceWith(b.cloneNode(true)));
+      // KeyboardPlugin 由整个游戏共享，不随单个场景自动销毁；显式移除本次 create 的闭包。
+      this.input.keyboard?.off('keydown-SPACE', startGame);
+      this.input.keyboard?.off('keydown-SPACE', continueGame);
+      this.input.keyboard?.off('keydown-G', openGallery);
+      this.input.keyboard?.off('keydown-M', toggleMute);
     });
   }
 }

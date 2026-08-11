@@ -6,7 +6,7 @@ import { NewsTicker } from './NewsTicker';
 import { InteractPrompt } from './InteractPrompt';
 import { QuestLog } from './QuestLog';
 import type { QuestItem } from './QuestLog';
-import { Walker, createWalkerKeys } from './Walker';
+import { Walker, createWalkerKeys, consumeVirtualInteract, VirtualControls } from './Walker';
 import type { WalkerKeys } from './Walker';
 import { renderTileMap } from './tilemap';
 import type { TileMapSpec } from './tilemap';
@@ -22,7 +22,7 @@ import { showNewsToast } from './newsToast';
 import { ALL_EVENTS } from '../data/events';
 import type { EventChoice, GameEvent } from '../data/events';
 import type { StatDelta } from '../data/stats';
-import { NEWS_TICKER } from '../data/news';
+import { scheduleNewsForQuarter } from '../data/newsScheduler';
 import { determineEnding } from '../data/endings';
 import { STAT_LABELS, STAT_ICONS, HUD_STATS } from '../data/constants';
 import { applyStageEntry, describeStageEconomy } from '../data/economy';
@@ -40,6 +40,7 @@ import {
   npcsForStage, npcSpotAt, getTalk, getAffinity, changeAffinity, TRUST_AT, DISTANT_AT,
 } from '../data/npc';
 import type { NpcTalk } from '../data/npc';
+import { npcHiddenEventFor } from '../data/npcHiddenEvents';
 import { sound } from '../audio/sound';
 import { saveGame, consumePendingFired } from '../data/save';
 import { showQuarterAdvancePrompt } from './quarterAdvancePrompt';
@@ -122,7 +123,7 @@ export abstract class WalkStageScene extends Phaser.Scene {
   }
   /** 不等读满学制就提前离开（如退学 / 退培）。默认按 left_<stage> flag 判断。 */
   protected shouldLeaveEarly(): boolean {
-    return hasFlag('left_' + this.stageName);
+    return hasFlag('left_' + this.stageName) || hasFlag('left_med');
   }
   /** 某地点的特殊事件（如本科技能中心的缝合小游戏）。默认无。 */
   protected trySpecialEvent(_spot: Spot): GameEvent | null { return null; }
@@ -181,6 +182,10 @@ export abstract class WalkStageScene extends Phaser.Scene {
     this.keys = createWalkerKeys(this);
     // 交互键只用 E：EventCard / ConsequencePopup 用空格与回车提交，复用会误触。
     this.interactKey = this.input.keyboard!.addKey('E');
+    const bufferInteract = () => {
+      if (!this.busy && !this.minigame) this.keys.virtual.interact = true;
+    };
+    this.interactKey.on('down', bufferInteract);
 
     // 读档恢复：重建已触发集合，避免 once 事件重复触发
     const pending = consumePendingFired();
@@ -193,12 +198,20 @@ export abstract class WalkStageScene extends Phaser.Scene {
     sound.setBgmMood(this.stageName);
     this.input.keyboard?.on('keydown-M', () => sound.toggleMute());
 
-    // 重新开档（R 键）
-    bindGameMenu(this, this.consequence, () => this.minigame !== null || this.eventCard.busy || this.consequence.busy);
-
-    // 操作帮助（H 键）
-    new HelpPanel(this, this.getHelpLines(),
-      () => this.minigame !== null || this.eventCard.busy || this.consequence.busy);
+    const coreBusy = () => this.minigame !== null || this.eventCard.busy || this.consequence.busy;
+    let menu!: ReturnType<typeof bindGameMenu>;
+    const helpPanel = new HelpPanel(this, this.getHelpLines(), () => coreBusy() || menu?.busy);
+    menu = bindGameMenu(
+      this,
+      this.consequence,
+      () => coreBusy() || helpPanel.busy,
+      () => this.hud.update(getState().stats, this.stageName),
+    );
+    new VirtualControls(this, this.keys, bufferInteract, [
+      { label: '任务', onPress: () => { if (!coreBusy() && !helpPanel.busy && !menu.busy) this.questLog.toggle(); } },
+      { label: '帮助', onPress: () => helpPanel.toggle() },
+      { label: '菜单', onPress: () => menu.open() },
+    ]);
 
     this.hud.update(getState().stats, this.stageName);
     this.refreshInfoBar();
@@ -229,7 +242,7 @@ export abstract class WalkStageScene extends Phaser.Scene {
   private refreshInfoBar() {
     const s = getState();
     this.infoLabel.setText(
-      `第${s.year}年 Q${s.quarter} | ${s.stats.age}岁 | ${this.stageName} 第 ${s.turnsInStage}/${this.totalTurns()} 季  ·  移动 WASD/方向键 · 交互 E · 任务 Q · R 重新开档`,
+      `第${s.year}年 Q${s.quarter} | ${s.stats.age}岁 | ${this.stageName} 第 ${s.turnsInStage}/${this.totalTurns()} 季  ·  移动 WASD/方向键 · 交互 E · 任务 Q · R 游戏菜单`,
     );
     const left = Math.max(0, Math.min(this.actionsPerQuarter, this.actionsLeft));
     const dots = '●'.repeat(left) + '○'.repeat(this.actionsPerQuarter - left);
@@ -285,7 +298,15 @@ export abstract class WalkStageScene extends Phaser.Scene {
       );
       if (!tile) continue;
       const c = this.tileCenter(tile.col, tile.row);
-      const sprite = new NpcSprite(this, def, c.x, c.y);
+      const sprite = new NpcSprite(this, def, c.x, c.y, spotId, {
+        anchorCol: tile.col,
+        anchorRow: tile.row,
+        cols: this.spec.cols,
+        rows: this.spec.rows,
+        isBlocked: (col, row) => this.isSolid(col, row)
+          || (col === spot.door[0] && row === spot.door[1]),
+        tileCenter: this.tileCenter,
+      });
       sprite.setBang(this, true); // 每季首次对话前都亮 !
       this.npcs.push(sprite);
     }
@@ -311,13 +332,29 @@ export abstract class WalkStageScene extends Phaser.Scene {
       this.floatMessage(`${npc.def.name}：这季度已经聊过了`, '#b0bec5');
       return;
     }
-    const talk = getTalk(npc.def.id);
-    if (!talk) return;
-
     this.talkedThisQuarter.add(npc.def.id);
     npc.setBang(this, false);
-    // 记下正在对话的 NPC，供 handleChoice 结算好感度
     this.talkingWith = npc;
+
+    const hidden = npcHiddenEventFor({
+      npcId: npc.def.id,
+      stage: this.stageName,
+      spotId: npc.spotId,
+      firedEvents: this.firedEvents,
+    });
+    if (hidden) {
+      this.talkChoices = [];
+      this.openEvent(hidden);
+      return;
+    }
+
+    const talk = getTalk(npc.def.id);
+    if (!talk) {
+      this.talkingWith = null;
+      this.talkedThisQuarter.delete(npc.def.id);
+      npc.setBang(this, true);
+      return;
+    }
 
     // 复用事件卡呈现对话：把 NpcTalk 包装成一个临时 GameEvent。
     this.talkChoices = talk.choices;
@@ -360,11 +397,13 @@ export abstract class WalkStageScene extends Phaser.Scene {
 
   update() {
     if (this.leaving) return;
+    const delta = this.game.loop.delta;
+    for (const npc of this.npcs) npc.update(delta, this.busy);
     if (this.minigame) {
-      this.minigame.update(this.time.now, this.game.loop.delta);
+      this.minigame.update(this.time.now, delta);
       return;
     }
-    this.walker.update(this.keys, this.game.loop.delta);
+    this.walker.update(this.keys, delta);
 
     // NPC 与地点按"谁更近"决定优先级，避免 NPC 挡住它所在的地点
     const spot = this.prompt.update(this.walker.x, this.walker.y, (s: Spot) => this.hintFor(s));
@@ -390,7 +429,8 @@ export abstract class WalkStageScene extends Phaser.Scene {
         .setVisible(true);
     }
 
-    if (!this.busy && Phaser.Input.Keyboard.JustDown(this.interactKey)) {
+    const interactPressed = consumeVirtualInteract(this.keys);
+    if (!this.busy && interactPressed) {
       // 行动点耗尽时，NPC 对话（本身要花行动点）不可用，
       // 否则站在宿舍门口的室友会挡住"回宿舍睡觉"，导致本季无法结束（卡死）。
       if (npc && this.actionsLeft > 0) { this.talkTo(npc); return; }
@@ -512,9 +552,12 @@ export abstract class WalkStageScene extends Phaser.Scene {
       this.talkChoices = [];
     }
 
-    commitChoice(choice, this.currentEvent ?? undefined);
+    const outcome = commitChoice(choice, this.currentEvent ?? undefined);
     this.playDeltaSound(choice.delta as StatDelta);
     this.showDeltaFloaters(choice.delta as StatDelta);
+    if (outcome.clinicalSatisfaction) {
+      this.floatMessage(`临床满足 · 心理 +${outcome.clinicalSatisfaction.sanityGain}`, '#69f0ae', 136);
+    }
 
     const ev = this.currentEvent;
     if (ev?.newsTickerAfter) {
@@ -610,9 +653,14 @@ export abstract class WalkStageScene extends Phaser.Scene {
     const hbPen = holdbackSanityPenalty(this.stageName);
     if (hbPen !== 0) { updateStats({ sanity: hbPen }); this.floatMessage('重修的压力 · 心理 -3', '#ff8a80', 150); }
 
-    const { econ, grieving, integrity } = advanceQuarter(this.stageName);
+    const { econ, grieving, integrity, mentalDecline, affinity, datingOpportunity, pandemic, patientSafety } = advanceQuarter(this.stageName);
     this.showQuarterBill(econ);
     if (grieving) this.floatMessage('思念 · 心理 -2', '#ff8a80', 150);
+    if (mentalDecline) this.floatMessage(`财务焦虑 · 心理 ${mentalDecline.sanityDelta}`, '#ff8a80', 166);
+    if (datingOpportunity) this.floatMessage('生活机会：有人想介绍你们认识', '#f8bbd0', 174);
+    if (pandemic.started || pandemic.ended || pandemic.active) this.floatMessage(`疫情：${pandemic.message}`, pandemic.ended ? '#9fe6b0' : '#ffb74d', 182);
+    if (patientSafety.level !== 'none') this.floatMessage(`患者安全：${patientSafety.message}`, patientSafety.level === 'major' ? '#ff5252' : '#ff8a80', 198);
+    this.showAffinityQuarter(affinity);
 
     // 跨季度刷新氛围 tint（春夏秋冬）
     const mapImg = this.children.list.find(
@@ -660,10 +708,12 @@ export abstract class WalkStageScene extends Phaser.Scene {
 
   private runBurnout() {
     this.setBusy(true);
-    const { econ, grieving, integrity } = triggerBurnout();
+    const { econ, grieving, integrity, mentalDecline, affinity } = triggerBurnout();
     this.floatMessage('倦怠 · 你瘫倒了，错过了一整个季度', '#ff8a80', 170);
     this.showQuarterBill(econ);
     if (grieving) this.floatMessage('思念 · 心理 -2', '#ff8a80', 150);
+    if (mentalDecline) this.floatMessage(`财务焦虑 · 心理 ${mentalDecline.sanityDelta}`, '#ff8a80', 186);
+    this.showAffinityQuarter(affinity, 202);
 
     const mapImg = this.children.list.find(
       (c: any) => c?.texture?.key === this.mapKey,
@@ -692,10 +742,10 @@ export abstract class WalkStageScene extends Phaser.Scene {
   private maybeExamCrisis(): boolean {
     const stage = this.stageName;
     if (checkExamCrisis(stage) === null) return false;
-    // 已留级则不再重复触发
-    if (hasFlag('ug_holdback') || hasFlag('ms_holdback') || hasFlag('phd_holdback')) return false;
     const holdbackFlag = stage === 'undergrad' ? 'ug_holdback'
       : stage === 'master' ? 'ms_holdback' : 'phd_holdback';
+    // 已留级则不再重复触发；只看本阶段，避免本科/硕士旧 flag 屏蔽后续阶段危机。
+    if (hasFlag(holdbackFlag)) return false;
     setFlag(holdbackFlag);
     const label = stage === 'undergrad' ? '本科' : stage === 'master' ? '硕士' : '博士';
     sound.bad();
@@ -731,16 +781,8 @@ export abstract class WalkStageScene extends Phaser.Scene {
 
   // —— 新闻 / 存档（与 BaseStageScene 同逻辑）——
   private pumpNewsForQuarter() {
-    const { year, quarter } = getState();
-    let pool = NEWS_TICKER.filter(n => !this.firedNews.has(n.id) && n.year === year && n.quarter === quarter);
-    if (pool.length === 0) pool = NEWS_TICKER.filter(n => !this.firedNews.has(n.id) && n.year === year);
-    if (pool.length === 0) {
-      const unfired = NEWS_TICKER.filter(n => !this.firedNews.has(n.id));
-      if (unfired.length > 0) {
-        const maxY = unfired.reduce((m, n) => Math.max(m, n.year), 0);
-        if (maxY <= year + 1) pool = unfired.filter(n => n.year === maxY);
-      }
-    }
+    const { stage, year, quarter } = getState();
+    const pool = scheduleNewsForQuarter({ stage, year, quarter, firedIds: this.firedNews });
     let added = false;
     for (const n of pool) { addNews(n); this.firedNews.add(n.id); added = true; }
     if (added) { this.news.refresh(getState().newsLog.map(n => n.headline)); sound.news(); }
@@ -793,6 +835,15 @@ export abstract class WalkStageScene extends Phaser.Scene {
       `季度结算 ▸ 收¥${e.income} 支¥${e.cost} = 净 ${netStr}${e.financeNote ?? ""}`,
       e.net >= 0 ? '#69f0ae' : '#ff8a80', 110, 13,
     );
+  }
+
+  private showAffinityQuarter(affinity: { delta: StatDelta; messages: string[] }, y = 182) {
+    if (affinity.messages.length === 0) return;
+    const deltaText = Object.entries(affinity.delta)
+      .filter(([, v]) => typeof v === 'number' && v !== 0)
+      .map(([k, v]) => `${(STAT_LABELS as Record<string, string>)[k] ?? k}${(v as number) > 0 ? '+' : ''}${v}`)
+      .join(' ');
+    this.floatMessage(`关系网络：${affinity.messages.join('、')}${deltaText ? ` · ${deltaText}` : ''}`, '#c5cae9', y, 11);
   }
 
   private floatMessage(text: string, color: string, y = 92, fontSize = 12) {

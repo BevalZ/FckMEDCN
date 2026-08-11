@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { PALETTE, CLOTHING, shade } from './pixelArt';
 import type { Clothing, PaletteName } from './pixelArt';
 import { sound } from '../audio/sound';
+import { addTouchShortcuts } from './TouchShortcuts';
+import type { TouchShortcut } from './TouchShortcuts';
 
 // 可行走的四向像素角色。与 CharacterSprite（左栏静态立绘）互不相干：
 // 那个是 40x84 放大 1.6 倍的展示用立绘，这里是 24x36、scale=1 的行走精灵。
@@ -122,6 +124,7 @@ export interface WalkerKeys {
   down: Phaser.Input.Keyboard.Key[];
   left: Phaser.Input.Keyboard.Key[];
   right: Phaser.Input.Keyboard.Key[];
+  virtual: { up: boolean; down: boolean; left: boolean; right: boolean; interact: boolean };
 }
 
 /** 集中在一处的键位映射（方向键 + WASD），日后接虚拟摇杆也从这里改 */
@@ -133,7 +136,54 @@ export function createWalkerKeys(scene: Phaser.Scene): WalkerKeys {
     down: [k('DOWN'), k('S')],
     left: [k('LEFT'), k('A')],
     right: [k('RIGHT'), k('D')],
+    virtual: { up: false, down: false, left: false, right: false, interact: false },
   };
+}
+
+export function consumeVirtualInteract(keys: WalkerKeys): boolean {
+  if (!keys.virtual.interact) return false;
+  keys.virtual.interact = false;
+  return true;
+}
+
+export class VirtualControls {
+  private readonly scene: Phaser.Scene;
+  private readonly keys: WalkerKeys;
+  private readonly objects: Phaser.GameObjects.GameObject[] = [];
+
+  constructor(scene: Phaser.Scene, keys: WalkerKeys, onInteract: () => void, shortcuts: TouchShortcut[] = []) {
+    this.scene = scene;
+    this.keys = keys;
+    if (!scene.sys.game.device.input.touch) return;
+    this.addPadButton(76, 444, '▲', 'up');
+    this.addPadButton(76, 508, '▼', 'down');
+    this.addPadButton(30, 476, '◀', 'left');
+    this.addPadButton(122, 476, '▶', 'right');
+    const interact = scene.add.text(866, 474, '交互', {
+      fontFamily: '"Microsoft YaHei", sans-serif', fontSize: '16px', color: '#ffffff',
+      backgroundColor: '#101522dd', padding: { x: 15, y: 12 },
+    }).setOrigin(0.5).setDepth(120).setInteractive();
+    interact.on('pointerdown', () => onInteract());
+    this.objects.push(interact);
+    this.objects.push(...addTouchShortcuts(scene, shortcuts));
+  }
+
+  private addPadButton(x: number, y: number, label: string, direction: 'up' | 'down' | 'left' | 'right') {
+    const button = this.scene.add.text(x, y, label, {
+      fontFamily: 'Arial, sans-serif', fontSize: '20px', color: '#ffffff',
+      backgroundColor: '#101522cc', padding: { x: 12, y: 8 },
+    }).setOrigin(0.5).setDepth(120).setInteractive();
+    button.on('pointerdown', () => { this.keys.virtual[direction] = true; });
+    const release = () => { this.keys.virtual[direction] = false; };
+    button.on('pointerup', release);
+    button.on('pointerout', release);
+    this.objects.push(button);
+  }
+
+  destroy() {
+    for (const object of this.objects) object.destroy();
+    this.objects.length = 0;
+  }
 }
 
 const SPEED = 110;
@@ -172,13 +222,13 @@ export class Walker {
 
   update(keys: WalkerKeys, delta = 16) {
     if (this.frozen) return;
-    const down = (arr: Phaser.Input.Keyboard.Key[]) => arr.some(k => k.isDown);
+    const down = (arr: Phaser.Input.Keyboard.Key[], virtual: boolean) => virtual || arr.some(k => k.isDown);
 
     let vx = 0, vy = 0;
-    if (down(keys.left)) vx = -SPEED;
-    else if (down(keys.right)) vx = SPEED;
-    else if (down(keys.up)) vy = -SPEED;
-    else if (down(keys.down)) vy = SPEED;
+    if (down(keys.left, keys.virtual.left)) vx = -SPEED;
+    else if (down(keys.right, keys.virtual.right)) vx = SPEED;
+    else if (down(keys.up, keys.virtual.up)) vy = -SPEED;
+    else if (down(keys.down, keys.virtual.down)) vy = SPEED;
     // 只走四向：不做斜移，贴合像素网格的移动手感
 
     this.sprite.setVelocity(vx, vy);

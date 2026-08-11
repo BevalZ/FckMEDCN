@@ -1,6 +1,7 @@
 import { BaseStageScene } from './BaseStageScene';
 import { getState, updateStats, hasFlag } from '../data/gameState';
 import { determineEnding } from '../data/endings';
+import { nextSceneAfterUndergrad } from '../data/trainingTrack';
 
 // 旧存档兼容场景：本科阶段的卡片模式。新开局走 CampusScene（可行走校园）。
 // 保留此场景是因为老存档的 sceneKey 可能仍是 'UndergradScene'，删掉会导致读档白屏。
@@ -34,6 +35,7 @@ export class UndergradScene extends BaseStageScene {
       });
       return;
     }
+    this.nextSceneKey = nextSceneAfterUndergrad('card');
     super.transitionToNext();
   }
 

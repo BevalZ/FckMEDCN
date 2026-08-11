@@ -20,12 +20,20 @@ import { PinnacleScene, RetirementScene, EternityScene } from './scenes/LateEraS
 import { EndingScene, MentalCrisisScene } from './scenes/EndingScene';
 import { CollectionScene } from './scenes/CollectionScene';
 import { installTextPatch } from './ui/textPatch';
+import { installKeyboardPatch } from './ui/keyboardPatch';
 
 // 全局文字补丁：修正中文字形顶部被裁（必须在任何场景 add.text 前安装）。
 installTextPatch();
+// 全局键盘补丁：阻止低帧率多 update step 重放同一原生按键事件。
+installKeyboardPatch();
+
+const forceWebglInAutomation = new URLSearchParams(window.location.search).get('renderer') === 'webgl';
+const useAutomationCanvas = navigator.webdriver && !forceWebglInAutomation;
 
 const config: Phaser.Types.Core.GameConfig = {
-  type: Phaser.AUTO,
+  // Headless Chromium can fail its first WebGL framebuffer initialization on Windows.
+  // Keep production on AUTO; automation defaults to Canvas but retains an explicit WebGL smoke path.
+  type: useAutomationCanvas ? Phaser.CANVAS : Phaser.AUTO,
   width: GAME_WIDTH,
   height: GAME_HEIGHT,
   parent: 'game-container',
@@ -104,6 +112,7 @@ if (import.meta.env.DEV) {
     import('./data/endings'),
     import('./data/hospitalMap'),
     import('./data/guipeiMap'),
+    import('./data/careerMap'),
     import('./ui/npcPlacement'),
     import('./ui/tilemap'),
     import('./data/collection'),
@@ -114,10 +123,19 @@ if (import.meta.env.DEV) {
     import('./data/patientType'),
     import('./data/economy'),
     import('./data/knowledge'),
-  ]).then(([gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad, leg, cmp, ngn, pt, ec, kn]) => {
+    import('./data/pandemic'),
+    import('./data/dating'),
+    import('./data/patientSafety'),
+    import('./data/trainingTrack'),
+    import('./data/npcHiddenEvents'),
+    import('./data/npcRomance'),
+    import('./data/news'),
+    import('./data/newsScheduler'),
+    import('./data/evidence'),
+  ]).then(([gs, ig, npc, stats, tf, ev, cm, en, hm, gm, crm, np, tm, col, bad, leg, cmp, ngn, pt, ec, kn, pandemic, dating, patientSafety, tr, nh, nr, news, newsScheduler, evidence]) => {
     w.__state = gs.getState;
     w.__setFlag = gs.setFlag;
     w.__patchState = gs.patchState;
-    w.__mod = { gs, ig, npc, stats, tf, ev, cm, en, hm, gm, np, tm, col, bad, leg, cmp, ngn, pt, ec, kn };
+    w.__mod = { gs, ig, npc, stats, tf, ev, cm, en, hm, gm, crm, np, tm, col, bad, leg, cmp, ngn, pt, ec, kn, pandemic, dating, patientSafety, tr, nh, nr, news, newsScheduler, evidence };
   });
 }

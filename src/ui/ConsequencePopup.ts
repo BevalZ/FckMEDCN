@@ -95,16 +95,27 @@ export class ConsequencePopup {
     }
     body.setPosition(0, y);
 
-    const actionLabel = opts?.actionLabel ?? '继续 [ 点击 / 空格 / 回车 ]';
-    const btnText = scene.add.text(0, H / 2 - 20, actionLabel, {
+    const cancellable = this.escapeMode === 'cancel';
+    const actionLabel = opts?.actionLabel ?? (cancellable ? '确认 [ 点击 / 空格 / 回车 ]' : '继续 [ 点击 / 空格 / 回车 ]');
+    const actionX = cancellable ? 50 : 0;
+    const btnText = scene.add.text(actionX, H / 2 - 20, actionLabel, {
       fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#ffffff',
     }).setOrigin(0.5, 0.5);
 
-    const hitArea = scene.add.rectangle(0, H / 2 - 16, Math.max(160, Math.min(320, actionLabel.length * 8 + 24)), 24, 0x000000, 0)
+    const hitArea = scene.add.rectangle(actionX, H / 2 - 16, Math.max(160, Math.min(320, actionLabel.length * 8 + 24)), 24, 0x000000, 0)
       .setInteractive({ cursor: 'pointer' });
     hitArea.on('pointerdown', () => this.dismiss(onDone));
 
-    this.container.add([bg, body, btnText, hitArea, ...(badgeText ? [badgeText] : [])]);
+    const cancelText = cancellable
+      ? scene.add.text(-220, H / 2 - 20, '取消 [ 点击 / ESC ]', {
+        fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#b0bec5',
+      }).setOrigin(0.5).setInteractive({ cursor: 'pointer' })
+      : null;
+    cancelText?.on('pointerdown', () => this.cancel());
+
+    this.container.add([
+      bg, body, btnText, hitArea, ...(cancelText ? [cancelText] : []), ...(badgeText ? [badgeText] : []),
+    ]);
 
     if (naturalH > MAX_H) this.container.setScale(MAX_H / naturalH);
 

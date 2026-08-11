@@ -7,6 +7,7 @@ import type { TileMapSpec } from '../ui/tilemap';
 import type { Spot } from '../data/campusMap';
 import type { StatDelta } from '../data/stats';
 import type { LifeStage } from '../data/gameState';
+import { nextSceneAfterMaster } from '../data/trainingTrack';
 import type { GameEvent } from '../data/events';
 import { paperMarketEvent } from '../data/paperTrading';
 
@@ -38,6 +39,8 @@ export class MasterWalkScene extends WalkStageScene {
   protected transitionToNext() {
     this.leaving = true;
     this.cameras.main.fadeOut(600, 0, 0, 0);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('PhdWalkScene'));
+    this.cameras.main.once('camerafadeoutcomplete', () => {
+      this.scene.start(nextSceneAfterMaster('walk'));
+    });
   }
 }

@@ -1,6 +1,7 @@
 import { BaseStageScene } from './BaseStageScene';
 import { getState, updateStats, hasFlag } from '../data/gameState';
 import { determineEnding } from '../data/endings';
+import { nextSceneAfterGuipei } from '../data/trainingTrack';
 
 export class GuipeiScene extends BaseStageScene {
   constructor() {
@@ -29,6 +30,7 @@ export class GuipeiScene extends BaseStageScene {
       });
       return;
     }
+    this.nextSceneKey = nextSceneAfterGuipei('card');
     super.transitionToNext();
   }
 }

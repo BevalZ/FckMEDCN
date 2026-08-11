@@ -44,7 +44,8 @@ export class TimingBarMinigame {
     const title = scene.add.text(480, 160, opts?.title ?? '缝合 · 在绿区落针', {
       fontFamily: '"Courier New", monospace', fontSize: '18px', color: '#ffffff', fontStyle: 'bold',
     }).setOrigin(0.5, 0);
-    const hint = scene.add.text(480, 190, '空格 / 回车 / E  ·  落针', {
+    const touch = scene.sys.game.device.input.touch;
+    const hint = scene.add.text(480, 190, touch ? '观察游标位置，点击下方“落针”' : '空格 / 回车 / E  ·  落针', {
       fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#9aa0b5',
     }).setOrigin(0.5, 0);
     this.root.add([title, hint]);
@@ -69,6 +70,15 @@ export class TimingBarMinigame {
       fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#cfd8e8',
     }).setOrigin(0.5, 0);
     this.root.add(legend);
+
+    if (touch) {
+      const touchButton = scene.add.text(480, 362, '落针', {
+        fontFamily: '"Microsoft YaHei", sans-serif', fontSize: '16px', color: '#ffffff',
+        backgroundColor: '#1976d2', padding: { x: 30, y: 8 },
+      }).setOrigin(0.5).setInteractive({ cursor: 'pointer' });
+      touchButton.on('pointerdown', () => this.resolve());
+      this.root.add(touchButton);
+    }
 
     this.keyHandler = (e: KeyboardEvent) => {
       if (this.closed) return;

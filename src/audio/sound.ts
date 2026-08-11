@@ -1,6 +1,6 @@
 import type { PaletteName } from '../ui/pixelArt';
 
-// 纯 Web Audio 生成的音效与 BGM（不依赖任何外部音频文件）
+// 所有音频均由 Web Audio 在运行时合成，不分发来源不明的外部采样或 BGM 文件。
 // 浏览器自动播放策略要求 AudioContext 在用户手势后才能发声，故 ensure() 在首个手势调用。
 
 type Osc = OscillatorType;
@@ -9,13 +9,9 @@ class SoundManager {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private muted = false;
-  // 文件化 BGM（两首 MP3，按阶段切换，循环播放）
-  private bgmAudio: HTMLAudioElement | null = null;
-  private currentBgmUrl: string | null = null;
-  private bgmVolume = 0.5;
-  // 按键 / 点击采样（下载的 CC0 音效，失败回退合成）
-  private clickAudio: HTMLAudioElement | null = null;
-  private keytickAudio: HTMLAudioElement | null = null;
+  private bgmNodes: OscillatorNode[] = [];
+  private bgmGain: GainNode | null = null;
+  private currentBgmMood: string | null = null;
   private lastKeytick = 0;
 
   ensure() {
@@ -40,7 +36,6 @@ class SoundManager {
   toggleMute() {
     this.muted = !this.muted;
     if (this.master) this.master.gain.value = this.muted ? 0 : 0.9;
-    if (this.bgmAudio) this.bgmAudio.volume = this.muted ? 0 : this.bgmVolume;
   }
 
   private blip(freq: number, start: number, dur: number, type: Osc, vol: number, slideTo?: number) {
@@ -66,17 +61,7 @@ class SoundManager {
   }
 
   // —— 交互音效 ——
-  /** 优先播放真实采样（UI 点击音），不可用时回退合成 blip */
-  click() {
-    const a = this.lazySample('click');
-    if (a) {
-      a.volume = this.muted ? 0 : 0.5;
-      a.currentTime = 0;
-      void a.play().catch(() => this.synthClick());
-      return;
-    }
-    this.synthClick();
-  }
+  click() { this.synthClick(); }
 
   private synthClick() { this.blip(620, 0, 0.06, 'square', 0.16); }
 
@@ -85,31 +70,7 @@ class SoundManager {
     const now = Date.now();
     if (now - this.lastKeytick < 55) return;
     this.lastKeytick = now;
-    const a = this.lazySample('keytick');
-    if (a) {
-      a.volume = this.muted ? 0 : 0.32;
-      a.currentTime = 0;
-      void a.play().catch(() => { /* 忽略 */ });
-    }
-  }
-
-  /** 懒加载一个采样音轨；首次访问时创建 HTMLAudioElement */
-  private lazySample(kind: 'click' | 'keytick'): HTMLAudioElement | null {
-    if (kind === 'click') {
-      if (!this.clickAudio) {
-        try { this.clickAudio = new Audio('/audio/sfx/click.mp3'); this.clickAudio.preload = 'auto'; }
-        catch { this.clickAudio = null; }
-      }
-      return this.clickAudio;
-    }
-    if (!this.keytickAudio) {
-      try {
-        this.keytickAudio = new Audio('/audio/sfx/click2.mp3');
-        this.keytickAudio.preload = 'auto';
-        this.keytickAudio.playbackRate = 1.15; // 略高音，做出 tick 区别
-      } catch { this.keytickAudio = null; }
-    }
-    return this.keytickAudio;
+    this.blip(760, 0, 0.035, 'square', 0.07);
   }
 
   /** 行走脚步：短促低频噪声感 blip，左右脚略有音高差 */
@@ -143,63 +104,68 @@ class SoundManager {
     else this.arp([329.63, 311.13, 261.63], 0.2, 'sine', 0.16); // bitter / 默认
   }
 
-  // —— 环境 BGM：两首 MP3 文件，按阶段切换、循环播放 ——
-  private readonly BGM_TRACKS: Record<string, string> = {
-    gaokao: '/audio/bgm_absolutesound.mp3',
-    undergrad: '/audio/bgm_absolutesound.mp3',
-    internship: '/audio/bgm_absolutesound.mp3',
-    jobhunt: '/audio/bgm_absolutesound.mp3',
-    guipei: '/audio/bgm_alexmorgan.mp3',
-    master: '/audio/bgm_alexmorgan.mp3',
-    phd: '/audio/bgm_alexmorgan.mp3',
-    career: '/audio/bgm_alexmorgan.mp3',
-    default: '/audio/bgm_absolutesound.mp3',
+  // —— 环境 BGM：低音量合成和弦，按阶段切换 ——
+  private readonly BGM_CHORDS: Record<string, readonly number[]> = {
+    bright: [130.81, 196.0, 261.63],
+    tense: [110.0, 164.81, 220.0],
   };
 
-  private getBgm(): HTMLAudioElement | null {
-    if (!this.bgmAudio) {
-      try {
-        const a = new Audio();
-        a.loop = true;
-        a.preload = 'auto';
-        a.volume = this.muted ? 0 : this.bgmVolume;
-        this.bgmAudio = a;
-      } catch {
-        return null;
-      }
+  private moodForStage(stage: string): string {
+    return ['guipei', 'master', 'phd', 'career', 'pinnacle', 'retirement', 'eternity'].includes(stage)
+      ? 'tense'
+      : 'bright';
+  }
+
+  private startSynthBgm(mood: string) {
+    if (!this.ctx || !this.master || this.muted) return;
+    if (this.currentBgmMood === mood && this.bgmNodes.length > 0) return;
+    this.stopBgmNodes();
+
+    const gain = this.ctx.createGain();
+    gain.gain.value = 0.028;
+    gain.connect(this.master);
+    this.bgmGain = gain;
+    const frequencies = this.BGM_CHORDS[mood] ?? this.BGM_CHORDS.bright;
+    frequencies.forEach((frequency, index) => {
+      const oscillator = this.ctx!.createOscillator();
+      oscillator.type = index === 0 ? 'sine' : 'triangle';
+      oscillator.frequency.value = frequency;
+      oscillator.detune.value = index === 1 ? -4 : index === 2 ? 4 : 0;
+      oscillator.connect(gain);
+      oscillator.start();
+      this.bgmNodes.push(oscillator);
+    });
+    this.currentBgmMood = mood;
+  }
+
+  private stopBgmNodes() {
+    for (const oscillator of this.bgmNodes) {
+      try { oscillator.stop(); } catch { /* 已停止时忽略 */ }
+      oscillator.disconnect();
     }
-    return this.bgmAudio;
+    this.bgmNodes = [];
+    this.bgmGain?.disconnect();
+    this.bgmGain = null;
   }
 
   /** 标题屏等无明确阶段处启动默认 BGM */
   startBgm() { this.setBgmMood('default'); }
 
   setBgmMood(stage: string | PaletteName) {
-    const a = this.getBgm();
-    if (!a) return;
-    const url = this.BGM_TRACKS[stage as string] ?? this.BGM_TRACKS.default;
-    if (this.currentBgmUrl !== url) {
-      a.src = url;
-      this.currentBgmUrl = url;
-      a.load();
-    }
-    if (!this.muted) {
-      a.volume = this.bgmVolume;
-      void a.play().catch(() => { /* 自动播放被拦截时静默，等用户手势 unlockAudio */ });
-    }
+    const mood = this.moodForStage(stage as string);
+    this.currentBgmMood = mood;
+    this.startSynthBgm(mood);
   }
 
-  /** 用户手势后调用：恢复 AudioContext 并在已选曲情况下启动 BGM */
+  /** 用户手势后调用：恢复 AudioContext 并启动已选定的合成氛围。 */
   unlockAudio() {
     this.ensure();
-    if (this.bgmAudio && this.currentBgmUrl && !this.muted) {
-      this.bgmAudio.volume = this.bgmVolume;
-      void this.bgmAudio.play().catch(() => { /* 忽略 */ });
-    }
+    if (this.currentBgmMood) this.startSynthBgm(this.currentBgmMood);
   }
 
   stopBgm() {
-    this.bgmAudio?.pause();
+    this.stopBgmNodes();
+    this.currentBgmMood = null;
   }
 }
 

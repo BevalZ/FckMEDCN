@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { SCHOOLS, TRACKS } from '../data/constants';
+import { SCHOOLS, TRACKS, trackBlockReason } from '../data/constants';
 import type { School, Track } from '../data/constants';
 import { getState, setState, setFlag, patchState, updateStats } from '../data/gameState';
 import type { DegreeType } from '../data/constants';
@@ -9,6 +9,7 @@ import { getPalette, createBgTexture, createStageDecor } from '../ui/pixelArt';
 import { CharacterSprite } from '../ui/CharacterSprite';
 import { sound } from '../audio/sound';
 import { saveGame } from '../data/save';
+import { clearTrainingTrack, setTrainingTrack } from '../data/trainingTrack';
 import { addMotivation, dominantMotivation, motivationBar } from '../data/motivation';
 import type { InitialAnswer, MotivationKind } from '../data/motivation';
 import { academicBaseScore, approximateRank, estimateFromChoice, familyScoreModifier, familyStatusFromAttrs } from '../data/era0';
@@ -23,6 +24,7 @@ interface OptionSpec {
   h: number;
   label: string;
   sub?: string;
+  disabled?: boolean;
   action: () => void;
 }
 
@@ -51,7 +53,7 @@ export class GaokaoScene extends Phaser.Scene {
   private attrValues: AttrAlloc = { family: 2, academic: 5, luck: 1, looks: 2 };
   private attrFocus = 0;
   private readonly ATTR_BUDGET = 10;
-  // 助学贷款开关（非富裕家庭可选：上学 +1500/季、工作后还 -1500/季）
+  // 助学贷款开关（非富裕家庭可选：在读 +1500/季、工作后还 -1500/季）
   private loanOn = false;
   private loanToggleText!: Phaser.GameObjects.Text;
   private loanBarText!: Phaser.GameObjects.Text;
@@ -199,7 +201,7 @@ export class GaokaoScene extends Phaser.Scene {
       fontFamily: '"Courier New", monospace', fontSize: '15px', color: '#ffffff', fontStyle: 'bold',
     });
     this.container.add(loanLabel);
-    const loanDesc = this.add.text(200, ly + 24, '上学期间每季 +1500 生活费，工作后每季还 1500（家境拮据/普通可用）', {
+    const loanDesc = this.add.text(200, ly + 24, '完整在读阶段每季 +1500，工作后每季还 1500（家境拮据/普通可用）', {
       fontFamily: '"Courier New", monospace', fontSize: '11px', color: '#888899',
     });
     this.container.add(loanDesc);
@@ -471,33 +473,36 @@ export class GaokaoScene extends Phaser.Scene {
     this.focusIndex = 0;
     specs.forEach((s, i) => {
       const bg = this.add.graphics();
+      const disabled = s.disabled === true;
       const draw = (focused: boolean) => {
         bg.clear();
-        bg.fillStyle(focused ? 0x2a2a52 : 0x111122, focused ? 0.98 : 0.9);
+        bg.fillStyle(disabled ? 0x101014 : focused ? 0x2a2a52 : 0x111122, disabled ? 0.75 : focused ? 0.98 : 0.9);
         bg.fillRoundedRect(s.x, s.y, s.w, s.h, 6);
-        bg.lineStyle(focused ? 2 : 1, 0x4fc3f7, focused ? 0.95 : 0.3);
+        bg.lineStyle(focused && !disabled ? 2 : 1, disabled ? 0x555566 : 0x4fc3f7, disabled ? 0.35 : focused ? 0.95 : 0.3);
         bg.strokeRoundedRect(s.x, s.y, s.w, s.h, 6);
       };
       draw(false);
       this.container.add(bg);
 
       const labelText = this.add.text(s.x + 16, s.y + 8, s.label, {
-        fontFamily: '"Courier New", monospace', fontSize: '16px', color: '#4fc3f7', fontStyle: 'bold',
+        fontFamily: '"Courier New", monospace', fontSize: '16px', color: disabled ? '#777788' : '#4fc3f7', fontStyle: 'bold',
       });
       this.container.add(labelText);
       if (s.sub) {
         this.container.add(this.add.text(s.x + 16, s.y + 32, s.sub, {
-          fontFamily: '"Courier New", monospace', fontSize: '11px', color: '#888888',
+          fontFamily: '"Courier New", monospace', fontSize: '11px', color: disabled ? '#666677' : '#888888',
         }));
       }
 
-      const hit = this.add.rectangle(s.x + s.w / 2, s.y + s.h / 2, s.w, s.h, 0, 0)
-        .setInteractive({ cursor: 'pointer' });
-      hit.on('pointerover', () => this.setFocus(i));
-      hit.on('pointerout', () => {
-        if (this.focusIndex !== i) { draw(false); labelText.setColor('#4fc3f7'); }
-      });
-      hit.on('pointerdown', () => this.choose(i));
+      const hit = this.add.rectangle(s.x + s.w / 2, s.y + s.h / 2, s.w, s.h, 0, 0);
+      if (!disabled) {
+        hit.setInteractive({ cursor: 'pointer' });
+        hit.on('pointerover', () => this.setFocus(i));
+        hit.on('pointerout', () => {
+          if (this.focusIndex !== i) { draw(false); labelText.setColor('#4fc3f7'); }
+        });
+        hit.on('pointerdown', () => this.choose(i));
+      }
 
       this.options.push({ ...s, draw, labelText });
     });
@@ -557,7 +562,7 @@ export class GaokaoScene extends Phaser.Scene {
     if (i === this.focusIndex) return;
     const old = this.options[this.focusIndex];
     old?.draw(false);
-    old?.labelText.setColor('#4fc3f7');
+    old?.labelText.setColor(old.disabled ? '#777788' : '#4fc3f7');
     this.focusIndex = i;
     this.applyFocus();
   }
@@ -566,12 +571,13 @@ export class GaokaoScene extends Phaser.Scene {
     const o = this.options[this.focusIndex];
     if (!o) return;
     o.draw(true);
-    o.labelText.setColor('#ffffff');
+    o.labelText.setColor(o.disabled ? '#888899' : '#ffffff');
   }
 
   private choose(i: number) {
     const o = this.options[i];
     if (!o) return;
+    if (o.disabled) return;
     this.removeKeyboard();
     o.action();
   }
@@ -810,19 +816,21 @@ export class GaokaoScene extends Phaser.Scene {
       fontFamily: '"Courier New", monospace', fontSize: '16px', color: '#ffffff', fontStyle: 'bold',
     }).setOrigin(0.5));
 
-    const availableTracks = TRACKS.filter(t => school.tier <= t.requiresTier)
-      .filter(t => !getState().era0.ruralOriented || t.id === 'five_year');
-
-    const specs: OptionSpec[] = availableTracks.map((track, i) => ({
+    const specs: OptionSpec[] = TRACKS.map((track, i) => {
+      const blockReason = trackBlockReason(track, school, this.selectedScore, getState().era0.ruralOriented);
+      return ({
       x: 120, y: 120 + i * 100, w: 720, h: 90,
-      label: track.name, sub: track.desc,
+      label: blockReason ? `${track.name}（不可选）` : track.name,
+      sub: blockReason ? `${track.desc}  |  ${blockReason}` : track.desc,
+      disabled: blockReason !== null,
       action: () => {
         this.selectedTrack = track;
         if (track.id === 'eight_year') this.addMotive('idealism', 2);
         if (track.id === 'five_plus_three') this.addMotive('pragmatism', 2);
         this.showAdmissionLetterPhase();
       },
-    }));
+    });
+    });
     this.renderOptions(specs);
   }
 
@@ -906,6 +914,13 @@ export class GaokaoScene extends Phaser.Scene {
     const school = this.selectedSchool!;
     const track = this.selectedTrack!;
     const state = getState();
+    const score = this.selectedScore || state.score;
+    const blockReason = trackBlockReason(track, school, score, state.era0.ruralOriented);
+    if (blockReason) {
+      this.selectedTrack = null;
+      this.showTrackPhase();
+      return;
+    }
 
     sound.click();
 
@@ -936,9 +951,9 @@ export class GaokaoScene extends Phaser.Scene {
     setFlag('initial_motivation_' + initialMotivation);
     setFlag('enrolled_' + school.id);
     setFlag('track_' + track.id);
-    // 学制 → 临床 / 科研 路线标记（驱动硕博阶段事件内容）
-    if (degree === 'phd' || degree === 'master_pro') setFlag('track_clinical');
-    else setFlag('track_research');
+    // 长学制入学即按临床一体化培养；普通五年制不预设规培后的科研/临床选择。
+    if (degree === 'phd' || degree === 'master_pro') setTrainingTrack('clinical');
+    else clearTrainingTrack();
     // 长学制（8 年一贯制：本博连读 / 5+3）统一置 long_system，
     // 用于本科结束路由直读硕士/博士，以及"连续低分转普通班"警告。
     if (track.id === 'eight_year' || track.id === 'five_plus_three') setFlag('long_system');

@@ -3,6 +3,7 @@ import { getPalette } from './pixelArt';
 import type { PaletteName } from './pixelArt';
 
 // 底部滚动新闻条。展示 gameState.newsLog 中的最新头条，循环从右向左滚动。
+// 所有公共头条都是游戏内趋势推演或匿名综合改写，不是实时新闻或医学事实来源。
 //
 // 修复：滚动文字曾与"快讯"栏目条（同一 depth，且文字后添加）互相穿插导致
 // 字符被栏目条"切碎"。现在：
@@ -17,7 +18,7 @@ export class NewsTicker {
   private idx = 0;
   private tween?: Phaser.Tweens.Tween;
   private readonly y = 506;
-  private readonly labelW = 56;
+  private readonly labelW = 104;
   private readonly tickerH = 34;
 
   constructor(scene: Phaser.Scene, paletteName: PaletteName) {
@@ -41,14 +42,19 @@ export class NewsTicker {
     // 3) "快讯" 栏目条（置于最上层，覆盖任何可能溢出的文字边沿）
     const labelBg = scene.add.graphics().setDepth(95);
     labelBg.fillStyle(pal.accent, 1).fillRect(0, this.y, this.labelW, this.tickerH);
-    this.labelText = scene.add.text(6, this.y + 9, '快讯', {
+    this.labelText = scene.add.text(6, this.y + 9, '游戏内推演', {
       fontFamily: '"Courier New", monospace', fontSize: '13px',
       color: '#0a0a0f', fontStyle: 'bold',
     }).setDepth(96);
   }
 
   refresh(headlines: string[]) {
-    this.headlines = headlines.filter(Boolean);
+    const nextHeadlines = [...new Set(headlines.filter(Boolean))];
+    const unchanged = nextHeadlines.length === this.headlines.length
+      && nextHeadlines.every((headline, index) => headline === this.headlines[index]);
+    if (unchanged && this.tween) return;
+
+    this.headlines = nextHeadlines;
     this.idx = 0;
     this.tween?.remove();
     this.showNext();
@@ -65,7 +71,7 @@ export class NewsTicker {
     // 从右侧视口外滑入，向左滑到完全离开左侧视口外（期间被遮罩裁剪）
     this.text.setX(960);
     const distance = 960 + this.text.width;
-    const duration = Math.max(7000, distance * 14);
+    const duration = Math.min(12000, Math.max(5500, distance * 7));
     this.tween = this.scene.tweens.add({
       targets: this.text,
       x: -this.text.width,

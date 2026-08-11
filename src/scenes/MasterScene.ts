@@ -1,5 +1,6 @@
 import { BaseStageScene } from './BaseStageScene';
 import { getState, updateStats } from '../data/gameState';
+import { nextSceneAfterMaster } from '../data/trainingTrack';
 
 export class MasterScene extends BaseStageScene {
   constructor() {
@@ -12,6 +13,10 @@ export class MasterScene extends BaseStageScene {
 
   protected getStageLabelText(): string { return '🔬 研究生阶段'; }
   protected shouldAdvanceToNextStage(): boolean { return getState().turnsInStage >= this.maxTurns; }
+  protected transitionToNext() {
+    this.nextSceneKey = nextSceneAfterMaster('card');
+    super.transitionToNext();
+  }
 
   protected doPassiveTurn() {
     updateStats({ stamina: -12, knowledge: 5 });

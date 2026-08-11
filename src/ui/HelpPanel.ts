@@ -12,21 +12,19 @@ export class HelpPanel {
     this.scene = scene;
     this.lines = lines;
     this.isBusy = isBusy ?? (() => false);
-    scene.input.keyboard?.on('keydown-H', () => {
-      if (this.isBusy()) return;
-      this.toggle();
-    });
+    scene.input.keyboard?.on('keydown-H', () => this.toggle());
   }
 
   /** 有面板展示中（供菜单/重开等全局快捷键守卫） */
   get busy(): boolean { return this.container !== null; }
 
-  private toggle() {
+  toggle() {
     if (this.container) {
       this.container.destroy();
       this.container = null;
       return;
     }
+    if (this.isBusy()) return;
     const W = 500;
     const rowH = 22;
     const H = Math.min(560, 56 + this.lines.length * rowH + 16);
@@ -39,9 +37,10 @@ export class HelpPanel {
     bg.strokeRoundedRect(-W / 2, -H / 2, W, H, 10);
     c.add(bg);
 
-    const title = this.scene.add.text(0, -H / 2 + 20, '操作帮助  [H] 关闭', {
+    const title = this.scene.add.text(0, -H / 2 + 20, '操作帮助  [点击 / H 关闭]', {
       fontFamily: '"Courier New", monospace', fontSize: '15px', color: '#4fc3f7', fontStyle: 'bold',
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setInteractive({ cursor: 'pointer' });
+    title.on('pointerdown', () => this.toggle());
     c.add(title);
 
     let y = -H / 2 + 50;

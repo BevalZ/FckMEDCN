@@ -149,11 +149,12 @@ export class EventCard {
       cy += bh + gapChoice;
     });
 
-    // ESC 取消提示：仅可行走场景（传入 onCancel）显示，放右上角与徽章同高
+    // 取消提示：传入 onCancel 时同时提供键盘与触控入口，放右上角与徽章同高。
     if (this.onCancel) {
-      this.cancelHint = scene.add.text(CARD_W / 2 - 20, -H / 2 + 13, 'ESC 离开', {
-        fontFamily: '"Courier New", monospace', fontSize: '10px', color: '#9aa0b5',
-      }).setOrigin(1, 0);
+      this.cancelHint = scene.add.text(CARD_W / 2 - 20, -H / 2 + 11, '点击 / ESC 离开', {
+        fontFamily: '"Courier New", monospace', fontSize: '11px', color: '#9aa0b5',
+      }).setOrigin(1, 0).setPadding(6, 4).setInteractive({ cursor: 'pointer' });
+      this.cancelHint.on('pointerdown', () => this.cancel());
       children.push(this.cancelHint);
     }
 

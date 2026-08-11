@@ -16,6 +16,7 @@ export function bindGameMenu(
   scene: Phaser.Scene,
   consequence: ConsequencePopup,
   isBusy?: () => boolean,
+  onStateChange?: () => void,
 ) {
   const MAIN_ITEMS = ['继续游戏', '返回标题', '修改性别', '理财策略', '资产账户', '重新开档'] as const;
   const GENDER_ITEMS = ['男生', '女生'] as const;
@@ -37,10 +38,12 @@ export function bindGameMenu(
   const redraw = () => {
     const list = items();
     rowTexts.forEach((t, i) => {
-      if (i >= list.length) { t.setText(''); return; }
+      if (i >= list.length) { t.setText('').disableInteractive(); return; }
       t.setColor(i === selected ? '#ffc107' : '#cccccc');
       t.setFontStyle(i === selected ? 'bold' : 'normal');
       t.setText(i === selected ? `▶ ${list[i]}` : `  ${list[i]}`);
+      // 子菜单会 disable 多余行；回到主菜单时需显式重新启用并按新文本刷新命中区。
+      t.setInteractive({ cursor: 'pointer' });
     });
   };
 
@@ -68,6 +71,7 @@ export function bindGameMenu(
       const blob = loadSave();
       if (blob) saveGame(blob.sceneKey, blob.firedEvents ?? [], blob.firedNews ?? []);
     } catch { /* 静默 */ }
+    onStateChange?.();
   };
 
   const persistCurrentState = () => {
@@ -142,6 +146,28 @@ export function bindGameMenu(
     );
   };
 
+  const confirmSelection = () => {
+    const list = items();
+    if (mode === 'gender') {
+      setGender(selected === 0 ? 'male' : 'female');
+      close();
+    } else if (mode === 'finance') {
+      setFinance(selected === 0 ? 'thrifty' : selected === 2 ? 'invest' : 'stable');
+      close();
+    } else if (mode === 'assets') {
+      if (selected === 4) { mode = 'main'; selected = 0; redraw(); }
+      else if (selected <= 1) withdraw(selected === 0 ? 5000 : 10000);
+      else spendAssets(selected === 2 ? 'education' : 'mortgage');
+    } else {
+      doMainAction(list[selected] as MainItem);
+    }
+  };
+
+  const goBack = () => {
+    if (mode !== 'main') { mode = 'main'; selected = 0; redraw(); }
+    else close();
+  };
+
   const open = () => {
     if (container || isBusy?.()) return;
     const W = 360, H = 340;
@@ -154,9 +180,10 @@ export function bindGameMenu(
     bg.strokeRoundedRect(-W / 2, -H / 2, W, H, 10);
     c.add(bg);
 
-    const title = scene.add.text(0, -H / 2 + 22, '游戏菜单  [R] 关闭', {
+    const title = scene.add.text(0, -H / 2 + 22, '游戏菜单  [点击 / R / ESC 关闭]', {
       fontFamily: '"Courier New", monospace', fontSize: '15px', color: '#ffc107', fontStyle: 'bold',
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setInteractive({ cursor: 'pointer' });
+    title.on('pointerdown', goBack);
     c.add(title);
 
     rowTexts.length = 0;
@@ -164,10 +191,16 @@ export function bindGameMenu(
       const t = scene.add.text(-W / 2 + 40, -H / 2 + 60 + i * 40, '', {
         fontFamily: '"Courier New", monospace', fontSize: '15px',
       });
+      t.on('pointerdown', () => {
+        if (i >= items().length) return;
+        selected = i;
+        redraw();
+        confirmSelection();
+      });
       rowTexts.push(t);
       c.add(t);
     }
-    const foot = scene.add.text(0, H / 2 - 20, '↑↓ 选择 · 空格 确认 · ESC 关闭', {
+    const foot = scene.add.text(0, H / 2 - 20, '点击选项 / ↑↓ 选择 · 空格确认 · ESC 关闭', {
       fontFamily: '"Courier New", monospace', fontSize: '11px', color: '#888888',
     }).setOrigin(0.5);
     c.add(foot);
@@ -182,39 +215,25 @@ export function bindGameMenu(
       else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); selected = (selected + 1) % n; redraw(); }
       else if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        const list = items();
-        if (mode === 'gender') {
-          setGender(selected === 0 ? 'male' : 'female');
-          close();
-        } else if (mode === 'finance') {
-          setFinance(selected === 0 ? 'thrifty' : selected === 2 ? 'invest' : 'stable');
-          close();
-        } else if (mode === 'assets') {
-          if (selected === 4) { mode = 'main'; selected = 0; redraw(); }
-          else if (selected <= 1) withdraw(selected === 0 ? 5000 : 10000);
-          else spendAssets(selected === 2 ? 'education' : 'mortgage');
-        } else {
-          doMainAction(list[selected] as MainItem);
-        }
+        confirmSelection();
       } else if (e.key === 'Escape') {
-        if (mode !== 'main') { mode = 'main'; selected = 0; redraw(); } else { close(); }
+        goBack();
       } else {
         const num = parseInt(e.key, 10);
         if (!Number.isNaN(num) && num >= 1 && num <= n) {
-          const list = items();
-          const picked = num - 1;
-          if (mode === 'gender') { setGender(picked === 0 ? 'male' : 'female'); close(); }
-          else if (mode === 'finance') { setFinance(picked === 0 ? 'thrifty' : picked === 2 ? 'invest' : 'stable'); close(); }
-          else if (mode === 'assets') {
-            if (picked === 4) { mode = 'main'; selected = 0; redraw(); }
-            else if (picked <= 1) withdraw(picked === 0 ? 5000 : 10000);
-            else spendAssets(picked === 2 ? 'education' : 'mortgage');
-          } else doMainAction(list[picked] as MainItem);
+          selected = num - 1;
+          confirmSelection();
         }
       }
     };
     scene.input.keyboard?.on('keydown', kbHandler);
   };
 
-  scene.input.keyboard?.on('keydown-R', open);
+  const toggle = () => { if (container) close(); else open(); };
+  scene.input.keyboard?.on('keydown-R', toggle);
+  return {
+    open,
+    toggle,
+    get busy() { return container !== null; },
+  };
 }

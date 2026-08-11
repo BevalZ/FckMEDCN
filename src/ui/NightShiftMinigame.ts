@@ -53,19 +53,24 @@ export class NightShiftMinigame {
     const title = scene.add.text(480, 118, opts?.title ?? '夜班 · 呼叫铃', {
       fontFamily: '"Courier New", monospace', fontSize: '18px', color: '#ffffff', fontStyle: 'bold',
     }).setOrigin(0.5, 0);
-    const hint = scene.add.text(480, 148, '数字键 1–5 响应对应床位呼叫 · 漏接会扣分', {
+    const touch = scene.sys.game.device.input.touch;
+    const hint = scene.add.text(480, 148, touch ? '点击亮起的床位响应呼叫 · 漏接会扣分' : '数字键 1–5 响应对应床位呼叫 · 漏接会扣分', {
       fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#9aa0b5',
     }).setOrigin(0.5, 0);
     this.root.add([title, hint]);
 
     // 床位占位
-    for (const s of SLOTS) {
+    SLOTS.forEach((s, slot) => {
       const bed = scene.add.rectangle(s.x, s.y, 100, 64, 0x1e2a38).setStrokeStyle(1, 0x455a64);
+      if (touch) {
+        bed.setInteractive({ cursor: 'pointer' });
+        bed.on('pointerdown', () => this.tryHandle(slot));
+      }
       const lab = scene.add.text(s.x, s.y + 28, `[${s.key}]`, {
         fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#78909c',
       }).setOrigin(0.5, 0);
       this.root.add([bed, lab]);
-    }
+    });
 
     this.status = scene.add.text(480, 390, '待命中……', {
       fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#ffe082',

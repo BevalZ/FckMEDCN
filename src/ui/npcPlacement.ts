@@ -13,13 +13,45 @@
 // 返回 null 表示门口周围找不到落脚点（地图配置极端），调用方应跳过该 NPC，
 // 而不是把它放到一个不可达的位置。
 
-/** 候选偏移的搜索顺序：先门口下方与两侧（视觉上"在门边"），再向外扩一圈。 */
-const CANDIDATE_OFFSETS: ReadonlyArray<readonly [dc: number, dr: number]> = [
+function buildCandidateOffsets(): ReadonlyArray<readonly [dc: number, dr: number]> {
+  const preferred: Array<readonly [number, number]> = [
   [1, 1], [-1, 1], [1, 0], [-1, 0],
   [0, 1], [2, 1], [-2, 1], [2, 0], [-2, 0],
   [1, 2], [-1, 2], [0, 2],
   [1, -1], [-1, -1], [0, -1],
-];
+  ];
+  const seen = new Set(preferred.map(([dc, dr]) => `${dc},${dr}`));
+
+  for (let radius = 2; radius <= 6; radius++) {
+    const ring: Array<readonly [number, number]> = [];
+    for (let dr = -radius; dr <= radius; dr++) {
+      for (let dc = -radius; dc <= radius; dc++) {
+        if (dc === 0 && dr === 0) continue;
+        if (Math.max(Math.abs(dc), Math.abs(dr)) !== radius) continue;
+        ring.push([dc, dr]);
+      }
+    }
+    ring.sort(([adc, adr], [bdc, bdr]) => {
+      const aAbove = adr < 0 ? 1 : 0;
+      const bAbove = bdr < 0 ? 1 : 0;
+      if (aAbove !== bAbove) return aAbove - bAbove;
+      if (Math.abs(adr) !== Math.abs(bdr)) return Math.abs(adr) - Math.abs(bdr);
+      if (Math.abs(adc) !== Math.abs(bdc)) return Math.abs(adc) - Math.abs(bdc);
+      return adc - bdc;
+    });
+    for (const [dc, dr] of ring) {
+      const key = `${dc},${dr}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      preferred.push([dc, dr]);
+    }
+  }
+
+  return preferred;
+}
+
+/** 候选偏移的搜索顺序：先门口附近，再向外扩圈，支撑同地点多 NPC 错开。 */
+const CANDIDATE_OFFSETS = buildCandidateOffsets();
 
 export interface PlacementGrid {
   cols: number;
