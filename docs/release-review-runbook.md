@@ -31,7 +31,7 @@ npm run release:review > release-review-workpack.md
 npm run check
 ```
 
-然后由真人在 `sources/release-acceptance.json` 对应项目中记录：设备/操作系统、浏览器版本、屏幕方向、刘海或安全区表现、触控小游戏、长时间操作、音频首次解锁，以及发现问题的复现步骤。只有真实验收者填写 `reviewedBy`、`reviewedAt` 和具体 `notes` 后才能设为 `verified`。
+然后由真人在 `sources/release-acceptance.json` 对应项目中填写 `environment`（设备、操作系统、浏览器和版本），并逐条执行 `scenarios`，包括检查生产包控制台。每条场景通过后设为 `verified` 并填写具体 `notes`；发现问题时保留总体 `pending`，在场景 notes 中记录复现步骤。只有所有必测场景逐项通过，且真实验收者填写 `reviewedBy`、`reviewedAt` 和总体 `notes` 后，才能把父级验收项设为 `verified`。
 
 ## 发布顺序
 

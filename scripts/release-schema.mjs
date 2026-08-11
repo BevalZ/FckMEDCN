@@ -20,6 +20,18 @@ const MEDICAL_CATEGORIES = new Set([
 ]);
 const REVIEW_STATUSES = new Set(['pending', 'verified', 'rejected']);
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const REQUIRED_ACCEPTANCE_SCENARIOS = new Map([
+  ['desktop-lifecycle', [
+    'new-game', 'continue-save', 'clinical-route', 'research-route',
+    'exit-route', 'late-life-route', 'restart-save', 'console-clean',
+  ]],
+  ['ios-safari-device', [
+    'portrait', 'landscape', 'safe-area', 'touch-minigames', 'long-session', 'audio-unlock', 'console-clean',
+  ]],
+  ['android-chrome-device', [
+    'portrait', 'landscape', 'safe-area', 'touch-minigames', 'long-session', 'audio-unlock', 'console-clean',
+  ]],
+]);
 
 function isObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -214,14 +226,59 @@ function validateAcceptance(manifest, failures) {
       if (!hasString(record, field)) failures.push(`${prefix}.${field} 必须是字符串`);
     }
     if (!hasText(record, 'label')) failures.push(`${prefix} 缺少验收名称`);
-    if (record.status === 'verified'
-      && (!hasText(record, 'reviewedBy') || !hasIsoDate(record, 'reviewedAt') || !hasText(record, 'notes'))) {
-      failures.push(`${prefix} 标为 verified 时必须有审阅人、日期和设备/浏览器说明`);
+
+    const environmentFields = ['device', 'os', 'browser', 'browserVersion'];
+    if (!isObject(record.environment)) {
+      failures.push(`${prefix}.environment 必须是对象`);
+    } else {
+      for (const field of environmentFields) {
+        if (!hasString(record.environment, field)) failures.push(`${prefix}.environment.${field} 必须是字符串`);
+      }
+    }
+
+    const scenarios = Array.isArray(record.scenarios) ? record.scenarios : [];
+    if (!Array.isArray(record.scenarios) || scenarios.length === 0) {
+      failures.push(`${prefix}.scenarios 必须是非空数组`);
+    } else {
+      checkUniqueIds(scenarios, `${prefix}.scenarios`, failures);
+      for (const [scenarioIndex, scenario] of scenarios.entries()) {
+        const scenarioPrefix = `${prefix}.scenarios[${scenario?.id ?? scenarioIndex}]`;
+        if (!isObject(scenario)) {
+          failures.push(`${scenarioPrefix} 必须是对象`);
+          continue;
+        }
+        if (!REVIEW_STATUSES.has(scenario.status)) failures.push(`${scenarioPrefix}.status 非法`);
+        for (const field of ['label', 'notes']) {
+          if (!hasString(scenario, field)) failures.push(`${scenarioPrefix}.${field} 必须是字符串`);
+        }
+        if (!hasText(scenario, 'label')) failures.push(`${scenarioPrefix} 缺少场景名称`);
+        if (scenario.status !== 'pending' && !hasText(scenario, 'notes')) {
+          failures.push(`${scenarioPrefix} 完成或拒绝时必须填写具体 notes`);
+        }
+      }
+    }
+
+    const requiredScenarios = REQUIRED_ACCEPTANCE_SCENARIOS.get(record.id) ?? [];
+    const scenarioIds = new Set(scenarios.map(scenario => scenario?.id));
+    for (const scenarioId of requiredScenarios) {
+      if (!scenarioIds.has(scenarioId)) failures.push(`${prefix} 缺少必需场景：${scenarioId}`);
+    }
+
+    if (record.status === 'verified') {
+      if (!hasText(record, 'reviewedBy') || !hasIsoDate(record, 'reviewedAt') || !hasText(record, 'notes')) {
+        failures.push(`${prefix} 标为 verified 时必须有审阅人、日期和总体结论`);
+      }
+      if (!isObject(record.environment)
+        || environmentFields.some(field => !hasText(record.environment, field))) {
+        failures.push(`${prefix} 标为 verified 时必须填写设备、操作系统、浏览器和版本`);
+      }
+      if (scenarios.length === 0 || scenarios.some(scenario => scenario?.status !== 'verified')) {
+        failures.push(`${prefix} 标为 verified 时所有验收场景必须逐项 verified`);
+      }
     }
   }
 
-  const required = new Set(['desktop-lifecycle', 'ios-safari-device', 'android-chrome-device']);
-  for (const id of required) {
+  for (const id of REQUIRED_ACCEPTANCE_SCENARIOS.keys()) {
     if (!manifest.checks.some(record => record?.id === id)) failures.push(`release-acceptance.json 缺少必需验收项：${id}`);
   }
 }

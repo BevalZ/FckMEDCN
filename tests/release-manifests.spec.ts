@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { test, expect } from '@playwright/test';
 
@@ -26,6 +27,72 @@ test('医学事实清单完整保留当前 78 个复核对象，流程预审不�
   expect(manifest.records.filter((record: any) => record.preReviewStatus === 'flow_checked')).toHaveLength(26);
   expect(manifest.records.filter((record: any) =>
     record.preReviewStatus === 'flow_checked' && record.status === 'verified')).toEqual([]);
+});
+
+test('人工验收清单覆盖桌面生命周期与移动端必测场景', () => {
+  const manifest = readJson('sources/release-acceptance.json');
+  const expectedScenarios: Record<string, string[]> = {
+    'desktop-lifecycle': [
+      'new-game', 'continue-save', 'clinical-route', 'research-route',
+      'exit-route', 'late-life-route', 'restart-save', 'console-clean',
+    ],
+    'ios-safari-device': [
+      'portrait', 'landscape', 'safe-area', 'touch-minigames', 'long-session', 'audio-unlock', 'console-clean',
+    ],
+    'android-chrome-device': [
+      'portrait', 'landscape', 'safe-area', 'touch-minigames', 'long-session', 'audio-unlock', 'console-clean',
+    ],
+  };
+
+  for (const [id, expected] of Object.entries(expectedScenarios)) {
+    const check = manifest.checks.find((record: any) => record.id === id);
+    expect(check, `缺少 ${id}`).toBeTruthy();
+    expect(Object.keys(check.environment).sort()).toEqual(['browser', 'browserVersion', 'device', 'os']);
+    expect(check.scenarios.map((scenario: any) => scenario.id)).toEqual(expected);
+    expect(check.scenarios.every((scenario: any) => scenario.status === 'pending')).toBe(true);
+  }
+});
+
+test('verified 人工验收必须逐场景通过并填写完整环境', async () => {
+  // @ts-expect-error Runtime release validator is intentionally plain ESM JavaScript.
+  const { validateReleaseManifests } = await import('../scripts/release-schema.mjs');
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'fckmedcn-release-schema-'));
+  try {
+    fs.cpSync(path.join(ROOT, 'sources'), path.join(tempRoot, 'sources'), { recursive: true });
+    const acceptancePath = path.join(tempRoot, 'sources', 'release-acceptance.json');
+    const acceptance = JSON.parse(fs.readFileSync(acceptancePath, 'utf8'));
+    const desktop = acceptance.checks.find((record: any) => record.id === 'desktop-lifecycle');
+    desktop.status = 'verified';
+    desktop.reviewedBy = '真实验收者';
+    desktop.reviewedAt = '2026-08-12';
+    desktop.notes = '完整生命周期逐项验收通过。';
+    desktop.environment = {
+      device: 'Desktop PC', os: 'Windows 11', browser: 'Chromium', browserVersion: '140',
+    };
+    for (const scenario of desktop.scenarios) {
+      scenario.status = 'verified';
+      scenario.notes = '真机验收通过。';
+    }
+
+    desktop.scenarios[0].status = 'pending';
+    fs.writeFileSync(acceptancePath, JSON.stringify(acceptance));
+    expect(validateReleaseManifests(tempRoot).failures)
+      .toContain('release-acceptance.json[desktop-lifecycle] 标为 verified 时所有验收场景必须逐项 verified');
+
+    desktop.scenarios[0].status = 'verified';
+    desktop.scenarios[0].notes = '';
+    fs.writeFileSync(acceptancePath, JSON.stringify(acceptance));
+    expect(validateReleaseManifests(tempRoot).failures)
+      .toContain('release-acceptance.json[desktop-lifecycle].scenarios[new-game] 完成或拒绝时必须填写具体 notes');
+
+    desktop.scenarios[0].notes = '真机验收通过。';
+    desktop.environment.browserVersion = '';
+    fs.writeFileSync(acceptancePath, JSON.stringify(acceptance));
+    expect(validateReleaseManifests(tempRoot).failures)
+      .toContain('release-acceptance.json[desktop-lifecycle] 标为 verified 时必须填写设备、操作系统、浏览器和版本');
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
 });
 
 test('候选外部来源使用直接链接但保持 pending，等待真人复核', () => {
@@ -86,5 +153,8 @@ test('release:review 生成完整的人工复核工作包，不改变 pending �
   expect(output).toContain('clinical-pharmacist');
   expect(output).toContain('External evidence queue');
   expect(output).toContain('8 source-complete awaiting reviewer, 0 source-incomplete');
+  expect(output).toContain('0/8 verified');
+  expect(output).toContain('late-life-route');
+  expect(output).toContain('audio-unlock');
   for (const record of manifest.records) expect(output).toContain(record.id);
 });

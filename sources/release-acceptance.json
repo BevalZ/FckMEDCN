@@ -7,6 +7,22 @@
       "status": "pending",
       "reviewedBy": "",
       "reviewedAt": "",
+      "environment": {
+        "device": "",
+        "os": "",
+        "browser": "",
+        "browserVersion": ""
+      },
+      "scenarios": [
+        { "id": "new-game", "label": "新开局", "status": "pending", "notes": "" },
+        { "id": "continue-save", "label": "继续旧档", "status": "pending", "notes": "" },
+        { "id": "clinical-route", "label": "完整临床线", "status": "pending", "notes": "" },
+        { "id": "research-route", "label": "完整科研线", "status": "pending", "notes": "" },
+        { "id": "exit-route", "label": "退出线提前终止", "status": "pending", "notes": "" },
+        { "id": "late-life-route", "label": "晚年三阶段", "status": "pending", "notes": "" },
+        { "id": "restart-save", "label": "重开档并确认状态重置", "status": "pending", "notes": "" },
+        { "id": "console-clean", "label": "生产包控制台无错误", "status": "pending", "notes": "" }
+      ],
       "notes": ""
     },
     {
@@ -15,6 +31,21 @@
       "status": "pending",
       "reviewedBy": "",
       "reviewedAt": "",
+      "environment": {
+        "device": "",
+        "os": "",
+        "browser": "",
+        "browserVersion": ""
+      },
+      "scenarios": [
+        { "id": "portrait", "label": "竖屏布局", "status": "pending", "notes": "" },
+        { "id": "landscape", "label": "横屏布局", "status": "pending", "notes": "" },
+        { "id": "safe-area", "label": "刘海与安全区", "status": "pending", "notes": "" },
+        { "id": "touch-minigames", "label": "触控小游戏", "status": "pending", "notes": "" },
+        { "id": "long-session", "label": "长时间操作与多次切场景", "status": "pending", "notes": "" },
+        { "id": "audio-unlock", "label": "首次用户手势解锁音频", "status": "pending", "notes": "" },
+        { "id": "console-clean", "label": "生产包控制台无错误", "status": "pending", "notes": "" }
+      ],
       "notes": ""
     },
     {
@@ -23,6 +54,21 @@
       "status": "pending",
       "reviewedBy": "",
       "reviewedAt": "",
+      "environment": {
+        "device": "",
+        "os": "",
+        "browser": "",
+        "browserVersion": ""
+      },
+      "scenarios": [
+        { "id": "portrait", "label": "竖屏布局", "status": "pending", "notes": "" },
+        { "id": "landscape", "label": "横屏布局", "status": "pending", "notes": "" },
+        { "id": "safe-area", "label": "刘海与安全区", "status": "pending", "notes": "" },
+        { "id": "touch-minigames", "label": "触控小游戏", "status": "pending", "notes": "" },
+        { "id": "long-session", "label": "长时间操作与多次切场景", "status": "pending", "notes": "" },
+        { "id": "audio-unlock", "label": "首次用户手势解锁音频", "status": "pending", "notes": "" },
+        { "id": "console-clean", "label": "生产包控制台无错误", "status": "pending", "notes": "" }
+      ],
       "notes": ""
     }
   ]

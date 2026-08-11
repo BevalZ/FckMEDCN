@@ -78,11 +78,29 @@ if (failures.length > 0) {
 
   console.log('## 3. Manual acceptance queue');
   console.log('');
-  console.log('| id | label | status | required record |');
-  console.log('|---|---|---|---|');
+  console.log('| id | label | status | scenario progress | environment |');
+  console.log('|---|---|---|---|---|');
   for (const record of acceptance) {
-    console.log(`| ${cell(record.id)} | ${cell(record.label)} | ${cell(record.status)} | reviewer + ISO date + device/browser/OS notes |`);
+    const scenarios = Array.isArray(record.scenarios) ? record.scenarios : [];
+    const passed = scenarios.filter(scenario => scenario.status === 'verified').length;
+    const environment = record.environment
+      ? [record.environment.device, record.environment.os, record.environment.browser, record.environment.browserVersion]
+        .filter(Boolean).join(' / ')
+      : '';
+    console.log(`| ${cell(record.id)} | ${cell(record.label)} | ${cell(record.status)} | ${passed}/${scenarios.length} verified | ${cell(environment || '—')} |`);
   }
+  console.log('');
+  for (const record of acceptance) {
+    console.log(`### ${cell(record.label)}`);
+    console.log('');
+    console.log('| scenario id | check | status | notes |');
+    console.log('|---|---|---|---|');
+    for (const scenario of record.scenarios ?? []) {
+      console.log(`| ${cell(scenario.id)} | ${cell(scenario.label)} | ${cell(scenario.status)} | ${cell(scenario.notes || '—')} |`);
+    }
+    console.log('');
+  }
+  console.log('A parent acceptance record may be `verified` only after every scenario is individually `verified`, each scenario has concrete notes, and the reviewer, ISO date, device, OS, browser, and browser version are recorded.');
   console.log('');
   console.log('After each real review, run `npm run release:schema`, inspect the diff, and only then rerun `npm run release:check`.');
 }
