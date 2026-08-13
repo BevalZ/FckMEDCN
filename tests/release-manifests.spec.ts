@@ -264,6 +264,11 @@ test('release:review 生成完整的人工复核工作包，不改变 pending �
   expect(output).toContain('### Assigned clinical-pharmacist reviews');
   expect(output).toContain('clinical-pharmacist');
   expect(output).toContain('External evidence queue');
+  expect(output).toContain('used by ending cards');
+  expect(output).toContain('quit_guipei: 心理援助热线 = 全国统一号码：12356');
+  expect(output).toContain('exhausted_attending: 中国医生职业倦怠总体检出率 = 系统综述汇总为 75.48%');
+  expect(output).toContain('worker_steady: 技能工种缺口 = 制造业 / 服务业长期存在');
+  expect(output).toContain('exact card wording listed in `used by ending cards`');
   expect(output).toContain('8 source-complete awaiting reviewer, 0 source-incomplete');
   expect(output).toContain('reviewedBy, reviewedAt, notes');
   expect(output).toContain('0/8 verified');

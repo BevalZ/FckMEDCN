@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -39,6 +40,28 @@ if (failures.length > 0) {
     !record.reviewedAt && 'reviewedAt',
     !record.notes && 'notes',
   ].filter(Boolean).join(', ') || 'none';
+  const parseEndingEvidenceUsage = () => {
+    const endingsPath = path.join(root, 'src', 'data', 'endings.ts');
+    if (!fs.existsSync(endingsPath)) return new Map();
+    const source = fs.readFileSync(endingsPath, 'utf8');
+    const usage = new Map();
+    const endingBlocks = source.match(/\{\s*id:\s*'[^']+'[\s\S]*?realDataCard:\s*\[[\s\S]*?\]\s*,?\s*\}/gu) ?? [];
+    for (const block of endingBlocks) {
+      const endingId = block.match(/id:\s*'([^']+)'/u)?.[1] ?? 'unknown-ending';
+      const cardBlock = block.match(/realDataCard:\s*\[([\s\S]*?)\]\s*,?\s*\}/u)?.[1] ?? '';
+      const cards = cardBlock.match(/\{[^{}]*\}/gu) ?? [];
+      for (const card of cards) {
+        const evidenceId = card.match(/evidenceId:\s*'([^']+)'/u)?.[1];
+        if (!evidenceId) continue;
+        const label = card.match(/label:\s*'([^']*)'/u)?.[1] ?? '';
+        const value = card.match(/value:\s*'([^']*)'/u)?.[1] ?? '';
+        if (!usage.has(evidenceId)) usage.set(evidenceId, []);
+        usage.get(evidenceId).push({ endingId, label, value });
+      }
+    }
+    return usage;
+  };
+  const evidenceUsage = parseEndingEvidenceUsage();
   const externalEvidence = evidence.filter(record => record.scope === 'external');
   const outstandingExternal = externalEvidence.filter(record => record.status !== 'verified');
   const sourceComplete = outstandingExternal.filter(record => (
@@ -100,13 +123,17 @@ if (failures.length > 0) {
   console.log('');
   console.log('## 2. External evidence queue');
   console.log('');
-  console.log('| id | title | organization | status | missing / weak fields | current URL |');
-  console.log('|---|---|---|---|---|---|');
+  console.log('| id | title | organization | status | used by ending cards | missing / weak fields | current URL |');
+  console.log('|---|---|---|---|---|---|---|');
   for (const record of externalEvidence) {
-    console.log(`| ${cell(record.id)} | ${cell(record.title)} | ${cell(record.organization)} | ${cell(record.status)} | ${cell(missingEvidence(record))} | ${cell(record.url || '—')} |`);
+    const usages = evidenceUsage.get(record.id) ?? [];
+    const usageText = usages.length > 0
+      ? usages.map(usage => `${usage.endingId}: ${usage.label} = ${usage.value}`).join('; ')
+      : '—';
+    console.log(`| ${cell(record.id)} | ${cell(record.title)} | ${cell(record.organization)} | ${cell(record.status)} | ${cell(usageText)} | ${cell(missingEvidence(record))} | ${cell(record.url || '—')} |`);
   }
   console.log('');
-  console.log('External evidence is releasable only when the publication is traceable, the URL points to the specific source rather than a portal homepage, and publication/access/reviewer fields are complete. A reviewer must also record an ISO review date and a concise conclusion that the source supports the exact card wording.');
+  console.log('External evidence is releasable only when the publication is traceable, the URL points to the specific source rather than a portal homepage, and publication/access/reviewer fields are complete. A reviewer must also record an ISO review date and a concise conclusion that the source supports the exact card wording listed in `used by ending cards`.');
   console.log('');
 
   console.log('## 3. Manual acceptance queue');
