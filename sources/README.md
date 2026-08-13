@@ -9,6 +9,7 @@ This directory stores review evidence and redistribution records. It must not co
 - `medical-news-sources.md`: working notes only. A generic portal URL does not make a claim verified.
 - `research/`: reproducible candidate-source retrieval logs. These files help reviewers repeat searches but are not approvals by themselves.
 - `review-workpacks/`: generated Markdown workpacks for human review. Regenerate with `npm run release:review -- --write`; these are queues for assignment and annotation, not approval records.
+- `review-artifacts/`: reviewer-supplied screenshots, console logs, recordings, or notes referenced from `release-acceptance.json` as relative `sources/review-artifacts/...` paths. Do not use local absolute paths.
 - `src/data/evidence.ts`: typed runtime adapter for `evidence.json`; do not duplicate evidence records in TypeScript.
 - `docs/release-review-runbook.md`, `npm run release:review`, and `npm run release:review -- --write`: reviewer workflow plus terminal or file-based queues for all pending medical, evidence, and acceptance records.
 

@@ -1,7 +1,7 @@
 # Release review workpack
 
-Generated at: 2026-08-13T10:09:31.564Z
-Source HEAD at generation: acf2567
+Generated at: 2026-08-13T10:13:33.864Z
+Source HEAD at generation: ed0ef1c
 Manifest schema versions: evidence v1; medical v1; audio v1; acceptance v1
 
 Generated from the four release manifests. This report is a queue, not an approval record. Do not change `pending` to `verified` without the named reviewer, date, evidence reference, and written conclusion.

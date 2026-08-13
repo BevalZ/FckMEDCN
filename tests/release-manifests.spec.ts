@@ -124,6 +124,16 @@ test('verified 人工验收必须逐场景通过并填写完整环境', async ()
     fs.writeFileSync(acceptancePath, JSON.stringify(acceptance));
     expect(validateReleaseManifests(tempRoot).failures)
       .toContain('release-acceptance.json[desktop-lifecycle].scenarios[new-game] 完成或拒绝时必须至少记录一条 evidenceArtifacts');
+
+    desktop.scenarios[0].evidenceArtifacts = ['C:/Users/reviewer/Desktop/new-game.png'];
+    fs.writeFileSync(acceptancePath, JSON.stringify(acceptance));
+    expect(validateReleaseManifests(tempRoot).failures)
+      .toContain('release-acceptance.json[desktop-lifecycle].scenarios[new-game].evidenceArtifacts 必须使用 sources/review-artifacts/ 下的相对路径');
+
+    desktop.scenarios[0].evidenceArtifacts = ['sources/review-artifacts/desktop-lifecycle/new-game.md'];
+    fs.writeFileSync(acceptancePath, JSON.stringify(acceptance));
+    expect(validateReleaseManifests(tempRoot).failures
+      .filter((failure: string) => failure.includes('release-acceptance.json[desktop-lifecycle].scenarios[new-game]'))).toEqual([]);
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true });
   }

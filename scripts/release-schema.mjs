@@ -59,6 +59,15 @@ function isHttpUrl(value, requireDirectPath = false) {
   }
 }
 
+function isReviewArtifactPath(value) {
+  return typeof value === 'string'
+    && value.startsWith('sources/review-artifacts/')
+    && !path.isAbsolute(value)
+    && !value.includes('\\')
+    && !value.split('/').includes('..')
+    && value.split('/').every(part => part.length > 0);
+}
+
 function checkSchemaVersion(manifest, label, failures) {
   if (!isObject(manifest)) {
     failures.push(`${label} 顶层必须是 JSON 对象`);
@@ -265,6 +274,12 @@ function validateAcceptance(manifest, failures) {
         if (!Array.isArray(scenario.evidenceArtifacts)
           || scenario.evidenceArtifacts.some(artifact => typeof artifact !== 'string')) {
           failures.push(`${scenarioPrefix}.evidenceArtifacts 必须是字符串数组`);
+        } else {
+          const invalidArtifacts = scenario.evidenceArtifacts.filter(artifact => hasText({ artifact }, 'artifact')
+            && !isReviewArtifactPath(artifact));
+          if (invalidArtifacts.length > 0) {
+            failures.push(`${scenarioPrefix}.evidenceArtifacts 必须使用 sources/review-artifacts/ 下的相对路径`);
+          }
         }
         if (scenario.status !== 'pending' && !hasText(scenario, 'notes')) {
           failures.push(`${scenarioPrefix} 完成或拒绝时必须填写具体 notes`);
