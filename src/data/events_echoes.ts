@@ -2,7 +2,7 @@ import type { GameEvent } from './events';
 
 // "过去的选择在回响"：把各阶段埋下的 flag 在后续阶段兑现，形成贯穿一生的后果链。
 // 每个事件都用 requireFlag 精确门控，确保只在玩家确实做过该选择时才出现。
-// 这是把"死 flag"接成真实事件链的最后一块拼图（对应 ② 选择后果链）。
+// 这是把"死 flag"接成叙事事件链的最后一块拼图（对应 ② 选择后果链）。
 export const ECHO_EVENTS: GameEvent[] = [
   {
     id: 'echo_remember_initial', stage: ['master', 'career'], title: '你说过“我会记得”',

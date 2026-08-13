@@ -1,6 +1,6 @@
 // 求职写实管线（jobhunt 阶段）。
 // 目标：把"投简历→笔试→面试→多offer→签三方→违约"与"本校附属加成 / 导师推荐人情黑箱"做成可玩、可测、
-// 尽量贴近真实的机制。所有地区经济都落到 economy.ts currentRegionTier 已消费的 region flag 上
+// 尽量贴近玩家体感的机制。所有地区经济都落到 economy.ts currentRegionTier 已消费的 region flag 上
 // （offer_sanjia / took_hospital_a / took_public / took_private / offer_grass），由 signUnit 写。
 //
 // 设计要点：
@@ -20,9 +20,9 @@ const DEGREE_TEXT: Record<RecruitUnit['minDegree'], string> = {
   phd: '博士起（科研岗）',
 };
 
-// 笔试 / 面试基础通过率（按档位，越顶尖越难）。R15 据真实数据校准：
-// 市直三甲热门岗报录比 20-50:1、进面率不足 15%，故顶尖档 base 压到 ~0.3；
-// 县城/社区相对宽松。BASE 是"已满足学历/硬门槛后的合格考生"口径，故高于全社会报录比。
+// 笔试 / 面试基础通过率（按档位，越顶尖越难）。R15 按游戏平衡校准：
+// 热门三甲岗竞争强、基层相对宽松；顶尖档 base 压到 ~0.3 以形成路线差异。
+// BASE 是"已满足学历/硬门槛后的合格考生"口径，用于模拟而非现实统计。
 const EXAM_BASE: Record<RecruitUnit['tier'], number> = {
   sanjiajia: 0.3, sanjiayi: 0.42, erjia: 0.68, community: 0.85,
 };

@@ -7,6 +7,38 @@ import { validateReleaseManifests } from './release-schema.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { failures, manifests } = validateReleaseManifests(root);
 
+const ungatedRealityClaimPatterns = [
+  /真实事件/u,
+  /真实背景/u,
+  /真实数据/u,
+  /真实参照/u,
+  /现实口径/u,
+  /现实中/u,
+  /据真实数据校准/u,
+  /公开报道/u,
+  /行业公开数据/u,
+];
+const sourceDataRoot = path.join(root, 'src', 'data');
+function collectSourceDataFiles(directory) {
+  if (!fs.existsSync(directory)) return [];
+  const files = [];
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const absolute = path.join(directory, entry.name);
+    if (entry.isDirectory()) files.push(...collectSourceDataFiles(absolute));
+    else if (/\.(ts|tsx|js|json)$/i.test(entry.name)) files.push(absolute);
+  }
+  return files;
+}
+for (const file of collectSourceDataFiles(sourceDataRoot)) {
+  const text = fs.readFileSync(file, 'utf8');
+  const matched = ungatedRealityClaimPatterns
+    .filter(pattern => pattern.test(text))
+    .map(pattern => pattern.source);
+  if (matched.length > 0) {
+    failures.push(`源码数据包含未经证据门禁的现实声明：${path.relative(root, file).replaceAll('\\', '/')}（${matched.join(', ')}）`);
+  }
+}
+
 const medicalRecords = Array.isArray(manifests.medical?.records) ? manifests.medical.records : [];
 const medicalOutstanding = medicalRecords.filter(record => record?.status !== 'verified');
 if (medicalOutstanding.length > 0) {

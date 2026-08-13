@@ -168,6 +168,30 @@ test('verified 外部证据必须记录复核日期与原句支持结论', async
   }
 });
 
+test('release:check 阻止源码数据中的未经门禁现实声明', () => {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'fckmedcn-release-content-'));
+  try {
+    fs.cpSync(path.join(ROOT, 'scripts'), path.join(tempRoot, 'scripts'), { recursive: true });
+    fs.cpSync(path.join(ROOT, 'sources'), path.join(tempRoot, 'sources'), { recursive: true });
+    fs.mkdirSync(path.join(tempRoot, 'src', 'data'), { recursive: true });
+    fs.writeFileSync(
+      path.join(tempRoot, 'src', 'data', 'unsafe.ts'),
+      "export const unsafe = '真实数据：未经 evidence registry 复核';\n",
+    );
+
+    const result = spawnSync(process.execPath, ['scripts/release-check.mjs'], {
+      cwd: tempRoot,
+      encoding: 'utf8',
+    });
+    const output = `${result.stdout}\n${result.stderr}`;
+    expect(result.status, output).toBe(1);
+    expect(output).toContain('源码数据包含未经证据门禁的现实声明：src/data/unsafe.ts');
+    expect(output).toContain('真实数据');
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
+
 test('release:check 的退出码与结构化清单中的未闭环状态一致', () => {
   const evidence = readJson('sources/evidence.json');
   const medical = readJson('sources/medical-fact-audit.json');

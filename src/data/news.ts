@@ -1,6 +1,6 @@
 import { GENERATED_NEWS_TICKER } from './newsGenerated';
 
-// 新闻滚动条数据（M3）。按年份/季度组织公开报道主题的匿名综合改写。
+// 新闻滚动条数据（M3）。按年份/季度组织公共议题的匿名综合改写。
 // 与 gameState.NewsItem 结构保持一致（year/quarter/headline/type），额外带 id 供去重。
 
 export type NewsType = 'event' | 'warning' | 'irony' | 'tragedy';
