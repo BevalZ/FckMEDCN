@@ -151,6 +151,12 @@ test('verified 人工验收必须逐场景通过并填写完整环境', async ()
 
     desktop.scenarios[0].evidenceArtifacts = ['sources/review-artifacts/desktop-lifecycle/new-game.md'];
     fs.writeFileSync(acceptancePath, JSON.stringify(acceptance));
+    expect(validateReleaseManifests(tempRoot).failures)
+      .toContain('release-acceptance.json[desktop-lifecycle].scenarios[new-game].evidenceArtifacts 引用的证据文件不存在：sources/review-artifacts/desktop-lifecycle/new-game.md');
+
+    const artifactPath = path.join(tempRoot, 'sources', 'review-artifacts', 'desktop-lifecycle', 'new-game.md');
+    fs.mkdirSync(path.dirname(artifactPath), { recursive: true });
+    fs.writeFileSync(artifactPath, '# new-game acceptance evidence\n');
     expect(validateReleaseManifests(tempRoot).failures
       .filter((failure: string) => failure.includes('release-acceptance.json[desktop-lifecycle].scenarios[new-game]'))).toEqual([]);
   } finally {

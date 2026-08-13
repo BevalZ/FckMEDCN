@@ -224,7 +224,7 @@ function validateAudio(manifest, failures) {
   }
 }
 
-function validateAcceptance(manifest, failures) {
+function validateAcceptance(manifest, root, failures) {
   if (!checkSchemaVersion(manifest, RELEASE_MANIFEST_FILES.acceptance, failures)) return;
   if (!Array.isArray(manifest.checks) || manifest.checks.length === 0) {
     failures.push('release-acceptance.json checks 必须是非空数组');
@@ -283,6 +283,12 @@ function validateAcceptance(manifest, failures) {
           if (nonEmptyArtifacts.includes('sources/review-artifacts/TEMPLATE.md')) {
             failures.push(`${scenarioPrefix}.evidenceArtifacts 不能引用 sources/review-artifacts/TEMPLATE.md 模板`);
           }
+          const missingArtifacts = nonEmptyArtifacts.filter(artifact => isReviewArtifactPath(artifact)
+            && artifact !== 'sources/review-artifacts/TEMPLATE.md'
+            && !fs.existsSync(path.join(root, artifact)));
+          if (missingArtifacts.length > 0) {
+            failures.push(`${scenarioPrefix}.evidenceArtifacts 引用的证据文件不存在：${missingArtifacts.join(', ')}`);
+          }
         }
         if (scenario.status !== 'pending' && !hasText(scenario, 'notes')) {
           failures.push(`${scenarioPrefix} 完成或拒绝时必须填写具体 notes`);
@@ -336,7 +342,7 @@ export function validateReleaseManifests(root) {
   if (manifests.evidence) validateEvidence(manifests.evidence, failures);
   if (manifests.medical) validateMedical(manifests.medical, manifests.evidence, failures);
   if (manifests.audio) validateAudio(manifests.audio, failures);
-  if (manifests.acceptance) validateAcceptance(manifests.acceptance, failures);
+  if (manifests.acceptance) validateAcceptance(manifests.acceptance, root, failures);
   return { failures, manifests };
 }
 
