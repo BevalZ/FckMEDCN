@@ -63,17 +63,17 @@ export class CareerScene extends BaseStageScene {
         && (getState().counters['chief_quarters'] ?? 0) >= 4) {
         this.forcedEventId = 'career_chief_graduate';
       }
-      // 薄轮转：第 6 季起——非急诊强制急诊轮转；急诊强制病房支援（优先于第二起诉讼）
+      else if (turn >= 9 && !flags.has('lawsuit_done_2')) this.forcedEventId = lawsuitEventId(2);
+      else if (turn >= 12 && turn <= 16
+        && flags.has('appraisal_adverse') && !flags.has('second_appeal_done')) {
+        this.forcedEventId = 'career_second_appeal';
+      }
+      // 薄轮转：诉讼/二审之后再插——避免挡强制法务节点
       else if (turn >= 6 && flags.has('sub_emergency') && !flags.has('ward_rotation_done')) {
         this.forcedEventId = 'career_ward_rotation';
       }
       else if (turn >= 6 && hasSub && !flags.has('sub_emergency') && !flags.has('er_rotation_done')) {
         this.forcedEventId = 'career_er_rotation';
-      }
-      else if (turn >= 9 && !flags.has('lawsuit_done_2')) this.forcedEventId = lawsuitEventId(2);
-      else if (turn >= 12 && turn <= 16
-        && flags.has('appraisal_adverse') && !flags.has('second_appeal_done')) {
-        this.forcedEventId = 'career_second_appeal';
       }
       else if (turn >= 5 && !flags.has('legal_complaint_handled')) {
         setFlag('legal_complaint_due');
