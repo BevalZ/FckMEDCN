@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
@@ -9,6 +10,17 @@ const shouldWrite = process.argv.includes('--write');
 const workpackPath = path.join(root, 'sources', 'review-workpacks', 'release-review-workpack.md');
 const lines = [];
 const emit = line => lines.push(line);
+const generatedAt = new Date().toISOString();
+const gitCommit = (() => {
+  try {
+    return execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
+  } catch {
+    return 'unknown';
+  }
+})();
+const manifestVersions = manifestMap => Object.entries(manifestMap)
+  .map(([name, manifest]) => `${name} v${manifest?.schemaVersion ?? 'unknown'}`)
+  .join('; ');
 const { failures, manifests } = validateReleaseManifests(root);
 
 if (failures.length > 0) {
@@ -76,6 +88,10 @@ if (failures.length > 0) {
   ));
 
   emit('# Release review workpack');
+  emit('');
+  emit(`Generated at: ${generatedAt}`);
+  emit(`Git commit: ${gitCommit}`);
+  emit(`Manifest schema versions: ${manifestVersions(manifests)}`);
   emit('');
   emit('Generated from the four release manifests. This report is a queue, not an approval record. Do not change `pending` to `verified` without the named reviewer, date, evidence reference, and written conclusion.');
   emit('');
