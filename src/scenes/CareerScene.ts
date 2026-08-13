@@ -82,6 +82,13 @@ export class CareerScene extends BaseStageScene {
       else if (flags.has('legal_dispute_due') && !flags.has('legal_dispute_open') && !flags.has('legal_resolution_chosen')) {
         this.forcedEventId = 'legal_seal_records';
       }
+      // 诚信薄路径：普通局也可触达负向结局（插在法务节点之后）
+      else if (turn >= 7 && flags.has('passed_zhuzhi') && !flags.has('title_paper_pressure_done')) {
+        this.forcedEventId = 'career_title_paper_pressure';
+      }
+      else if (turn >= 11 && !flags.has('dept_scandal_done')) {
+        this.forcedEventId = 'career_dept_authorship_scandal';
+      }
       else if (flags.has('meaning_crisis_due')) this.forcedEventId = 'sp_midlife_collapse';
       else if (flags.has('family_crisis_due')) this.forcedEventId = 'fa_spouse_night_talk';
       else if (flags.has('love_crisis_due') && getState().marital === 'married') this.forcedEventId = 'lv_living_room';

@@ -144,6 +144,13 @@ const NARRATIVE_ONLY = new Set([
   'era6_no_successor', 'era7_accepted_retirement', 'era7_rehired',
   'era7_cannot_leave', 'era7_memoir_complete', 'era7_notes_to_students',
   'era7_reconnected', 'era8_writing', 'era8_photos_sorted',
+  // R13 诚信薄路径：分支结果由 endings/integrity 消费主 flag；细节标记纯叙事
+  'title_paper_padded', 'title_paper_gifted', 'title_paper_refused',
+  'dept_scandal_cooperated', 'gift_authorship_kept', 'gift_authorship_denied',
+  'dept_scandal_cleared', 'fraud_quiet_lived', 'fraud_self_cleaned',
+  'era6_crisis_covered', 'era6_crisis_delegated', 'era6_crisis_escalated',
+  'era7_identity_soft', 'era7_identity_clung', 'era7_identity_quiet',
+  'er_rotation_done', 'ward_rotation_done',
   'era8_family_called', 'era8_records_donated', 'era8_records_kept',
   'era8_records_destroyed', 'era8_returned_department', 'era8_returned_first_ward',
   'era8_sat_outside', 'era8_last_person_met', 'era8_last_letter',
