@@ -8,7 +8,8 @@ This directory stores review evidence and redistribution records. It must not co
 - `medical-fact-audit.json`: the machine-readable source of truth for all medical review items. `flow_checked` records are still `pending` until the appropriate clinician or pharmacist completes final review and records evidence.
 - `medical-news-sources.md`: working notes only. A generic portal URL does not make a claim verified.
 - `research/`: reproducible candidate-source retrieval logs. These files help reviewers repeat searches but are not approvals by themselves.
+- `review-workpacks/`: generated Markdown workpacks for human review. Regenerate with `npm run release:review -- --write`; these are queues for assignment and annotation, not approval records.
 - `src/data/evidence.ts`: typed runtime adapter for `evidence.json`; do not duplicate evidence records in TypeScript.
-- `docs/release-review-runbook.md` and `npm run release:review`: reviewer workflow and a generated queue for all pending medical, evidence, and acceptance records.
+- `docs/release-review-runbook.md`, `npm run release:review`, and `npm run release:review -- --write`: reviewer workflow plus terminal or file-based queues for all pending medical, evidence, and acceptance records.
 
 Run `npm run release:schema` while editing manifests and `npm run release:check` before deployment. Missing human review is a release blocker, not a warning to suppress. The Markdown audit is a readable checklist; release decisions use the JSON manifest.

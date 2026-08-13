@@ -5,6 +5,10 @@ import { fileURLToPath } from 'node:url';
 import { validateReleaseManifests } from './release-schema.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const shouldWrite = process.argv.includes('--write');
+const workpackPath = path.join(root, 'sources', 'review-workpacks', 'release-review-workpack.md');
+const lines = [];
+const emit = line => lines.push(line);
 const { failures, manifests } = validateReleaseManifests(root);
 
 if (failures.length > 0) {
@@ -71,17 +75,17 @@ if (failures.length > 0) {
     && isDirectHttpUrl(record.url)
   ));
 
-  console.log('# Release review workpack');
-  console.log('');
-  console.log('Generated from the four release manifests. This report is a queue, not an approval record. Do not change `pending` to `verified` without the named reviewer, date, evidence reference, and written conclusion.');
-  console.log('');
-  console.log(`- Medical records: ${medical.length} total; ${medical.filter(record => record.status !== 'verified').length} outstanding`);
-  console.log(`- External evidence: ${externalEvidence.length} total; ${outstandingExternal.length} outstanding (${sourceComplete.length} source-complete awaiting reviewer, ${outstandingExternal.length - sourceComplete.length} source-incomplete)`);
-  console.log(`- Manual acceptance checks: ${acceptance.length} total; ${acceptance.filter(record => record.status !== 'verified').length} outstanding`);
-  console.log('');
+  emit('# Release review workpack');
+  emit('');
+  emit('Generated from the four release manifests. This report is a queue, not an approval record. Do not change `pending` to `verified` without the named reviewer, date, evidence reference, and written conclusion.');
+  emit('');
+  emit(`- Medical records: ${medical.length} total; ${medical.filter(record => record.status !== 'verified').length} outstanding`);
+  emit(`- External evidence: ${externalEvidence.length} total; ${outstandingExternal.length} outstanding (${sourceComplete.length} source-complete awaiting reviewer, ${outstandingExternal.length - sourceComplete.length} source-incomplete)`);
+  emit(`- Manual acceptance checks: ${acceptance.length} total; ${acceptance.filter(record => record.status !== 'verified').length} outstanding`);
+  emit('');
 
-  console.log('## 1. Medical and pharmacy review queue');
-  console.log('');
+  emit('## 1. Medical and pharmacy review queue');
+  emit('');
   const outstandingMedical = medical.filter(record => record.status !== 'verified');
   const suggestedClinician = outstandingMedical.filter(record => suggestedRoleFor(record.category) === 'licensed-clinician').length;
   const suggestedPharmacist = outstandingMedical.filter(record => suggestedRoleFor(record.category) === 'clinical-pharmacist').length;
@@ -96,50 +100,50 @@ if (failures.length > 0) {
   const groupCounts = medicalGroups
     .map(([role, label]) => `${label}: ${outstandingMedical.filter(record => assignedRoleFor(record) === role).length}`)
     .join('; ');
-  console.log(`Medical queue by reviewerRole: ${groupCounts}`);
-  console.log('');
-  console.log(`Suggested reviewer split: licensed-clinician ${suggestedClinician}; clinical-pharmacist ${suggestedPharmacist}`);
-  console.log(`Pre-review split: flow_checked ${flowCheckedMedical}; not_started ${notStartedMedical}`);
-  console.log(`Medical records missing evidenceRefs: ${missingMedicalEvidence}`);
-  console.log('');
-  console.log('Rows with reviewerRole `unassigned` must be assigned to a real reviewer before they can be marked verified. The suggested role is derived from category only and is not an approval.');
-  console.log('');
+  emit(`Medical queue by reviewerRole: ${groupCounts}`);
+  emit('');
+  emit(`Suggested reviewer split: licensed-clinician ${suggestedClinician}; clinical-pharmacist ${suggestedPharmacist}`);
+  emit(`Pre-review split: flow_checked ${flowCheckedMedical}; not_started ${notStartedMedical}`);
+  emit(`Medical records missing evidenceRefs: ${missingMedicalEvidence}`);
+  emit('');
+  emit('Rows with reviewerRole `unassigned` must be assigned to a real reviewer before they can be marked verified. The suggested role is derived from category only and is not an approval.');
+  emit('');
   for (const [role, label] of medicalGroups) {
     const rows = outstandingMedical.filter(record => assignedRoleFor(record) === role);
-    console.log(`### ${label}`);
-    console.log('');
-    console.log('| id | suggested reviewer | category | label | review focus | pre-review | status | evidenceRefs |');
-    console.log('|---|---|---|---|---|---|---|---|');
+    emit(`### ${label}`);
+    emit('');
+    emit('| id | suggested reviewer | category | label | review focus | pre-review | status | evidenceRefs |');
+    emit('|---|---|---|---|---|---|---|---|');
     if (rows.length === 0) {
-      console.log('| — | — | — | — | — | — | — | — |');
+      emit('| — | — | — | — | — | — | — | — |');
     } else {
       for (const record of rows) {
-        console.log(`| ${cell(record.id)} | ${suggestedRoleFor(record.category)} | ${cell(record.category)} | ${cell(record.label)} | ${cell(record.focus)} | ${cell(record.preReviewStatus)} | ${cell(record.status)} | ${cell(record.evidenceRefs.join(', ') || '—')} |`);
+        emit(`| ${cell(record.id)} | ${suggestedRoleFor(record.category)} | ${cell(record.category)} | ${cell(record.label)} | ${cell(record.focus)} | ${cell(record.preReviewStatus)} | ${cell(record.status)} | ${cell(record.evidenceRefs.join(', ') || '—')} |`);
       }
     }
-    console.log('');
+    emit('');
   }
-  console.log('Required medical completion fields: `status: verified`, `reviewerRole`, named reviewer in `reviewedBy`, ISO date in `reviewedAt`, at least one `evidenceRefs` entry, and a concise `notes` conclusion. Medication records require `clinical-pharmacist`; other records require a licensed clinician.');
-  console.log('');
-  console.log('## 2. External evidence queue');
-  console.log('');
-  console.log('| id | title | organization | status | used by ending cards | missing / weak fields | current URL |');
-  console.log('|---|---|---|---|---|---|---|');
+  emit('Required medical completion fields: `status: verified`, `reviewerRole`, named reviewer in `reviewedBy`, ISO date in `reviewedAt`, at least one `evidenceRefs` entry, and a concise `notes` conclusion. Medication records require `clinical-pharmacist`; other records require a licensed clinician.');
+  emit('');
+  emit('## 2. External evidence queue');
+  emit('');
+  emit('| id | title | organization | status | used by ending cards | missing / weak fields | current URL |');
+  emit('|---|---|---|---|---|---|---|');
   for (const record of externalEvidence) {
     const usages = evidenceUsage.get(record.id) ?? [];
     const usageText = usages.length > 0
       ? usages.map(usage => `${usage.endingId}: ${usage.label} = ${usage.value}`).join('; ')
       : '—';
-    console.log(`| ${cell(record.id)} | ${cell(record.title)} | ${cell(record.organization)} | ${cell(record.status)} | ${cell(usageText)} | ${cell(missingEvidence(record))} | ${cell(record.url || '—')} |`);
+    emit(`| ${cell(record.id)} | ${cell(record.title)} | ${cell(record.organization)} | ${cell(record.status)} | ${cell(usageText)} | ${cell(missingEvidence(record))} | ${cell(record.url || '—')} |`);
   }
-  console.log('');
-  console.log('External evidence is releasable only when the publication is traceable, the URL points to the specific source rather than a portal homepage, and publication/access/reviewer fields are complete. A reviewer must also record an ISO review date and a concise conclusion that the source supports the exact card wording listed in `used by ending cards`.');
-  console.log('');
+  emit('');
+  emit('External evidence is releasable only when the publication is traceable, the URL points to the specific source rather than a portal homepage, and publication/access/reviewer fields are complete. A reviewer must also record an ISO review date and a concise conclusion that the source supports the exact card wording listed in `used by ending cards`.');
+  emit('');
 
-  console.log('## 3. Manual acceptance queue');
-  console.log('');
-  console.log('| id | label | status | scenario progress | environment |');
-  console.log('|---|---|---|---|---|');
+  emit('## 3. Manual acceptance queue');
+  emit('');
+  emit('| id | label | status | scenario progress | environment |');
+  emit('|---|---|---|---|---|');
   for (const record of acceptance) {
     const scenarios = Array.isArray(record.scenarios) ? record.scenarios : [];
     const passed = scenarios.filter(scenario => scenario.status === 'verified').length;
@@ -147,20 +151,27 @@ if (failures.length > 0) {
       ? [record.environment.device, record.environment.os, record.environment.browser, record.environment.browserVersion]
         .filter(Boolean).join(' / ')
       : '';
-    console.log(`| ${cell(record.id)} | ${cell(record.label)} | ${cell(record.status)} | ${passed}/${scenarios.length} verified | ${cell(environment || '—')} |`);
+    emit(`| ${cell(record.id)} | ${cell(record.label)} | ${cell(record.status)} | ${passed}/${scenarios.length} verified | ${cell(environment || '—')} |`);
   }
-  console.log('');
+  emit('');
   for (const record of acceptance) {
-    console.log(`### ${cell(record.label)}`);
-    console.log('');
-    console.log('| scenario id | check | status | notes |');
-    console.log('|---|---|---|---|');
+    emit(`### ${cell(record.label)}`);
+    emit('');
+    emit('| scenario id | check | status | notes |');
+    emit('|---|---|---|---|');
     for (const scenario of record.scenarios ?? []) {
-      console.log(`| ${cell(scenario.id)} | ${cell(scenario.label)} | ${cell(scenario.status)} | ${cell(scenario.notes || '—')} |`);
+      emit(`| ${cell(scenario.id)} | ${cell(scenario.label)} | ${cell(scenario.status)} | ${cell(scenario.notes || '—')} |`);
     }
-    console.log('');
+    emit('');
   }
-  console.log('A parent acceptance record may be `verified` only after every scenario is individually `verified`, each scenario has concrete notes, and the reviewer, ISO date, device, OS, browser, and browser version are recorded.');
-  console.log('');
-  console.log('After each real review, run `npm run release:schema`, inspect the diff, and only then rerun `npm run release:check`.');
+  emit('A parent acceptance record may be `verified` only after every scenario is individually `verified`, each scenario has concrete notes, and the reviewer, ISO date, device, OS, browser, and browser version are recorded.');
+  emit('');
+  emit('After each real review, run `npm run release:schema`, inspect the diff, and only then rerun `npm run release:check`.');
+  const output = `${lines.join('\n')}\n`;
+  process.stdout.write(output);
+  if (shouldWrite) {
+    fs.mkdirSync(path.dirname(workpackPath), { recursive: true });
+    fs.writeFileSync(workpackPath, output);
+    process.stderr.write(`Wrote release review workpack: ${path.relative(root, workpackPath).replaceAll('\\', '/')}\n`);
+  }
 }

@@ -245,6 +245,28 @@ test('release:check 的退出码与结构化清单中的未闭环状态一致', 
   }
 });
 
+test('release:review --write 生成可归档 Markdown 工作包', () => {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'fckmedcn-review-write-'));
+  try {
+    copyReleaseCheckFixture(tempRoot);
+    const result = spawnSync(process.execPath, ['scripts/release-review.mjs', '--write'], {
+      cwd: tempRoot,
+      encoding: 'utf8',
+    });
+    const output = `${result.stdout}\n${result.stderr}`;
+    const workpackPath = path.join(tempRoot, 'sources', 'review-workpacks', 'release-review-workpack.md');
+    expect(result.status, output).toBe(0);
+    expect(output).toContain('Wrote release review workpack: sources/review-workpacks/release-review-workpack.md');
+    expect(fs.existsSync(workpackPath)).toBe(true);
+    const workpack = fs.readFileSync(workpackPath, 'utf8');
+    expect(workpack).toContain('# Release review workpack');
+    expect(workpack).toContain('used by ending cards');
+    expect(workpack).toContain('Medical queue by reviewerRole');
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
+
 test('release:review 生成完整的人工复核工作包，不改变 pending 状态', () => {
   const manifest = readJson('sources/medical-fact-audit.json');
   const result = spawnSync(process.execPath, ['scripts/release-review.mjs'], {
