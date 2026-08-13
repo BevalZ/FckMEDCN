@@ -47,6 +47,14 @@ test('医学终审 reviewerRole 必须是空值或白名单角色', async () => 
     fs.rmSync(tempRoot, { recursive: true, force: true });
   }
 });
+test('人工验收证据目录记录 artifact 路径规范', () => {
+  const readme = fs.readFileSync(path.join(ROOT, 'sources', 'review-artifacts', 'README.md'), 'utf8');
+  expect(readme).toContain('sources/review-artifacts/');
+  expect(readme).toContain('Do not record local absolute paths');
+  expect(readme).toContain('protected health information');
+  expect(readme).toContain('evidenceArtifacts');
+});
+
 test('人工验收清单覆盖桌面生命周期与移动端必测场景', () => {
   const manifest = readJson('sources/release-acceptance.json');
   const expectedScenarios: Record<string, string[]> = {
