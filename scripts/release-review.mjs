@@ -16,9 +16,10 @@ if (failures.length > 0) {
     .map(([id, record]) => ({ id, ...record }));
   const acceptance = manifests.acceptance.checks;
 
-  const roleFor = category => category === 'medication'
+  const suggestedRoleFor = category => category === 'medication'
     ? 'clinical-pharmacist'
     : 'licensed-clinician';
+  const assignedRoleFor = record => record.reviewerRole || 'unassigned';
   const cell = value => String(value ?? '').replaceAll('|', '\\|').replaceAll('\n', ' ');
   const isDirectHttpUrl = value => {
     try {
@@ -58,15 +59,36 @@ if (failures.length > 0) {
 
   console.log('## 1. Medical and pharmacy review queue');
   console.log('');
-  console.log('| id | required reviewer | category | label | review focus | pre-review | status | evidenceRefs |');
-  console.log('|---|---|---|---|---|---|---|---|');
-  for (const record of medical) {
-    console.log(`| ${cell(record.id)} | ${roleFor(record.category)} | ${cell(record.category)} | ${cell(record.label)} | ${cell(record.focus)} | ${cell(record.preReviewStatus)} | ${cell(record.status)} | ${cell(record.evidenceRefs.join(', ') || '—')} |`);
-  }
+  const outstandingMedical = medical.filter(record => record.status !== 'verified');
+  const medicalGroups = [
+    ['unassigned', 'Unassigned medical/pharmacy reviews'],
+    ['licensed-clinician', 'Assigned licensed-clinician reviews'],
+    ['clinical-pharmacist', 'Assigned clinical-pharmacist reviews'],
+  ];
+  const groupCounts = medicalGroups
+    .map(([role, label]) => `${label}: ${outstandingMedical.filter(record => assignedRoleFor(record) === role).length}`)
+    .join('; ');
+  console.log(`Medical queue by reviewerRole: ${groupCounts}`);
   console.log('');
+  console.log('Rows with reviewerRole `unassigned` must be assigned to a real reviewer before they can be marked verified. The suggested role is derived from category only and is not an approval.');
+  console.log('');
+  for (const [role, label] of medicalGroups) {
+    const rows = outstandingMedical.filter(record => assignedRoleFor(record) === role);
+    console.log(`### ${label}`);
+    console.log('');
+    console.log('| id | suggested reviewer | category | label | review focus | pre-review | status | evidenceRefs |');
+    console.log('|---|---|---|---|---|---|---|---|');
+    if (rows.length === 0) {
+      console.log('| — | — | — | — | — | — | — | — |');
+    } else {
+      for (const record of rows) {
+        console.log(`| ${cell(record.id)} | ${suggestedRoleFor(record.category)} | ${cell(record.category)} | ${cell(record.label)} | ${cell(record.focus)} | ${cell(record.preReviewStatus)} | ${cell(record.status)} | ${cell(record.evidenceRefs.join(', ') || '—')} |`);
+      }
+    }
+    console.log('');
+  }
   console.log('Required medical completion fields: `status: verified`, `reviewerRole`, named reviewer in `reviewedBy`, ISO date in `reviewedAt`, at least one `evidenceRefs` entry, and a concise `notes` conclusion. Medication records require `clinical-pharmacist`; other records require a licensed clinician.');
   console.log('');
-
   console.log('## 2. External evidence queue');
   console.log('');
   console.log('| id | title | organization | status | missing / weak fields | current URL |');

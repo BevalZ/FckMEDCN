@@ -254,6 +254,11 @@ test('release:review 生成完整的人工复核工作包，不改变 pending �
   const output = `${result.stdout}\n${result.stderr}`;
   expect(result.status, output).toBe(0);
   expect(output).toContain('# Release review workpack');
+  expect(output).toContain('Medical queue by reviewerRole: Unassigned medical/pharmacy reviews: 78; Assigned licensed-clinician reviews: 0; Assigned clinical-pharmacist reviews: 0');
+  expect(output).toContain('Rows with reviewerRole `unassigned` must be assigned to a real reviewer');
+  expect(output).toContain('### Unassigned medical/pharmacy reviews');
+  expect(output).toContain('### Assigned licensed-clinician reviews');
+  expect(output).toContain('### Assigned clinical-pharmacist reviews');
   expect(output).toContain('clinical-pharmacist');
   expect(output).toContain('External evidence queue');
   expect(output).toContain('8 source-complete awaiting reviewer, 0 source-incomplete');
