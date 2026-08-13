@@ -68,6 +68,8 @@ test('人工验收清单覆盖桌面生命周期与移动端必测场景', () =>
     expect(Object.keys(check.environment).sort()).toEqual(['browser', 'browserVersion', 'device', 'os']);
     expect(check.scenarios.map((scenario: any) => scenario.id)).toEqual(expected);
     expect(check.scenarios.every((scenario: any) => scenario.status === 'pending')).toBe(true);
+    expect(check.scenarios.every((scenario: any) =>
+      scenario.steps && scenario.passCriteria && scenario.evidenceToRecord)).toBe(true);
   }
 });
 
@@ -108,6 +110,12 @@ test('verified 人工验收必须逐场景通过并填写完整环境', async ()
     fs.writeFileSync(acceptancePath, JSON.stringify(acceptance));
     expect(validateReleaseManifests(tempRoot).failures)
       .toContain('release-acceptance.json[desktop-lifecycle] 标为 verified 时必须填写设备、操作系统、浏览器和版本');
+
+    desktop.environment.browserVersion = '140';
+    desktop.scenarios[0].steps = '';
+    fs.writeFileSync(acceptancePath, JSON.stringify(acceptance));
+    expect(validateReleaseManifests(tempRoot).failures)
+      .toContain('release-acceptance.json[desktop-lifecycle].scenarios[new-game].steps 必须填写验收指引');
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true });
   }

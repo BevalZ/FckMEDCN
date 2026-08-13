@@ -255,10 +255,13 @@ function validateAcceptance(manifest, failures) {
           continue;
         }
         if (!REVIEW_STATUSES.has(scenario.status)) failures.push(`${scenarioPrefix}.status 非法`);
-        for (const field of ['label', 'notes']) {
+        for (const field of ['label', 'steps', 'passCriteria', 'evidenceToRecord', 'notes']) {
           if (!hasString(scenario, field)) failures.push(`${scenarioPrefix}.${field} 必须是字符串`);
         }
         if (!hasText(scenario, 'label')) failures.push(`${scenarioPrefix} 缺少场景名称`);
+        for (const field of ['steps', 'passCriteria', 'evidenceToRecord']) {
+          if (!hasText(scenario, field)) failures.push(`${scenarioPrefix}.${field} 必须填写验收指引`);
+        }
         if (scenario.status !== 'pending' && !hasText(scenario, 'notes')) {
           failures.push(`${scenarioPrefix} 完成或拒绝时必须填写具体 notes`);
         }
