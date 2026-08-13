@@ -173,14 +173,17 @@ if (failures.length > 0) {
   for (const record of acceptance) {
     emit(`### ${cell(record.label)}`);
     emit('');
-    emit('| scenario id | check | steps | pass criteria | evidence to record | status | notes |');
-    emit('|---|---|---|---|---|---|---|');
+    emit('| scenario id | check | steps | pass criteria | evidence to record | artifacts | status | notes |');
+    emit('|---|---|---|---|---|---|---|---|');
     for (const scenario of record.scenarios ?? []) {
-      emit(`| ${cell(scenario.id)} | ${cell(scenario.label)} | ${cell(scenario.steps)} | ${cell(scenario.passCriteria)} | ${cell(scenario.evidenceToRecord)} | ${cell(scenario.status)} | ${cell(scenario.notes || '—')} |`);
+      const artifacts = Array.isArray(scenario.evidenceArtifacts) && scenario.evidenceArtifacts.length > 0
+        ? scenario.evidenceArtifacts.join(', ')
+        : '—';
+      emit(`| ${cell(scenario.id)} | ${cell(scenario.label)} | ${cell(scenario.steps)} | ${cell(scenario.passCriteria)} | ${cell(scenario.evidenceToRecord)} | ${cell(artifacts)} | ${cell(scenario.status)} | ${cell(scenario.notes || '—')} |`);
     }
     emit('');
   }
-  emit('A parent acceptance record may be `verified` only after every scenario is individually `verified`, each scenario has concrete notes, and the reviewer, ISO date, device, OS, browser, and browser version are recorded.');
+  emit('A parent acceptance record may be `verified` only after every scenario is individually `verified`, each scenario has concrete notes and evidenceArtifacts, and the reviewer, ISO date, device, OS, browser, and browser version are recorded.');
   emit('');
   emit('After each real review, run `npm run release:schema`, inspect the diff, and only then rerun `npm run release:check`.');
   const output = `${lines.join('\n')}\n`;

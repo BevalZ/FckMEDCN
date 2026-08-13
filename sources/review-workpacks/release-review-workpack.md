@@ -1,7 +1,7 @@
 # Release review workpack
 
-Generated at: 2026-08-13T10:04:09.007Z
-Source HEAD at generation: b8cc8da
+Generated at: 2026-08-13T10:09:31.564Z
+Source HEAD at generation: acf2567
 Manifest schema versions: evidence v1; medical v1; audio v1; acceptance v1
 
 Generated from the four release manifests. This report is a queue, not an approval record. Do not change `pending` to `verified` without the named reviewer, date, evidence reference, and written conclusion.
@@ -142,41 +142,41 @@ External evidence is releasable only when the publication is traceable, the URL 
 
 ### 桌面 Chromium：新开局、旧档、临床、科研、退出、晚年和重开档
 
-| scenario id | check | steps | pass criteria | evidence to record | status | notes |
-|---|---|---|---|---|---|---|
-| new-game | 新开局 | Launch production build, start a new game, allocate attrs, enter first playable scene. | No crash; state initializes from defaults; first scene is interactable. | Record device/browser, route notes, screenshot if layout is suspect. | pending | — |
-| continue-save | 继续旧档 | Create or load an existing save, reload browser, continue from title. | Save loads without unsafe migration; age/year/stage and key flags remain coherent. | Record save origin/version and resumed stage. | pending | — |
-| clinical-route | 完整临床线 | Play a full clinical-oriented lifecycle through job/career into a final ending. | Clinical route reaches a route-appropriate ending; no early dropout/quit ending after full practice. | Record route choices, final stage, ending id, age/year. | pending | — |
-| research-route | 完整科研线 | Play a research-oriented lifecycle through master/PhD/career into a final ending. | Research route reaches a route-appropriate ending; papers/reputation effects are visible. | Record route choices, final stage, ending id, age/year/papers. | pending | — |
-| exit-route | 退出线提前终止 | Choose a supported exit path such as leaving undergrad or quitting guipei. | Route terminates immediately at the matching exit ending and does not continue later seasons. | Record exit choice, ending id, age/year. | pending | — |
-| late-life-route | 晚年三阶段 | Reach pinnacle/retirement/eternity phases and play through late-life decisions. | Late-life personal echoes appear; age/year/quarter remain coherent; final ending matches legacy/health state. | Record late-life phases visited, ending id, age/year. | pending | — |
-| restart-save | 重开档并确认状态重置 | From a populated save, start over and then reload once. | New run resets prior flags/resources and persists its own fresh state. | Record old/new stage and any reset anomalies. | pending | — |
-| console-clean | 生产包控制台无错误 | Open production build with DevTools console while exercising the target scenarios. | No uncaught errors, failed asset loads, or persistent console error spam. | Record console status; paste exact errors if any. | pending | — |
+| scenario id | check | steps | pass criteria | evidence to record | artifacts | status | notes |
+|---|---|---|---|---|---|---|---|
+| new-game | 新开局 | Launch production build, start a new game, allocate attrs, enter first playable scene. | No crash; state initializes from defaults; first scene is interactable. | Record device/browser, route notes, screenshot if layout is suspect. | — | pending | — |
+| continue-save | 继续旧档 | Create or load an existing save, reload browser, continue from title. | Save loads without unsafe migration; age/year/stage and key flags remain coherent. | Record save origin/version and resumed stage. | — | pending | — |
+| clinical-route | 完整临床线 | Play a full clinical-oriented lifecycle through job/career into a final ending. | Clinical route reaches a route-appropriate ending; no early dropout/quit ending after full practice. | Record route choices, final stage, ending id, age/year. | — | pending | — |
+| research-route | 完整科研线 | Play a research-oriented lifecycle through master/PhD/career into a final ending. | Research route reaches a route-appropriate ending; papers/reputation effects are visible. | Record route choices, final stage, ending id, age/year/papers. | — | pending | — |
+| exit-route | 退出线提前终止 | Choose a supported exit path such as leaving undergrad or quitting guipei. | Route terminates immediately at the matching exit ending and does not continue later seasons. | Record exit choice, ending id, age/year. | — | pending | — |
+| late-life-route | 晚年三阶段 | Reach pinnacle/retirement/eternity phases and play through late-life decisions. | Late-life personal echoes appear; age/year/quarter remain coherent; final ending matches legacy/health state. | Record late-life phases visited, ending id, age/year. | — | pending | — |
+| restart-save | 重开档并确认状态重置 | From a populated save, start over and then reload once. | New run resets prior flags/resources and persists its own fresh state. | Record old/new stage and any reset anomalies. | — | pending | — |
+| console-clean | 生产包控制台无错误 | Open production build with DevTools console while exercising the target scenarios. | No uncaught errors, failed asset loads, or persistent console error spam. | Record console status; paste exact errors if any. | — | pending | — |
 
 ### iOS Safari 真机：竖横屏、安全区、触控、长时操作和音频解锁
 
-| scenario id | check | steps | pass criteria | evidence to record | status | notes |
-|---|---|---|---|---|---|---|
-| portrait | 竖屏布局 | Open on the target phone in portrait and navigate title, HUD, event cards, endings. | No clipped primary controls; text remains readable; scrolling/taps work. | Record device model, OS/browser version, screenshots for issues. | pending | — |
-| landscape | 横屏布局 | Rotate to landscape and repeat title, HUD, event cards, endings. | Layout adapts without hidden controls or unusable hit targets. | Record rotation behavior and screenshots for issues. | pending | — |
-| safe-area | 刘海与安全区 | Check notch/home-indicator/status-bar areas on title, gameplay, modal/card, ending. | Interactive UI stays outside unsafe areas or remains comfortably tappable. | Record affected screens and screenshots if unsafe. | pending | — |
-| touch-minigames | 触控小游戏 | Play touch-driven minigames and dismiss overlays using only touch. | Gestures register reliably; no keyboard-only blocker; ESC alternatives exist where needed. | Record minigames tried and any missed taps. | pending | — |
-| long-session | 长时间操作与多次切场景 | Play continuously with multiple scene transitions, save/load, and orientation changes. | No memory/performance degradation, stuck overlay, or lost input after long operation. | Record duration, transitions, and final state. | pending | — |
-| audio-unlock | 首次用户手势解锁音频 | Start from a fresh browser session, perform first user gesture, trigger sound. | Audio starts only after user gesture and does not throw browser autoplay errors. | Record gesture used, sound status, console status. | pending | — |
-| console-clean | 生产包控制台无错误 | Open production build with DevTools console while exercising the target scenarios. | No uncaught errors, failed asset loads, or persistent console error spam. | Record console status; paste exact errors if any. | pending | — |
+| scenario id | check | steps | pass criteria | evidence to record | artifacts | status | notes |
+|---|---|---|---|---|---|---|---|
+| portrait | 竖屏布局 | Open on the target phone in portrait and navigate title, HUD, event cards, endings. | No clipped primary controls; text remains readable; scrolling/taps work. | Record device model, OS/browser version, screenshots for issues. | — | pending | — |
+| landscape | 横屏布局 | Rotate to landscape and repeat title, HUD, event cards, endings. | Layout adapts without hidden controls or unusable hit targets. | Record rotation behavior and screenshots for issues. | — | pending | — |
+| safe-area | 刘海与安全区 | Check notch/home-indicator/status-bar areas on title, gameplay, modal/card, ending. | Interactive UI stays outside unsafe areas or remains comfortably tappable. | Record affected screens and screenshots if unsafe. | — | pending | — |
+| touch-minigames | 触控小游戏 | Play touch-driven minigames and dismiss overlays using only touch. | Gestures register reliably; no keyboard-only blocker; ESC alternatives exist where needed. | Record minigames tried and any missed taps. | — | pending | — |
+| long-session | 长时间操作与多次切场景 | Play continuously with multiple scene transitions, save/load, and orientation changes. | No memory/performance degradation, stuck overlay, or lost input after long operation. | Record duration, transitions, and final state. | — | pending | — |
+| audio-unlock | 首次用户手势解锁音频 | Start from a fresh browser session, perform first user gesture, trigger sound. | Audio starts only after user gesture and does not throw browser autoplay errors. | Record gesture used, sound status, console status. | — | pending | — |
+| console-clean | 生产包控制台无错误 | Open production build with DevTools console while exercising the target scenarios. | No uncaught errors, failed asset loads, or persistent console error spam. | Record console status; paste exact errors if any. | — | pending | — |
 
 ### Android Chrome 真机：竖横屏、安全区、触控、长时操作和音频解锁
 
-| scenario id | check | steps | pass criteria | evidence to record | status | notes |
-|---|---|---|---|---|---|---|
-| portrait | 竖屏布局 | Open on the target phone in portrait and navigate title, HUD, event cards, endings. | No clipped primary controls; text remains readable; scrolling/taps work. | Record device model, OS/browser version, screenshots for issues. | pending | — |
-| landscape | 横屏布局 | Rotate to landscape and repeat title, HUD, event cards, endings. | Layout adapts without hidden controls or unusable hit targets. | Record rotation behavior and screenshots for issues. | pending | — |
-| safe-area | 刘海与安全区 | Check notch/home-indicator/status-bar areas on title, gameplay, modal/card, ending. | Interactive UI stays outside unsafe areas or remains comfortably tappable. | Record affected screens and screenshots if unsafe. | pending | — |
-| touch-minigames | 触控小游戏 | Play touch-driven minigames and dismiss overlays using only touch. | Gestures register reliably; no keyboard-only blocker; ESC alternatives exist where needed. | Record minigames tried and any missed taps. | pending | — |
-| long-session | 长时间操作与多次切场景 | Play continuously with multiple scene transitions, save/load, and orientation changes. | No memory/performance degradation, stuck overlay, or lost input after long operation. | Record duration, transitions, and final state. | pending | — |
-| audio-unlock | 首次用户手势解锁音频 | Start from a fresh browser session, perform first user gesture, trigger sound. | Audio starts only after user gesture and does not throw browser autoplay errors. | Record gesture used, sound status, console status. | pending | — |
-| console-clean | 生产包控制台无错误 | Open production build with DevTools console while exercising the target scenarios. | No uncaught errors, failed asset loads, or persistent console error spam. | Record console status; paste exact errors if any. | pending | — |
+| scenario id | check | steps | pass criteria | evidence to record | artifacts | status | notes |
+|---|---|---|---|---|---|---|---|
+| portrait | 竖屏布局 | Open on the target phone in portrait and navigate title, HUD, event cards, endings. | No clipped primary controls; text remains readable; scrolling/taps work. | Record device model, OS/browser version, screenshots for issues. | — | pending | — |
+| landscape | 横屏布局 | Rotate to landscape and repeat title, HUD, event cards, endings. | Layout adapts without hidden controls or unusable hit targets. | Record rotation behavior and screenshots for issues. | — | pending | — |
+| safe-area | 刘海与安全区 | Check notch/home-indicator/status-bar areas on title, gameplay, modal/card, ending. | Interactive UI stays outside unsafe areas or remains comfortably tappable. | Record affected screens and screenshots if unsafe. | — | pending | — |
+| touch-minigames | 触控小游戏 | Play touch-driven minigames and dismiss overlays using only touch. | Gestures register reliably; no keyboard-only blocker; ESC alternatives exist where needed. | Record minigames tried and any missed taps. | — | pending | — |
+| long-session | 长时间操作与多次切场景 | Play continuously with multiple scene transitions, save/load, and orientation changes. | No memory/performance degradation, stuck overlay, or lost input after long operation. | Record duration, transitions, and final state. | — | pending | — |
+| audio-unlock | 首次用户手势解锁音频 | Start from a fresh browser session, perform first user gesture, trigger sound. | Audio starts only after user gesture and does not throw browser autoplay errors. | Record gesture used, sound status, console status. | — | pending | — |
+| console-clean | 生产包控制台无错误 | Open production build with DevTools console while exercising the target scenarios. | No uncaught errors, failed asset loads, or persistent console error spam. | Record console status; paste exact errors if any. | — | pending | — |
 
-A parent acceptance record may be `verified` only after every scenario is individually `verified`, each scenario has concrete notes, and the reviewer, ISO date, device, OS, browser, and browser version are recorded.
+A parent acceptance record may be `verified` only after every scenario is individually `verified`, each scenario has concrete notes and evidenceArtifacts, and the reviewer, ISO date, device, OS, browser, and browser version are recorded.
 
 After each real review, run `npm run release:schema`, inspect the diff, and only then rerun `npm run release:check`.

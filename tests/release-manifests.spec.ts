@@ -70,6 +70,7 @@ test('人工验收清单覆盖桌面生命周期与移动端必测场景', () =>
     expect(check.scenarios.every((scenario: any) => scenario.status === 'pending')).toBe(true);
     expect(check.scenarios.every((scenario: any) =>
       scenario.steps && scenario.passCriteria && scenario.evidenceToRecord)).toBe(true);
+    expect(check.scenarios.every((scenario: any) => Array.isArray(scenario.evidenceArtifacts))).toBe(true);
   }
 });
 
@@ -92,6 +93,7 @@ test('verified 人工验收必须逐场景通过并填写完整环境', async ()
     for (const scenario of desktop.scenarios) {
       scenario.status = 'verified';
       scenario.notes = '真机验收通过。';
+      scenario.evidenceArtifacts = [`sources/review-artifacts/desktop-lifecycle/${scenario.id}.md`];
     }
 
     desktop.scenarios[0].status = 'pending';
@@ -116,6 +118,12 @@ test('verified 人工验收必须逐场景通过并填写完整环境', async ()
     fs.writeFileSync(acceptancePath, JSON.stringify(acceptance));
     expect(validateReleaseManifests(tempRoot).failures)
       .toContain('release-acceptance.json[desktop-lifecycle].scenarios[new-game].steps 必须填写验收指引');
+
+    desktop.scenarios[0].steps = 'Launch production build, start a new game, allocate attrs, enter first playable scene.';
+    desktop.scenarios[0].evidenceArtifacts = [];
+    fs.writeFileSync(acceptancePath, JSON.stringify(acceptance));
+    expect(validateReleaseManifests(tempRoot).failures)
+      .toContain('release-acceptance.json[desktop-lifecycle].scenarios[new-game] 完成或拒绝时必须至少记录一条 evidenceArtifacts');
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true });
   }
@@ -273,7 +281,7 @@ test('release:review --write 生成可归档 Markdown 工作包', () => {
     expect(workpack).toContain('Manifest schema versions: evidence v1; medical v1; audio v1; acceptance v1');
     expect(workpack).toContain('used by ending cards');
     expect(workpack).toContain('Medical queue by reviewerRole');
-    expect(workpack).toContain('| scenario id | check | steps | pass criteria | evidence to record | status | notes |');
+    expect(workpack).toContain('| scenario id | check | steps | pass criteria | evidence to record | artifacts | status | notes |');
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true });
   }
@@ -309,7 +317,7 @@ test('release:review 生成完整的人工复核工作包，不改变 pending �
   expect(output).toContain('8 source-complete awaiting reviewer, 0 source-incomplete');
   expect(output).toContain('reviewedBy, reviewedAt, notes');
   expect(output).toContain('0/8 verified');
-  expect(output).toContain('| scenario id | check | steps | pass criteria | evidence to record | status | notes |');
+  expect(output).toContain('| scenario id | check | steps | pass criteria | evidence to record | artifacts | status | notes |');
   expect(output).toContain('new-game | 新开局 | Launch production build, start a new game, allocate attrs');
   expect(output).toContain('Clinical route reaches a route-appropriate ending');
   expect(output).toContain('Record late-life phases visited, ending id, age/year');

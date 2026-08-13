@@ -262,8 +262,16 @@ function validateAcceptance(manifest, failures) {
         for (const field of ['steps', 'passCriteria', 'evidenceToRecord']) {
           if (!hasText(scenario, field)) failures.push(`${scenarioPrefix}.${field} 必须填写验收指引`);
         }
+        if (!Array.isArray(scenario.evidenceArtifacts)
+          || scenario.evidenceArtifacts.some(artifact => typeof artifact !== 'string')) {
+          failures.push(`${scenarioPrefix}.evidenceArtifacts 必须是字符串数组`);
+        }
         if (scenario.status !== 'pending' && !hasText(scenario, 'notes')) {
           failures.push(`${scenarioPrefix} 完成或拒绝时必须填写具体 notes`);
+        }
+        if (scenario.status !== 'pending'
+          && (!Array.isArray(scenario.evidenceArtifacts) || scenario.evidenceArtifacts.filter(hasText).length === 0)) {
+          failures.push(`${scenarioPrefix} 完成或拒绝时必须至少记录一条 evidenceArtifacts`);
         }
       }
     }

@@ -21,7 +21,8 @@
           "notes": "",
           "steps": "Launch production build, start a new game, allocate attrs, enter first playable scene.",
           "passCriteria": "No crash; state initializes from defaults; first scene is interactable.",
-          "evidenceToRecord": "Record device/browser, route notes, screenshot if layout is suspect."
+          "evidenceToRecord": "Record device/browser, route notes, screenshot if layout is suspect.",
+          "evidenceArtifacts": []
         },
         {
           "id": "continue-save",
@@ -30,7 +31,8 @@
           "notes": "",
           "steps": "Create or load an existing save, reload browser, continue from title.",
           "passCriteria": "Save loads without unsafe migration; age/year/stage and key flags remain coherent.",
-          "evidenceToRecord": "Record save origin/version and resumed stage."
+          "evidenceToRecord": "Record save origin/version and resumed stage.",
+          "evidenceArtifacts": []
         },
         {
           "id": "clinical-route",
@@ -39,7 +41,8 @@
           "notes": "",
           "steps": "Play a full clinical-oriented lifecycle through job/career into a final ending.",
           "passCriteria": "Clinical route reaches a route-appropriate ending; no early dropout/quit ending after full practice.",
-          "evidenceToRecord": "Record route choices, final stage, ending id, age/year."
+          "evidenceToRecord": "Record route choices, final stage, ending id, age/year.",
+          "evidenceArtifacts": []
         },
         {
           "id": "research-route",
@@ -48,7 +51,8 @@
           "notes": "",
           "steps": "Play a research-oriented lifecycle through master/PhD/career into a final ending.",
           "passCriteria": "Research route reaches a route-appropriate ending; papers/reputation effects are visible.",
-          "evidenceToRecord": "Record route choices, final stage, ending id, age/year/papers."
+          "evidenceToRecord": "Record route choices, final stage, ending id, age/year/papers.",
+          "evidenceArtifacts": []
         },
         {
           "id": "exit-route",
@@ -57,7 +61,8 @@
           "notes": "",
           "steps": "Choose a supported exit path such as leaving undergrad or quitting guipei.",
           "passCriteria": "Route terminates immediately at the matching exit ending and does not continue later seasons.",
-          "evidenceToRecord": "Record exit choice, ending id, age/year."
+          "evidenceToRecord": "Record exit choice, ending id, age/year.",
+          "evidenceArtifacts": []
         },
         {
           "id": "late-life-route",
@@ -66,7 +71,8 @@
           "notes": "",
           "steps": "Reach pinnacle/retirement/eternity phases and play through late-life decisions.",
           "passCriteria": "Late-life personal echoes appear; age/year/quarter remain coherent; final ending matches legacy/health state.",
-          "evidenceToRecord": "Record late-life phases visited, ending id, age/year."
+          "evidenceToRecord": "Record late-life phases visited, ending id, age/year.",
+          "evidenceArtifacts": []
         },
         {
           "id": "restart-save",
@@ -75,7 +81,8 @@
           "notes": "",
           "steps": "From a populated save, start over and then reload once.",
           "passCriteria": "New run resets prior flags/resources and persists its own fresh state.",
-          "evidenceToRecord": "Record old/new stage and any reset anomalies."
+          "evidenceToRecord": "Record old/new stage and any reset anomalies.",
+          "evidenceArtifacts": []
         },
         {
           "id": "console-clean",
@@ -84,7 +91,8 @@
           "notes": "",
           "steps": "Open production build with DevTools console while exercising the target scenarios.",
           "passCriteria": "No uncaught errors, failed asset loads, or persistent console error spam.",
-          "evidenceToRecord": "Record console status; paste exact errors if any."
+          "evidenceToRecord": "Record console status; paste exact errors if any.",
+          "evidenceArtifacts": []
         }
       ],
       "notes": ""
@@ -109,7 +117,8 @@
           "notes": "",
           "steps": "Open on the target phone in portrait and navigate title, HUD, event cards, endings.",
           "passCriteria": "No clipped primary controls; text remains readable; scrolling/taps work.",
-          "evidenceToRecord": "Record device model, OS/browser version, screenshots for issues."
+          "evidenceToRecord": "Record device model, OS/browser version, screenshots for issues.",
+          "evidenceArtifacts": []
         },
         {
           "id": "landscape",
@@ -118,7 +127,8 @@
           "notes": "",
           "steps": "Rotate to landscape and repeat title, HUD, event cards, endings.",
           "passCriteria": "Layout adapts without hidden controls or unusable hit targets.",
-          "evidenceToRecord": "Record rotation behavior and screenshots for issues."
+          "evidenceToRecord": "Record rotation behavior and screenshots for issues.",
+          "evidenceArtifacts": []
         },
         {
           "id": "safe-area",
@@ -127,7 +137,8 @@
           "notes": "",
           "steps": "Check notch/home-indicator/status-bar areas on title, gameplay, modal/card, ending.",
           "passCriteria": "Interactive UI stays outside unsafe areas or remains comfortably tappable.",
-          "evidenceToRecord": "Record affected screens and screenshots if unsafe."
+          "evidenceToRecord": "Record affected screens and screenshots if unsafe.",
+          "evidenceArtifacts": []
         },
         {
           "id": "touch-minigames",
@@ -136,7 +147,8 @@
           "notes": "",
           "steps": "Play touch-driven minigames and dismiss overlays using only touch.",
           "passCriteria": "Gestures register reliably; no keyboard-only blocker; ESC alternatives exist where needed.",
-          "evidenceToRecord": "Record minigames tried and any missed taps."
+          "evidenceToRecord": "Record minigames tried and any missed taps.",
+          "evidenceArtifacts": []
         },
         {
           "id": "long-session",
@@ -145,7 +157,8 @@
           "notes": "",
           "steps": "Play continuously with multiple scene transitions, save/load, and orientation changes.",
           "passCriteria": "No memory/performance degradation, stuck overlay, or lost input after long operation.",
-          "evidenceToRecord": "Record duration, transitions, and final state."
+          "evidenceToRecord": "Record duration, transitions, and final state.",
+          "evidenceArtifacts": []
         },
         {
           "id": "audio-unlock",
@@ -154,7 +167,8 @@
           "notes": "",
           "steps": "Start from a fresh browser session, perform first user gesture, trigger sound.",
           "passCriteria": "Audio starts only after user gesture and does not throw browser autoplay errors.",
-          "evidenceToRecord": "Record gesture used, sound status, console status."
+          "evidenceToRecord": "Record gesture used, sound status, console status.",
+          "evidenceArtifacts": []
         },
         {
           "id": "console-clean",
@@ -163,7 +177,8 @@
           "notes": "",
           "steps": "Open production build with DevTools console while exercising the target scenarios.",
           "passCriteria": "No uncaught errors, failed asset loads, or persistent console error spam.",
-          "evidenceToRecord": "Record console status; paste exact errors if any."
+          "evidenceToRecord": "Record console status; paste exact errors if any.",
+          "evidenceArtifacts": []
         }
       ],
       "notes": ""
@@ -188,7 +203,8 @@
           "notes": "",
           "steps": "Open on the target phone in portrait and navigate title, HUD, event cards, endings.",
           "passCriteria": "No clipped primary controls; text remains readable; scrolling/taps work.",
-          "evidenceToRecord": "Record device model, OS/browser version, screenshots for issues."
+          "evidenceToRecord": "Record device model, OS/browser version, screenshots for issues.",
+          "evidenceArtifacts": []
         },
         {
           "id": "landscape",
@@ -197,7 +213,8 @@
           "notes": "",
           "steps": "Rotate to landscape and repeat title, HUD, event cards, endings.",
           "passCriteria": "Layout adapts without hidden controls or unusable hit targets.",
-          "evidenceToRecord": "Record rotation behavior and screenshots for issues."
+          "evidenceToRecord": "Record rotation behavior and screenshots for issues.",
+          "evidenceArtifacts": []
         },
         {
           "id": "safe-area",
@@ -206,7 +223,8 @@
           "notes": "",
           "steps": "Check notch/home-indicator/status-bar areas on title, gameplay, modal/card, ending.",
           "passCriteria": "Interactive UI stays outside unsafe areas or remains comfortably tappable.",
-          "evidenceToRecord": "Record affected screens and screenshots if unsafe."
+          "evidenceToRecord": "Record affected screens and screenshots if unsafe.",
+          "evidenceArtifacts": []
         },
         {
           "id": "touch-minigames",
@@ -215,7 +233,8 @@
           "notes": "",
           "steps": "Play touch-driven minigames and dismiss overlays using only touch.",
           "passCriteria": "Gestures register reliably; no keyboard-only blocker; ESC alternatives exist where needed.",
-          "evidenceToRecord": "Record minigames tried and any missed taps."
+          "evidenceToRecord": "Record minigames tried and any missed taps.",
+          "evidenceArtifacts": []
         },
         {
           "id": "long-session",
@@ -224,7 +243,8 @@
           "notes": "",
           "steps": "Play continuously with multiple scene transitions, save/load, and orientation changes.",
           "passCriteria": "No memory/performance degradation, stuck overlay, or lost input after long operation.",
-          "evidenceToRecord": "Record duration, transitions, and final state."
+          "evidenceToRecord": "Record duration, transitions, and final state.",
+          "evidenceArtifacts": []
         },
         {
           "id": "audio-unlock",
@@ -233,7 +253,8 @@
           "notes": "",
           "steps": "Start from a fresh browser session, perform first user gesture, trigger sound.",
           "passCriteria": "Audio starts only after user gesture and does not throw browser autoplay errors.",
-          "evidenceToRecord": "Record gesture used, sound status, console status."
+          "evidenceToRecord": "Record gesture used, sound status, console status.",
+          "evidenceArtifacts": []
         },
         {
           "id": "console-clean",
@@ -242,7 +263,8 @@
           "notes": "",
           "steps": "Open production build with DevTools console while exercising the target scenarios.",
           "passCriteria": "No uncaught errors, failed asset loads, or persistent console error spam.",
-          "evidenceToRecord": "Record console status; paste exact errors if any."
+          "evidenceToRecord": "Record console status; paste exact errors if any.",
+          "evidenceArtifacts": []
         }
       ],
       "notes": ""
