@@ -412,7 +412,8 @@ export const NEWS_TICKER: NewsTickerItem[] = [
 
 ### 暂缓项
 
-完整移动端触控、SEO/分享卡片和大规模结局重构暂缓；
+完整移动端触控和大规模结局重构暂缓；
+SEO/分享卡片薄方案已落地（`index.html` OG + `public/og-share.svg`）。
 急诊第五亚专科与薄轮转已落地（`sub_emergency` + `events_career_rotation.ts`）。
 
 ## 文件结构

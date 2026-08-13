@@ -55,6 +55,11 @@ npm run release:check:full      # 认证发布门禁
 
 预览构建会设置 `VITE_RELEASE_TRACK=preview`，标题页声明“医学内容尚未终审”；未 `verified` 的结局事实卡仍不展示。
 
+## 文档速览
+
+- 结局最短路径：[`docs/ENDING-REACHABILITY.md`](docs/ENDING-REACHABILITY.md)
+- 交接与门禁：[`docs/HANDOFF.md`](docs/HANDOFF.md)
+
 ## 医学内容声明
 
 本项目是叙事游戏，不构成医学建议、诊断或治疗依据。当前医学内容仍在事实审计中，尚未完成临床医师与药师终审；

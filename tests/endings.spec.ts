@@ -103,3 +103,68 @@ test('新结局分支：身败名裂 / 侥幸 / 临床专家 / 科研明星', as
   expect(results.ageDynamic.titleNoStatic45, '结局标题不应再写死 45岁').toBe(true);
   expect(results.ageDynamic.finalAgeMatches, '结局 stats.finalAge 应等于玩家真实年龄').toBe(true);
 });
+
+test('多策略结局年龄与叙事年龄误差 ≤ 2 岁', async ({ page }) => {
+  await boot(page);
+  const r = await page.evaluate(() => {
+    const { en, stats: st } = (window as any).__mod;
+    const make = (partial: any) => {
+      const base = st.createDefaultStats();
+      return {
+        stats: { ...base, ...partial.stats },
+        flags: new Set(partial.flags ?? []),
+        stage: partial.stage ?? 'career',
+        marital: partial.marital ?? 'single',
+        spouse: null, hasChild: false, familyAlive: 4,
+        school: null, track: null, degree: 'bachelor', score: 0,
+        year: 2040, quarter: 1, turnsInStage: 10, guipeiCity: '',
+        newsLog: [], endingId: null, affinity: {},
+        assets: partial.assets ?? 0,
+        lateLife: partial.lateLife,
+        health: partial.health,
+        spirit: partial.spirit,
+        family: partial.family,
+        publicImage: partial.publicImage,
+        research: partial.research,
+        colleagues: partial.colleagues,
+        leisure: partial.leisure,
+      };
+    };
+    const strategies = [
+      { name: '稳定副高', ages: [36, 42, 48], partial: { flags: ['passed_fugao'], stats: { reputation: 60, clinical: 40 } } },
+      { name: '正高主任', ages: [44, 50], partial: { flags: ['passed_zhenggao'], stats: { reputation: 55 } } },
+      { name: '临床专家', ages: [40, 46], partial: { flags: [], stats: { clinical: 70, papers: 2, reputation: 55 } } },
+      { name: '基层', ages: [38, 45], partial: { flags: ['offer_grass'], stats: { relations: 40, reputation: 30 } } },
+      { name: '身败名裂', ages: [35, 41], partial: { flags: ['exposed_ruin'], stats: { papers: 8, reputation: 70 } } },
+      { name: '打工安稳', ages: [30, 38], partial: { flags: ['no_college'], stats: { sanity: 60, money: 20000 } } },
+    ];
+    const rows = [];
+    for (const s of strategies) {
+      for (const age of s.ages) {
+        const ending = en.determineEnding(make({
+          ...s.partial,
+          stats: { ...s.partial.stats, age },
+        }));
+        const ageErr = Math.abs(ending.stats.finalAge - age);
+        const yearsErr = Math.abs(ending.stats.totalYears - (age - 18));
+        const titleOk = !/\d+岁/.test(ending.title) || ending.title.includes(`${age}岁`);
+        rows.push({
+          name: `${s.name}@${age}`,
+          ageErr,
+          yearsErr,
+          titleOk,
+          finalAge: ending.stats.finalAge,
+          id: ending.id,
+        });
+      }
+    }
+    return rows;
+  });
+
+  for (const row of r) {
+    expect(row.ageErr, `${row.name} finalAge`).toBeLessThanOrEqual(2);
+    expect(row.yearsErr, `${row.name} totalYears`).toBeLessThanOrEqual(2);
+    expect(row.titleOk, `${row.name} 标题年龄`).toBe(true);
+    expect(row.ageErr, `${row.name} 应精确对齐真实年龄`).toBe(0);
+  }
+});
