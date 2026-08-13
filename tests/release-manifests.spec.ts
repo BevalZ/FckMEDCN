@@ -170,6 +170,10 @@ test('release:check 的退出码与结构化清单中的未闭环状态一致', 
   const output = `${result.stdout}\n${result.stderr}`;
   expect(result.status, output).toBe(outstanding.length === 0 ? 0 : 1);
   expect(output).toContain(outstanding.length === 0 ? 'Release readiness checks passed.' : 'Release blocked:');
+  if (outstanding.length > 0) {
+    expect(output).toContain('未完成场景：new-game, continue-save, clinical-route, research-route, exit-route, late-life-route, restart-save, console-clean');
+    expect(output).toContain('未完成场景：portrait, landscape, safe-area, touch-minigames, long-session, audio-unlock, console-clean');
+  }
 });
 
 test('release:review 生成完整的人工复核工作包，不改变 pending 状态', () => {

@@ -52,7 +52,17 @@ for (const manifestPath of recordsByPath.keys()) {
 
 const acceptanceChecks = Array.isArray(manifests.acceptance?.checks) ? manifests.acceptance.checks : [];
 for (const check of acceptanceChecks) {
-  if (check?.status !== 'verified') failures.push(`人工验收尚未完成：${check?.label ?? check?.id ?? '未知验收项'}`);
+  if (check?.status !== 'verified') {
+    const pendingScenarios = Array.isArray(check.scenarios)
+      ? check.scenarios
+        .filter(scenario => scenario?.status !== 'verified')
+        .map(scenario => scenario?.id ?? scenario?.label ?? '未知场景')
+      : [];
+    const scenarioText = pendingScenarios.length > 0
+      ? `（未完成场景：${pendingScenarios.join(', ')}）`
+      : '';
+    failures.push(`人工验收尚未完成：${check?.label ?? check?.id ?? '未知验收项'}${scenarioText}`);
+  }
 }
 
 if (failures.length > 0) {
