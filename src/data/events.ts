@@ -13,6 +13,7 @@ import { JOBHUNT_ECHO_EVENTS } from './events_jobhunt_echo';
 import { CAREER_EVENTS } from './events_career';
 import { CAREER_ROUTE_EVENTS } from './events_career_routes';
 import { CAREER_LITIGATION_EVENTS } from './events_career_litigation';
+import { CAREER_CHIEF_EVENTS } from './events_career_chief';
 import { GENERATED_EVENTS } from './eventGen';
 import { CURATED_M2_EVENTS } from './events_curated_m2';
 import { LIFE_EVENTS } from './events_life';
@@ -191,6 +192,7 @@ export const ALL_EVENTS: GameEvent[] = [
   ...CAREER_EVENTS,
   ...CAREER_ROUTE_EVENTS,
   ...CAREER_LITIGATION_EVENTS,
+  ...CAREER_CHIEF_EVENTS,
   // —— M2 程序化生成器产出的海量变体事件（确定性，ID 稳定）——
   ...GENERATED_EVENTS,
   // —— M2 手写叙事核心（研究接地、分支链、逻辑门）——

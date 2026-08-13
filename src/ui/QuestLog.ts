@@ -107,9 +107,10 @@ export function internshipQuests(flags: Set<string>, actionsLeft: number, storyl
     },
     {
       id: 'attending',
-      label: '找林主治沟通或修复关系',
-      done: flags.has('trust_attending') || flags.has('attending_repaired') || flags.has('attending_arc_complete'),
-      rewardHint: '与带教关系推进 · 任务完成',
+      label: '找林主治或刘护士长推进关系',
+      done: flags.has('trust_attending') || flags.has('attending_repaired') || flags.has('attending_arc_complete')
+        || flags.has('trust_headnurse') || flags.has('headnurse_repaired') || flags.has('headnurse_arc_complete'),
+      rewardHint: '与带教/护士站关系推进 · 任务完成',
     },
   ];
 }
@@ -128,7 +129,7 @@ export function guipeiQuests(flags: Set<string>, actionsLeft: number, storyletUs
     {
       id: 'fellow',
       label: '与赵师姐修复或巩固关系',
-      done: flags.has('trust_fellow') || flags.has('fellow_repaired'),
+      done: flags.has('trust_fellow') || flags.has('fellow_repaired') || flags.has('fellow_arc_complete'),
       rewardHint: '规培搭档关系推进',
     },
   ];

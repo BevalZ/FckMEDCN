@@ -72,9 +72,10 @@ test('职业阶段收入含职称档差与绩效、支出含房贷', async ({ pa
   });
   console.log('  职业净结余(底薪/副高+房贷):', JSON.stringify(r));
   // 直接断言纯经济盘口，避免 advanceQuarter 的健康/政策/life-system tick 污染此测试。
-  // 默认市级档位（REGION_INCOME=1.1），且默认政策盈余给绩效部分 4% 加成。
-  expect(r.base, '职业底薪净结余').toBe(18288);
-  expect(r.fugao, '副高档差+房贷后的净结余').toBe(24282);
+  // 默认市级档位（REGION_INCOME=1.1），默认政策盈余给绩效部分 4% 加成；
+  // 另含公积金个人缴存（无编制 flag 时按合同薄档）。
+  expect(r.base, '职业底薪净结余').toBe(15888);
+  expect(r.fugao, '副高档差+房贷后的净结余').toBe(21252);
 });
 
 test('R 菜单可调整理财策略并持久化', async ({ page }) => {

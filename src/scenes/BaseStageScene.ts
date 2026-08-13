@@ -3,6 +3,7 @@ import { HUD } from '../ui/HUD';
 import { EventCard } from '../ui/EventCard';
 import { ConsequencePopup } from '../ui/ConsequencePopup';
 import { getState, setFlag, hasFlag, addNews, enterStage } from '../data/gameState';
+import { isInMentalCrisis } from '../data/specialtyLoad';
 import { ALL_EVENTS } from '../data/events';
 import type { EventChoice, GameEvent } from '../data/events';
 import { drawStorylet, commitChoice, advanceQuarter } from '../data/turnFlow';
@@ -264,8 +265,16 @@ export abstract class BaseStageScene extends Phaser.Scene {
 
   // 推进一个季度并结算固定收支（无论是否有事件触发，保证收支稳定）。
   private progressTurn() {
-    const { econ, grieving, integrity, mentalDecline, affinity, datingOpportunity, pandemic, patientSafety } = advanceQuarter(this.stageName);
+    const { econ, grieving, integrity, mentalDecline, affinity, datingOpportunity, pandemic, patientSafety, specialtyNote } = advanceQuarter(this.stageName);
     this.showQuarterBill(econ);
+    if (specialtyNote) {
+      const t = this.add.text(480, 138, specialtyNote, {
+        fontFamily: '"Courier New", monospace', fontSize: '11px', color: '#ffb74d',
+      }).setOrigin(0.5, 0).setDepth(120).setAlpha(0);
+      this.tweens.add({ targets: t, alpha: 1, duration: 240, onComplete: () => {
+        this.tweens.add({ targets: t, alpha: 0, y: 122, duration: 1000, delay: 700, onComplete: () => t.destroy() });
+      } });
+    }
     if (grieving) {
       const g = this.add.text(480, 150, '思念 · 心理 -2', {
         fontFamily: '"Courier New", monospace', fontSize: '11px', color: '#ff8a80',
@@ -366,7 +375,7 @@ export abstract class BaseStageScene extends Phaser.Scene {
       return;
     }
 
-    if (state.stats.sanity <= 0) {
+    if (isInMentalCrisis()) {
       this.scene.start('MentalCrisisScene', { fromStage: this.stageName });
       return;
     }

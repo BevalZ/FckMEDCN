@@ -4,7 +4,7 @@ import { resetGame, getState } from '../data/gameState';
 import { sound } from '../audio/sound';
 import { clearSave } from '../data/save';
 import { recordEnding } from '../data/collection';
-import { careerFinancialSnapshot } from '../data/economy';
+import { careerFinancialSnapshot, regionDisposableCompare } from '../data/economy';
 import { verifiedEvidence } from '../data/evidence';
 
 export class EndingScene extends Phaser.Scene {
@@ -46,27 +46,38 @@ export class EndingScene extends Phaser.Scene {
     const maritalLabel: Record<string, string> = { single: '单身', dating: '恋爱中', married: '已婚' };
 
     const finance = careerFinancialSnapshot();
+    const regionCmp = regionDisposableCompare();
+    const fmt = (n: number) => `¥${n.toLocaleString()}`;
     const infoRows: [string, string][] = [
       ['感情', maritalLabel[state.marital]],
       ['家人/子女', `${state.familyAlive}/4 在世 · ${state.hasChild ? '有娃' : '无娃'}`],
-      ['现金 / 资产', `现金¥${finance.cash.toLocaleString()} · 资产¥${finance.assets.toLocaleString()}`],
-      ['职业现金流', `${finance.region} ${finance.title} · 季度收入¥${finance.quarterlyIncome.toLocaleString()} · 可支配¥${finance.disposable.toLocaleString()}`],
+      ['现金 / 资产', `现金${fmt(finance.cash)} · 资产${fmt(finance.assets)}`],
+      ['职业现金流', `${finance.region} ${finance.title} · 季度收入${fmt(finance.quarterlyIncome)} · 可支配${fmt(finance.disposable)}`],
       ['房贷', finance.mortgageBalance > 0
-        ? `余额约¥${finance.mortgageBalance.toLocaleString()} · 季度还款¥${finance.housePayment.toLocaleString()}`
+        ? `余额约${fmt(finance.mortgageBalance)} · 季度还款${fmt(finance.housePayment)}`
         : '未购房 / 无房贷'],
+      ['地区对照', `一线三甲可支配 ${fmt(regionCmp.topDisposable)} ｜ 基层/县城 ${fmt(regionCmp.countyDisposable)} ｜ 你（${regionCmp.yoursLabel}）${fmt(regionCmp.yoursDisposable)}`],
     ];
 
-    this.add.text(60, 210, '你的数据', { fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#ffc107', fontStyle: 'bold' });
+    this.add.text(60, 208, '你的数据', { fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#ffc107', fontStyle: 'bold' });
 
-    const rowY = (i: number) => 236 + i * 28;
+    const rowY = (i: number) => 230 + i * 24;
     infoRows.forEach((r, i) => {
       const y = rowY(i);
-      this.add.text(60, y, `${r[0]}：`, { fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#999999' });
-      this.add.text(150, y, r[1], { fontFamily: '"Courier New", monospace', fontSize: '13px', color: '#ffffff', fontStyle: 'bold' });
+      this.add.text(60, y, `${r[0]}：`, { fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#999999' });
+      this.add.text(150, y, r[1], {
+        fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#ffffff', fontStyle: 'bold',
+        wordWrap: { width: 740 },
+      });
+    });
+
+    this.add.text(60, rowY(infoRows.length) + 2, regionCmp.blurb, {
+      fontFamily: '"Courier New", monospace', fontSize: '11px', color: '#9aa0b5',
+      wordWrap: { width: 840 },
     });
 
     // Only reviewed evidence is rendered. Pending external claims remain in the registry for audit.
-    let cardY = rowY(infoRows.length) + 8;
+    let cardY = rowY(infoRows.length) + 22;
     ending.realDataCard.forEach((c) => {
       const evidence = verifiedEvidence(c.evidenceId);
       if (!evidence) return;

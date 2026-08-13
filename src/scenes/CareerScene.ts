@@ -4,9 +4,9 @@ import { getState, setFlag } from '../data/gameState';
 // 亚专科选择：开局选科室，决定职业阶段被动体力/心理消耗（劳累程度不同）。
 export const SUB_SPECIALTIES: Array<{ flag: string; label: string; desc: string }> = [
   { flag: 'sub_internal', label: '内科', desc: '平稳规律，动脑多动身少' },
-  { flag: 'sub_surgery', label: '外科', desc: '站台久、体力消耗大，最累' },
-  { flag: 'sub_obgyn', label: '妇产科', desc: '急诊多、节奏紧，身心都累' },
-  { flag: 'sub_pediatrics', label: '儿科', desc: '压力大、沟通累，心理消耗高' },
+  { flag: 'sub_surgery', label: '外科', desc: '站台久、体力消耗大；长期站台会压低体力上限' },
+  { flag: 'sub_obgyn', label: '妇产科', desc: '急诊多、节奏紧；长期双压会半速磨损体力上限与危机阈值' },
+  { flag: 'sub_pediatrics', label: '儿科', desc: '压力大、沟通累；长期高压会抬升心理危机阈值' },
 ];
 
 export function currentSubspecialty(): string {
@@ -29,7 +29,8 @@ export class CareerScene extends BaseStageScene {
 
   protected getStageLabelText(): string {
     const sub = SUB_SPECIALTIES.find(s => getState().flags.has(s.flag));
-    return `🩺 职业阶段 · ${sub?.label ?? '内科'}`;
+    const chief = getState().flags.has('chief_resident_year') ? ' · 住院总' : '';
+    return `🩺 职业阶段 · ${sub?.label ?? '内科'}${chief}`;
   }
   protected shouldAdvanceToNextStage(): boolean { return getState().turnsInStage >= this.maxTurns; }
 
@@ -46,6 +47,20 @@ export class CareerScene extends BaseStageScene {
       else if (turn >= 3 && !flags.has('lawsuit_done_1')) this.forcedEventId = lawsuitEventId(1);
       else if (turn >= 5 && flags.has('lawsuit_done_1') && !flags.has('appraisal_resolved')) {
         this.forcedEventId = 'career_lawsuit_appraisal';
+      }
+      // 住院总一年：第 5 季起任命；任期内半年节点；满 4 季结业（优先于第二起诉讼）
+      else if (turn >= 5
+        && flags.has('passed_zhuzhi')
+        && !flags.has('chief_offer_resolved')) {
+        this.forcedEventId = 'career_chief_offer';
+      }
+      else if (flags.has('chief_resident_year') && !flags.has('chief_mid_done')
+        && (getState().counters['chief_quarters'] ?? 0) >= 2) {
+        this.forcedEventId = 'career_chief_mid_crush';
+      }
+      else if (flags.has('chief_resident_year') && !flags.has('chief_graduated')
+        && (getState().counters['chief_quarters'] ?? 0) >= 4) {
+        this.forcedEventId = 'career_chief_graduate';
       }
       else if (turn >= 9 && !flags.has('lawsuit_done_2')) this.forcedEventId = lawsuitEventId(2);
       else if (turn >= 12 && turn <= 16

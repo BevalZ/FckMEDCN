@@ -79,6 +79,8 @@ const NARRATIVE_ONLY = new Set([
   // M11 诉讼长尾终端标记
   'appraisal_win_taught', 'appraisal_win_quiet', 'appraisal_lose_reformed', 'appraisal_lose_defensive',
   'lawsuit_shadow_talked', 'lawsuit_shadow_buried', 'second_appeal_done',
+  // 住院总一年：婉拒/半年节点/结业为叙事终点（任期内 flag 由 requireFlag 消费）
+  'chief_declined', 'chief_mid_done', 'chief_graduated',
   // 职业：应对方式标记（后续有回声链但非 must-have）
   'dispute_happened', 'picked_side', 'multi_site', 'internet_doc', 'burnout_seen',
   'bought_house', 'fin_appealed', 'led_project', 'admin_trained', 'admin_drilled', 'admin_covered',
@@ -101,7 +103,7 @@ const NARRATIVE_ONLY = new Set([
   'overwork_aware', 'conflict_prone', 'in_couple', 'exp_failed',
   // NPC 好感度事件分支标记（修复关系/接受内推等叙事结果）
   'roommate_repaired', 'senior_referral', 'senior_repaired', 'teacher_repaired', 'counselor_repaired',
-  'headnurse_repaired', // 修复完成终端；信任门控另走 trust_headnurse
+  // headnurse_repaired / fellow_repaired 由 after_repair requireFlag 消费，不进白名单
   'guide_qe_walk', // 行走场景首次 Q/E 引导，纯 UI
   // R8 家庭链终端标记（修复完成/关系落定/子女入学，叙事终点无后续消费）
   'family_anchored', 'family_repaired', 'spouse_reconciled', 'marriage_cold', 'child_in_medschool',

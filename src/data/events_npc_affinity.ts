@@ -196,6 +196,48 @@ export const NPC_AFFINITY_EVENTS: GameEvent[] = [
       },
     ],
   },
+  {
+    id: 'aff_headnurse_after_repair', stage: ['internship', 'guipei'],
+    title: '护士长把你叫去对班',
+    body: '道歉之后没几天，刘护士长把你拽进治疗室："今晚跟我对班。不是罚你，是教你怎么跟护士站把话说明白。"',
+    category: 'clinical', weight: 48, once: true, minTurn: 2,
+    requireFlag: 'headnurse_repaired', excludeFlag: 'trust_headnurse',
+    choices: [
+      {
+        text: '认真对完，记下她的规矩',
+        delta: { clinical: 4, relations: 5, stamina: -6, reputation: 2 },
+        effect: { kind: 'changeAffinity', npcId: 'headnurse', amount: 14 },
+        flagSet: 'headnurse_arc_complete',
+        consequence: '她说"下次排班有意见，先来找我"。护患之间那道缝，缝上了。',
+      },
+      {
+        text: '紧张得话都说不利索',
+        delta: { relations: 3, sanity: -2, clinical: 2 },
+        effect: { kind: 'changeAffinity', npcId: 'headnurse', amount: 8 },
+        flagSet: 'headnurse_arc_complete',
+        consequence: '她没笑话你，只把流程又说了一遍。',
+      },
+    ],
+  },
+  {
+    id: 'echo_headnurse_career', stage: 'career',
+    title: '护士长的旧消息',
+    body: '职业期某天，科室群里有人转发老照片——实习时刘护士长站在护士站门口。有人评论："她现在带教更严了。"你忽然想起那次对班。',
+    category: 'social', weight: 32, once: true, minTurn: 2,
+    requireFlag: 'headnurse_arc_complete',
+    choices: [
+      {
+        text: '私信一句谢谢当年没放弃你',
+        delta: { relations: 3, sanity: 4 },
+        consequence: '她回了个表情："别贫，把医嘱对清楚。"你笑了。',
+      },
+      {
+        text: '把照片存进相册，继续交班',
+        delta: { sanity: 2 },
+        consequence: '有些护持不需要回响很大声，记得就行。',
+      },
+    ],
+  },
   // ============ 高年资规培 赵师姐 ============
   {
     id: 'aff_fellow_trust', stage: 'guipei',
@@ -225,6 +267,48 @@ export const NPC_AFFINITY_EVENTS: GameEvent[] = [
         delta: { relations: -3, sanity: -4, stamina: -3 },
         effect: { kind: 'changeAffinity', npcId: 'fellow', amount: -5 },
         consequence: '值班室更安静。你少了一个能换班的人。',
+      },
+    ],
+  },
+  {
+    id: 'aff_fellow_after_repair', stage: 'guipei',
+    title: '师姐把危重班分给你一半',
+    body: '话说开之后，赵师姐在排班软件里把一个危重班拆成两人："你跟我一起。别再一个人硬扛，也别再背后阴阳。"',
+    category: 'clinical', weight: 48, once: true, minTurn: 2,
+    requireFlag: 'fellow_repaired', excludeFlag: 'trust_fellow',
+    choices: [
+      {
+        text: '并肩值完，交班写清楚',
+        delta: { clinical: 5, relations: 5, stamina: -10, reputation: 2 },
+        effect: { kind: 'changeAffinity', npcId: 'fellow', amount: 14 },
+        flagSet: 'fellow_arc_complete',
+        consequence: '清晨她递给你一瓶水："算你过关。"',
+      },
+      {
+        text: '仍有点别扭，但把活干完',
+        delta: { clinical: 3, relations: 3, sanity: -2, stamina: -8 },
+        effect: { kind: 'changeAffinity', npcId: 'fellow', amount: 9 },
+        flagSet: 'fellow_arc_complete',
+        consequence: '尴尬还在，信任却开始长出来。',
+      },
+    ],
+  },
+  {
+    id: 'echo_fellow_career', stage: 'career',
+    title: '赵师姐发来转科祝贺',
+    body: '你独立执业后不久，收到赵师姐的消息："听说你留下了。值班室那瓶水，记得自己买。"附了一张当年排班表截图。',
+    category: 'social', weight: 32, once: true, minTurn: 2,
+    requireFlag: 'fellow_arc_complete',
+    choices: [
+      {
+        text: '回她：下回我请咖啡',
+        delta: { relations: 4, sanity: 4 },
+        consequence: '她回了个"行"。两个曾经别扭过的人，成了能互相通气的同行。',
+      },
+      {
+        text: '回个表情，把截图存下',
+        delta: { sanity: 2 },
+        consequence: '有些搭档关系，不必天天联系，关键时仍在。',
       },
     ],
   },

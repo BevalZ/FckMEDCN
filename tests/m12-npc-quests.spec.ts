@@ -47,6 +47,41 @@ test('M12 林主治弧：疏远→修复→再信任→职业回声门控', asyn
   expect(r.fellowDistant).toBe(true);
 });
 
+test('M12 护士长/师姐迷你弧：修复→再合作→职业回声', async ({ page }) => {
+  await boot(page);
+  const r = await page.evaluate(() => {
+    const { ev, stats: st } = (window as any).__mod;
+    const base = st.createDefaultStats();
+    const reach = (stage: string, flags: string[], turn: number, id: string) =>
+      ev.getAvailableEvents(stage, new Set(flags), { ...base }, new Set(), turn, 'single')
+        .some((e: any) => e.id === id);
+
+    return {
+      hnAfterGated: reach('internship', [], 2, 'aff_headnurse_after_repair'),
+      hnAfterOpen: reach('internship', ['headnurse_repaired'], 2, 'aff_headnurse_after_repair'),
+      hnAfterBlocked: reach('internship', ['headnurse_repaired', 'trust_headnurse'], 2, 'aff_headnurse_after_repair'),
+      hnEchoGated: reach('career', [], 2, 'echo_headnurse_career'),
+      hnEchoOpen: reach('career', ['headnurse_arc_complete'], 2, 'echo_headnurse_career'),
+      fellowAfterGated: reach('guipei', [], 2, 'aff_fellow_after_repair'),
+      fellowAfterOpen: reach('guipei', ['fellow_repaired'], 2, 'aff_fellow_after_repair'),
+      fellowAfterBlocked: reach('guipei', ['fellow_repaired', 'trust_fellow'], 2, 'aff_fellow_after_repair'),
+      fellowEchoGated: reach('career', [], 2, 'echo_fellow_career'),
+      fellowEchoOpen: reach('career', ['fellow_arc_complete'], 2, 'echo_fellow_career'),
+    };
+  });
+
+  expect(r.hnAfterGated).toBe(false);
+  expect(r.hnAfterOpen).toBe(true);
+  expect(r.hnAfterBlocked).toBe(false);
+  expect(r.hnEchoGated).toBe(false);
+  expect(r.hnEchoOpen).toBe(true);
+  expect(r.fellowAfterGated).toBe(false);
+  expect(r.fellowAfterOpen).toBe(true);
+  expect(r.fellowAfterBlocked).toBe(false);
+  expect(r.fellowEchoGated).toBe(false);
+  expect(r.fellowEchoOpen).toBe(true);
+});
+
 test('M12 QuestLog：完成任务返回飘字提示；地点/NPC 指向文案', async ({ page }) => {
   await boot(page);
   const r = await page.evaluate(() => {
@@ -80,7 +115,7 @@ test('M12 QuestLog：完成任务返回飘字提示；地点/NPC 指向文案', 
   });
 
   expect(r.attendingDone).toBe(true);
-  expect(r.firstHint).toContain('带教');
+  expect(r.firstHint).toMatch(/带教|护士站|关系/);
   expect(r.secondEmpty).toBe(true);
   expect(r.pointsToPlace).toBe(true);
   expect(r.pointsToNpc).toBe(true);

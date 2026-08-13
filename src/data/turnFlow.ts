@@ -29,6 +29,7 @@ import { renderNpcText } from './npc';
 import { tickDatingOpportunity, tickNpcRomanceQuarter } from './dating';
 import { tickPandemicQuarter } from './pandemic';
 import { rollPatientSafety } from './patientSafety';
+import { tickSpecialtyCumulative } from './specialtyLoad';
 
 // 回合流程的共享逻辑。
 // BaseStageScene（卡片模式）与 CampusScene（可行走地图）都走这里，
@@ -299,7 +300,7 @@ export function commitChoice(choice: EventChoice, event?: GameEvent): CommitChoi
 // grieving 表示玩家处于丧亲状态，调用方需额外扣心理并给出提示。
 // integrity 为本季的学术风险判定结果，level !== 'none' 时调用方应展示通报。
 export function advanceQuarter(stageName: string): {
-  econ: QuarterEconomy; grieving: boolean; integrity: IntegrityOutcome; mentalDecline: MentalDeclineOutcome | null; affinity: ReturnType<typeof tickAffinityQuarter>; datingOpportunity: boolean; pandemic: ReturnType<typeof tickPandemicQuarter>; patientSafety: ReturnType<typeof rollPatientSafety>;
+  econ: QuarterEconomy; grieving: boolean; integrity: IntegrityOutcome; mentalDecline: MentalDeclineOutcome | null; affinity: ReturnType<typeof tickAffinityQuarter>; datingOpportunity: boolean; pandemic: ReturnType<typeof tickPandemicQuarter>; patientSafety: ReturnType<typeof rollPatientSafety>; specialtyNote: string | null;
 } {
   advanceTurn();
   const pandemic = tickPandemicQuarter(stageName);
@@ -408,7 +409,13 @@ export function advanceQuarter(stageName: string): {
     if (getState().turnsInStage > 0 && getState().turnsInStage % 4 === 0) {
       changeAttr('looks', -1, '长期夜班与职业疲劳留下了痕迹');
     }
+    // 住院总任期内：额外体力/心理双压，并累计满一年（4 季）
+    if (f.has('chief_resident_year') && !f.has('chief_graduated')) {
+      updateStats({ stamina: -4, sanity: -3 });
+      setCounter('chief_quarters', getCounter('chief_quarters') + 1);
+    }
   }
+  const specialtyNote = tickSpecialtyCumulative(stageName);
   const grieving = hasFlag('grieving');
   if (grieving) updateStats({ sanity: -2 });
   const mentalDecline = tickLowSavingsMentalDecline(stageName);
@@ -440,5 +447,5 @@ export function advanceQuarter(stageName: string): {
   });
   patchState({ finance });
   if (finance.financialAnxiety) updateStats({ sanity: -2 });
-  return { econ, grieving, integrity, mentalDecline, affinity, datingOpportunity, pandemic, patientSafety };
+  return { econ, grieving, integrity, mentalDecline, affinity, datingOpportunity, pandemic, patientSafety, specialtyNote };
 }

@@ -15,6 +15,7 @@ import { addScanlineOverlay, addVignette, getPalette, stageAmbientTint } from '.
 import type { PaletteName } from './pixelArt';
 import { getState, updateStats, setFlag, hasFlag, addNews, enterStage } from '../data/gameState';
 import type { LifeStage } from '../data/gameState';
+import { isInMentalCrisis } from '../data/specialtyLoad';
 import { drawStorylet, hasStorylet, commitChoice, advanceQuarter } from '../data/turnFlow';
 import { bindGameMenu } from './gameMenu';
 import { HelpPanel } from './HelpPanel';
@@ -773,7 +774,7 @@ export abstract class WalkStageScene extends Phaser.Scene {
   }
 
   private checkCrisis(): boolean {
-    if (getState().stats.sanity > 0) return false;
+    if (!isInMentalCrisis()) return false;
     this.leaving = true;
     this.scene.start('MentalCrisisScene', { fromStage: this.stageName });
     return true;

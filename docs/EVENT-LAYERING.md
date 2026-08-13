@@ -6,7 +6,7 @@
 
 | 层 | 触发方式 | 例子 | 权重/强制 |
 |---|---|---|---|
-| L1 人生节点 | 场景 `forcedEventId` + once flag | 亚专科、诉讼、鉴定、二审、晋升 | 强制到完成；ESC 仅跳过当卡 |
+| L1 人生节点 | 场景 `forcedEventId` + once flag | 亚专科、诉讼、鉴定、二审、住院总一年、晋升 | 强制到完成；ESC 仅跳过当卡 |
 | L2 关系互动 | `requireFlag` trust_/distant_ + 修复链 | 林主治疏远→修复→再信任→职业回声 | weight 35–55；once 链用 flag 门控 |
 | L3 日常生成 | `eventGen` / 地点池 / 高 weight 手写 | 排班、门诊、琐事 | 填满季内空档；可被 L1/L2 挤占 |
 
@@ -22,6 +22,7 @@
 - L2 每个 `flagSet` 须有消费者（requireFlag / affinity / 经济），或进叙事白名单
 - L3 禁止写可执行剂量/处方；医学表述走审计清单
 - 新 NPC 链推荐形状：初识谈话 → `distant_*` 疏远事件 → `*_repaired` + `changeAffinity` → 信任/回声
+- 已落地示例：林主治（完整弧）、刘护士长 / 赵师姐（迷你弧：修复→再合作→职业回声）
 
 ## 与 QuestLog
 

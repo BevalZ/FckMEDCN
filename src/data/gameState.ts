@@ -224,6 +224,14 @@ export function setState(s: GameState) { _state = s; }
 
 export function updateStats(delta: StatDelta) {
   _state = { ..._state, stats: applyDelta(_state.stats, delta) };
+  // 外科累积磨损：体力不可超过当前上限（counter 由 specialtyLoad 维护）
+  const wear = _state.counters['surg_stamina_wear'] ?? 0;
+  if (wear > 0) {
+    const cap = Math.max(70, 100 - Math.min(30, wear));
+    if (_state.stats.stamina > cap) {
+      _state = { ..._state, stats: { ..._state.stats, stamina: cap } };
+    }
+  }
 }
 
 export function setFlag(flag: string) { _state.flags.add(flag); }

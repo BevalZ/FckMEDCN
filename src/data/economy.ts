@@ -237,13 +237,13 @@ export const REGION_HOUSE: Record<RegionTier, { down: number; monthly: number }>
 };
 
 /** 职业期购房首付（随地区档位）。事件里展示用。 */
-export function houseDownPayment(): number {
-  return REGION_HOUSE[currentRegionTier()].down;
+export function houseDownPayment(tier: RegionTier = currentRegionTier()): number {
+  return REGION_HOUSE[tier].down;
 }
 
 /** 职业期房贷月供（随地区档位），季度结算时消费。 */
-export function houseMonthly(): number {
-  const base = REGION_HOUSE[currentRegionTier()].monthly;
+export function houseMonthly(tier: RegionTier = currentRegionTier()): number {
+  const base = REGION_HOUSE[tier].monthly;
   return hasFlag('mortgage_prepaid') ? Math.round(base * 0.6) : base;
 }
 
@@ -271,26 +271,59 @@ export function housingFundForIncome(grossIncome: number): { employee: number; d
 }
 
 /** 结局页财务数据卡使用的动态职业画像，明确拆分现金、资产、房贷和季度可支配收入。 */
-export function careerFinancialSnapshot(): CareerFinancialSnapshot {
+export function careerFinancialSnapshot(regionTier?: RegionTier): CareerFinancialSnapshot {
   const state = getState();
-  const economy = getQuarterEconomy('career');
+  const tier = regionTier ?? currentRegionTier();
+  const economy = getQuarterEconomy('career', tier);
   const title = state.flags.has('passed_zhenggao') ? '主任医师'
     : state.flags.has('passed_fugao') ? '副主任医师'
     : state.flags.has('passed_zhuzhi') ? '主治医师' : '住院医师';
-  const mortgageBalance = state.mortgageBalance || (state.flags.has('bought_house') ? houseDownPayment() * 4 : 0);
+  const mortgageBalance = state.mortgageBalance || (state.flags.has('bought_house') ? houseDownPayment(tier) * 4 : 0);
   return {
-    region: REGION_LABEL[currentRegionTier()], title,
+    region: REGION_LABEL[tier], title,
     quarterlyIncome: economy.income,
     quarterlyCost: economy.cost,
     disposable: economy.net,
-    housePayment: state.flags.has('bought_house') ? houseMonthly() : 0,
+    housePayment: state.flags.has('bought_house') ? houseMonthly(tier) : 0,
     mortgageBalance,
     cash: state.stats.money,
     assets: state.assets ?? 0,
   };
 }
 
-export function getQuarterEconomy(stage: string): QuarterEconomy {
+/** 结局对照：同一职称/声望下，一线三甲 vs 基层县城的季度可支配收入（游戏内模拟，非外部事实）。 */
+export interface RegionDisposableCompare {
+  yoursTier: RegionTier;
+  yoursLabel: string;
+  yoursDisposable: number;
+  topDisposable: number;
+  countyDisposable: number;
+  gapTopMinusCounty: number;
+  blurb: string;
+}
+
+export function regionDisposableCompare(): RegionDisposableCompare {
+  const yoursTier = currentRegionTier();
+  const yours = careerFinancialSnapshot(yoursTier);
+  const top = careerFinancialSnapshot('top');
+  const county = careerFinancialSnapshot('county');
+  const gap = top.disposable - county.disposable;
+  const blurb = gap >= 0
+    ? `同职称对照：一线三甲季度可支配约比基层/县城高 ¥${gap.toLocaleString()}（含收入系数与房贷差）`
+    : `同职称对照：本局参数下基层/县城可支配不低于一线（少见，多因未购房或特殊收支）`;
+  return {
+    yoursTier,
+    yoursLabel: REGION_LABEL[yoursTier],
+    yoursDisposable: yours.disposable,
+    topDisposable: top.disposable,
+    countyDisposable: county.disposable,
+    gapTopMinusCounty: gap,
+    blurb,
+  };
+}
+
+export function getQuarterEconomy(stage: string, regionTier?: RegionTier): QuarterEconomy {
+  const tier = regionTier ?? currentRegionTier();
   const spec = STAGE_ECON[stage] ?? { income: 0, cost: 0, label: stage };
   // 城市生活成本溢价只作用于上学/规培阶段（职业阶段由地区档位单独体现，见 currentRegionTier）
   const prem = SCHOOL_STAGES.has(stage) || stage === 'jobhunt' ? cityPremiumPct() : 0;
@@ -326,7 +359,7 @@ export function getQuarterEconomy(stage: string): QuarterEconomy {
     const performanceIncome = income - fixedIncome;
     income = fixedIncome + Math.round(performanceIncome * policyPerformanceMultiplier(s.policy, stage));
     // 医院/地区系数：三甲/私立上浮、基层/县城下调（求职选择真正影响收入）
-    income = Math.round(income * REGION_INCOME[currentRegionTier()]);
+    income = Math.round(income * REGION_INCOME[tier]);
     // 合同制现金略高、编制略低：差异主要体现在公积金对等缴存（见下方）
     if (s.flags.has('contract') || s.flags.has('jh_bianzhi_out')) {
       income = Math.round(income * 1.04);
@@ -335,7 +368,7 @@ export function getQuarterEconomy(stage: string): QuarterEconomy {
     }
     const fund = housingFundForIncome(income);
     cost += fund.employee;
-    if (s.flags.has('bought_house')) cost += houseMonthly();      // 房贷月供按地区档位
+    if (s.flags.has('bought_house')) cost += houseMonthly(tier);      // 房贷月供按地区档位
   }
 
   // —— 人生状态对收支的持续影响 ——

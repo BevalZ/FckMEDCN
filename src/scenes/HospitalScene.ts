@@ -15,6 +15,7 @@ import { npcTileNear } from '../ui/npcPlacement';
 import { addScanlineOverlay, addVignette, getPalette, stageAmbientTint } from '../ui/pixelArt';
 import { getState, updateStats, setFlag, hasFlag, addNews, enterStage } from '../data/gameState';
 import type { LifeStage } from '../data/gameState';
+import { isInMentalCrisis } from '../data/specialtyLoad';
 import { drawStorylet, hasStorylet, commitChoice, advanceQuarter } from '../data/turnFlow';
 import type { EventChoice, GameEvent } from '../data/events';
 import { ALL_EVENTS } from '../data/events';
@@ -557,7 +558,7 @@ export class HospitalScene extends Phaser.Scene {
   }
 
   private checkCrisis(): boolean {
-    if (getState().stats.sanity > 0) return false;
+    if (!isInMentalCrisis()) return false;
     this.leaving = true;
     this.scene.start('MentalCrisisScene', { fromStage: STAGE });
     return true;

@@ -5,6 +5,7 @@ import { getPalette } from './pixelArt';
 import { sound } from '../audio/sound';
 import { getState } from '../data/gameState';
 import { currentRegionTier, MENTOR_HUD_LABEL, REGION_LABEL } from '../data/economy';
+import { specialtyLoadHudHint } from '../data/specialtyLoad';
 
 export class HUD {
   private scene: Phaser.Scene;
@@ -205,6 +206,9 @@ export class HUD {
       } else if (s.flags.has('contract') || s.flags.has('jh_bianzhi_out') || s.flags.has('emp_contract_negotiated') || s.flags.has('emp_contract_rushed')) {
         bits.push('合同');
       }
+      const loadHint = specialtyLoadHudHint();
+      if (loadHint) bits.push(loadHint);
+      if (s.flags.has('chief_resident_year')) bits.push('住院总');
       careerContext = bits.length ? ` ｜ ${bits.join(' ')}` : '';
     }
     // 硕博：导师绩效风格（影响补助，简报有长文，HUD 用短标签）
