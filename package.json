@@ -16,7 +16,10 @@
     "check": "npm run release:schema && npm run typecheck && npm run typecheck:test && npm run build && npm run test:preview:subpath && npm run audit:prod && npm run test:ci",
     "release:schema": "node scripts/release-schema.mjs",
     "release:review": "node scripts/release-review.mjs",
-    "release:check": "node scripts/release-check.mjs"
+    "release:review:write": "node scripts/release-review.mjs --write",
+    "release:check": "node scripts/release-check.mjs",
+    "release:check:preview": "node scripts/release-check.mjs --track=preview",
+    "release:check:full": "node scripts/release-check.mjs --track=full"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",

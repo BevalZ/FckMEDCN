@@ -1,7 +1,7 @@
 # Release review workpack
 
-Generated at: 2026-08-13T10:13:33.864Z
-Source HEAD at generation: ed0ef1c
+Generated at: 2026-08-13T13:12:02.747Z
+Source HEAD at generation: fcdce4d
 Manifest schema versions: evidence v1; medical v1; audio v1; acceptance v1
 
 Generated from the four release manifests. This report is a queue, not an approval record. Do not change `pending` to `verified` without the named reviewer, date, evidence reference, and written conclusion.
@@ -12,7 +12,7 @@ Generated from the four release manifests. This report is a queue, not an approv
 
 ## 1. Medical and pharmacy review queue
 
-Medical queue by reviewerRole: Unassigned medical/pharmacy reviews: 78; Assigned licensed-clinician reviews: 0; Assigned clinical-pharmacist reviews: 0
+Medical queue by reviewerRole: Unassigned medical/pharmacy reviews: 0; Assigned licensed-clinician reviews: 66; Assigned clinical-pharmacist reviews: 12
 
 Suggested reviewer split: licensed-clinician 66; clinical-pharmacist 12
 Pre-review split: flow_checked 26; not_started 52
@@ -21,6 +21,12 @@ Medical records missing evidenceRefs: 78
 Rows with reviewerRole `unassigned` must be assigned to a real reviewer before they can be marked verified. The suggested role is derived from category only and is not an approval.
 
 ### Unassigned medical/pharmacy reviews
+
+| id | suggested reviewer | category | label | review focus | pre-review | status | evidenceRefs |
+|---|---|---|---|---|---|---|---|
+| — | — | — | — | — | — | — | — |
+
+### Assigned licensed-clinician reviews
 
 | id | suggested reviewer | category | label | review focus | pre-review | status | evidenceRefs |
 |---|---|---|---|---|---|---|---|
@@ -70,10 +76,8 @@ Rows with reviewerRole `unassigned` must be assigned to a real reviewer before t
 | template_endocrinology | licensed-clinician | clinical-template | 内分泌科 | 多饮多尿、甲状腺结节、低血糖；血糖与甲功 | not_started | pending | — |
 | template_ophthalmology | licensed-clinician | clinical-template | 眼科 | 视力骤降、眼红流泪、飞蚊症；眼底检查 | not_started | pending | — |
 | template_psychiatry | licensed-clinician | clinical-template | 精神科 | 失眠、情绪低落、惊恐发作；量表与晤谈 | not_started | pending | — |
-| education_penicillin_skin_test | clinical-pharmacist | medication | 青霉素皮试阳性后的处理 | 过敏风险、交叉过敏与不能自行换药 | not_started | pending | — |
 | education_cpr_rate | licensed-clinician | education | CPR 按压频率 | 指南版本、按压质量与急救上下文 | not_started | pending | — |
 | education_flatline_narrative | licensed-clinician | education | 心电图“拉直”叙事 | 叙事简化，避免把监护波形等同完整诊断 | not_started | pending | — |
-| education_anticoagulation_tradeoff | clinical-pharmacist | medication | 抗凝治疗利弊 | 房颤场景的风险沟通，不给出个体化处方 | not_started | pending | — |
 | education_pediatric_emergency | licensed-clinician | education | 高热惊厥/哮喘/低血糖 | 儿童急症和现场急救边界 | not_started | pending | — |
 | education_suture_consent | licensed-clinician | workflow | 缝合与术前谈话 | 无菌、分层、知情同意和上级监督 | not_started | pending | — |
 | diagnostic_workup | licensed-clinician | diagnostic | diagnostic_workup | 生命体征/检查申请；检查申请语境、上级复核顺序；急性胸闷早期心电图等时间敏感检查已点出 | flow_checked | pending | — |
@@ -82,16 +86,6 @@ Rows with reviewerRole `unassigned` must be assigned to a real reviewer before t
 | diagnostic_followup | licensed-clinician | workflow | diagnostic_followup | 复查计划/交班/求助路径；随访时间表的概括性表述 | flow_checked | pending | — |
 | diagnostic_shortcut_echo | licensed-clinician | diagnostic | diagnostic_shortcut_echo | 检查单流程回声；避免检查越多越好的暗示 | flow_checked | pending | — |
 | diagnostic_rushed_echo | licensed-clinician | diagnostic | diagnostic_rushed_echo | 鉴别诊断复盘回声；不确定性与上级复核表述 | flow_checked | pending | — |
-| med_reconciliation | clinical-pharmacist | medication | med_reconciliation | 入院用药清单、过敏史和不确定项核对；核对顺序、记录边界和上级复核 | flow_checked | pending | — |
-| med_indication_review | clinical-pharmacist | medication | med_indication_review | 抗菌药物指征与复评目标；抗菌药物管理措辞、药师参与边界 | flow_checked | pending | — |
-| med_indication_review_assisted | clinical-pharmacist | medication | med_indication_review_assisted | 低知识状态下的带教/药师复核；教学路径与风险沟通 | flow_checked | pending | — |
-| med_adverse_effect_escalation | clinical-pharmacist | medication | med_adverse_effect_escalation | 疑似不良反应的时间线记录与升级；不把时间相关等同因果，及时报告边界 | flow_checked | pending | — |
-| med_discharge_teachback | clinical-pharmacist | medication | med_discharge_teachback | 出院清单、复诊安排与复述确认；teach-back 译法、求助路径和交接责任 | flow_checked | pending | — |
-| med_reconciliation_echo | clinical-pharmacist | medication | med_reconciliation_echo | 未完成核对的规培复盘；避免把清单抄录等同于核对完成 | flow_checked | pending | — |
-| med_indication_echo | clinical-pharmacist | medication | med_indication_echo | 未复评用药指征的复盘；区分继续原方案与临床依据 | flow_checked | pending | — |
-| med_adverse_effect_echo | clinical-pharmacist | medication | med_adverse_effect_echo | 忽略疑似不良反应的职业期回声；不确定性、记录和升级流程 | flow_checked | pending | — |
-| med_teachback_echo | clinical-pharmacist | medication | med_teachback_echo | 完成复述确认后的职业期回声；沟通确认的适用场景 | flow_checked | pending | — |
-| med_teachback_rushed_echo | clinical-pharmacist | medication | med_teachback_rushed_echo | 仓促出院沟通的职业期回声；患者理解与求助路径的表述 | flow_checked | pending | — |
 | clinical_schedule_handoff | licensed-clinician | workflow | clinical_schedule_handoff | 轮转交接、责任层级和未完成事项；排班/交接责任边界 | flow_checked | pending | — |
 | clinical_rounds_hierarchy | licensed-clinician | workflow | clinical_rounds_hierarchy | 分级查房、风险汇报和上级确认；分级查房语境与教学边界 | flow_checked | pending | — |
 | clinical_rounds_assisted | licensed-clinician | workflow | clinical_rounds_assisted | 低知识状态下的带教汇报；辅助路径与上级介入表述 | flow_checked | pending | — |
@@ -103,17 +97,22 @@ Rows with reviewerRole `unassigned` must be assigned to a real reviewer before t
 | clinical_consult_echo | licensed-clinician | workflow | clinical_consult_echo | 清晰会诊申请的职业期回声；收到、反馈和记录的闭环 | flow_checked | pending | — |
 | clinical_consult_vague_echo | licensed-clinician | workflow | clinical_consult_vague_echo | 模糊会诊申请的职业期回声；具体问题和反馈路径 | flow_checked | pending | — |
 
-### Assigned licensed-clinician reviews
-
-| id | suggested reviewer | category | label | review focus | pre-review | status | evidenceRefs |
-|---|---|---|---|---|---|---|---|
-| — | — | — | — | — | — | — | — |
-
 ### Assigned clinical-pharmacist reviews
 
 | id | suggested reviewer | category | label | review focus | pre-review | status | evidenceRefs |
 |---|---|---|---|---|---|---|---|
-| — | — | — | — | — | — | — | — |
+| education_penicillin_skin_test | clinical-pharmacist | medication | 青霉素皮试阳性后的处理 | 过敏风险、交叉过敏与不能自行换药 | not_started | pending | — |
+| education_anticoagulation_tradeoff | clinical-pharmacist | medication | 抗凝治疗利弊 | 房颤场景的风险沟通，不给出个体化处方 | not_started | pending | — |
+| med_reconciliation | clinical-pharmacist | medication | med_reconciliation | 入院用药清单、过敏史和不确定项核对；核对顺序、记录边界和上级复核 | flow_checked | pending | — |
+| med_indication_review | clinical-pharmacist | medication | med_indication_review | 抗菌药物指征与复评目标；抗菌药物管理措辞、药师参与边界 | flow_checked | pending | — |
+| med_indication_review_assisted | clinical-pharmacist | medication | med_indication_review_assisted | 低知识状态下的带教/药师复核；教学路径与风险沟通 | flow_checked | pending | — |
+| med_adverse_effect_escalation | clinical-pharmacist | medication | med_adverse_effect_escalation | 疑似不良反应的时间线记录与升级；不把时间相关等同因果，及时报告边界 | flow_checked | pending | — |
+| med_discharge_teachback | clinical-pharmacist | medication | med_discharge_teachback | 出院清单、复诊安排与复述确认；teach-back 译法、求助路径和交接责任 | flow_checked | pending | — |
+| med_reconciliation_echo | clinical-pharmacist | medication | med_reconciliation_echo | 未完成核对的规培复盘；避免把清单抄录等同于核对完成 | flow_checked | pending | — |
+| med_indication_echo | clinical-pharmacist | medication | med_indication_echo | 未复评用药指征的复盘；区分继续原方案与临床依据 | flow_checked | pending | — |
+| med_adverse_effect_echo | clinical-pharmacist | medication | med_adverse_effect_echo | 忽略疑似不良反应的职业期回声；不确定性、记录和升级流程 | flow_checked | pending | — |
+| med_teachback_echo | clinical-pharmacist | medication | med_teachback_echo | 完成复述确认后的职业期回声；沟通确认的适用场景 | flow_checked | pending | — |
+| med_teachback_rushed_echo | clinical-pharmacist | medication | med_teachback_rushed_echo | 仓促出院沟通的职业期回声；患者理解与求助路径的表述 | flow_checked | pending | — |
 
 Required medical completion fields: `status: verified`, `reviewerRole`, named reviewer in `reviewedBy`, ISO date in `reviewedAt`, at least one `evidenceRefs` entry, and a concise `notes` conclusion. Medication records require `clinical-pharmacist`; other records require a licensed clinician.
 

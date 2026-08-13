@@ -26,7 +26,13 @@ test('医学事实清单完整保留当前 78 个复核对象，流程预审不�
   expect(new Set(ids).size).toBe(ids.length);
   expect(manifest.records.filter((record: any) => record.preReviewStatus === 'flow_checked')).toHaveLength(26);
   expect(manifest.records.every((record: any) => Object.prototype.hasOwnProperty.call(record, 'reviewerRole'))).toBe(true);
-  expect(manifest.records.filter((record: any) => record.status === 'pending').map((record: any) => record.reviewerRole)).toEqual(manifest.records.map(() => ''));
+  // reviewerRole 预填资质类别（派工用），不等于终审；pending 记录仍不得有 reviewedBy。
+  expect(manifest.records.filter((record: any) => record.category === 'medication')
+    .every((record: any) => record.reviewerRole === 'clinical-pharmacist')).toBe(true);
+  expect(manifest.records.filter((record: any) => record.category !== 'medication')
+    .every((record: any) => record.reviewerRole === 'licensed-clinician')).toBe(true);
+  expect(manifest.records.filter((record: any) => record.status === 'pending')
+    .every((record: any) => !record.reviewedBy)).toBe(true);
   expect(manifest.records.filter((record: any) =>
     record.preReviewStatus === 'flow_checked' && record.status === 'verified')).toEqual([]);
 });
@@ -283,7 +289,7 @@ test('release:check 的退出码与结构化清单中的未闭环状态一致', 
     ...acceptance.checks.filter((record: any) => record.status !== 'verified'),
   ];
 
-  const result = spawnSync(process.execPath, ['scripts/release-check.mjs'], {
+  const result = spawnSync(process.execPath, ['scripts/release-check.mjs', '--track=full'], {
     cwd: ROOT,
     encoding: 'utf8',
   });
@@ -293,6 +299,57 @@ test('release:check 的退出码与结构化清单中的未闭环状态一致', 
   if (outstanding.length > 0) {
     expect(output).toContain('未完成场景：new-game, continue-save, clinical-route, research-route, exit-route, late-life-route, restart-save, console-clean');
     expect(output).toContain('未完成场景：portrait, landscape, safe-area, touch-minigames, long-session, audio-unlock, console-clean');
+  }
+});
+
+test('release:check --track=preview 在仅有人工门禁未闭环时可通过', () => {
+  const result = spawnSync(process.execPath, ['scripts/release-check.mjs', '--track=preview'], {
+    cwd: ROOT,
+    encoding: 'utf8',
+  });
+  const output = `${result.stdout}\n${result.stderr}`;
+  expect(result.status, output).toBe(0);
+  expect(output).toContain('Release track: preview');
+  expect(output).toContain('Preview release checks passed');
+  expect(output).toContain('Deferred (allowed on preview)');
+  expect(output).toContain('医学人工终审仍有');
+});
+
+test('release:check 把 vX.Y.Z-preview 标签解析为 preview 轨道', () => {
+  const result = spawnSync(process.execPath, ['scripts/release-check.mjs'], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      RELEASE_TRACK: '',
+      RELEASE_TAG: 'v0.1.0-preview',
+      GITHUB_REF: 'refs/tags/v0.1.0-preview',
+    },
+  });
+  const output = `${result.stdout}\n${result.stderr}`;
+  expect(result.status, output).toBe(0);
+  expect(output).toContain('Release track: preview');
+});
+
+test('release:check --track=preview 仍阻止 ungated 现实声明', () => {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'fckmedcn-preview-unsafe-'));
+  try {
+    copyReleaseCheckFixture(tempRoot);
+    fs.writeFileSync(
+      path.join(tempRoot, 'src', 'data', 'unsafe.ts'),
+      "export const unsafe = '真实数据：未经 evidence registry 复核';\n",
+    );
+
+    const result = spawnSync(process.execPath, ['scripts/release-check.mjs', '--track=preview'], {
+      cwd: tempRoot,
+      encoding: 'utf8',
+    });
+    const output = `${result.stdout}\n${result.stderr}`;
+    expect(result.status, output).toBe(1);
+    expect(output).toContain('Release track: preview');
+    expect(output).toContain('源码数据包含未经证据门禁的现实声明：src/data/unsafe.ts');
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
   }
 });
 
@@ -334,7 +391,7 @@ test('release:review 生成完整的人工复核工作包，不改变 pending �
   expect(output).toMatch(/Generated at: \d{4}-\d{2}-\d{2}T/);
   expect(output).toMatch(/Source HEAD at generation: [0-9a-f]{7,}|Source HEAD at generation: unknown/);
   expect(output).toContain('Manifest schema versions: evidence v1; medical v1; audio v1; acceptance v1');
-  expect(output).toContain('Medical queue by reviewerRole: Unassigned medical/pharmacy reviews: 78; Assigned licensed-clinician reviews: 0; Assigned clinical-pharmacist reviews: 0');
+  expect(output).toContain('Medical queue by reviewerRole: Unassigned medical/pharmacy reviews: 0; Assigned licensed-clinician reviews: 66; Assigned clinical-pharmacist reviews: 12');
   expect(output).toContain('Suggested reviewer split: licensed-clinician 66; clinical-pharmacist 12');
   expect(output).toContain('Pre-review split: flow_checked 26; not_started 52');
   expect(output).toContain('Medical records missing evidenceRefs: 78');
@@ -342,7 +399,10 @@ test('release:review 生成完整的人工复核工作包，不改变 pending �
   expect(output).toContain('### Unassigned medical/pharmacy reviews');
   expect(output).toContain('### Assigned licensed-clinician reviews');
   expect(output).toContain('### Assigned clinical-pharmacist reviews');
+  expect(output).toContain('| — | — | — | — | — | — | — | — |');
   expect(output).toContain('clinical-pharmacist');
+  expect(output).toContain('diagnostic_workup');
+  expect(output).toContain('med_reconciliation');
   expect(output).toContain('External evidence queue');
   expect(output).toContain('used by ending cards');
   expect(output).toContain('quit_guipei: 心理援助热线 = 全国统一号码：12356');

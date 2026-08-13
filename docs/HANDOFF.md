@@ -118,12 +118,20 @@ attr-allocation 补贷款开关用例。
 
 ## 尚未完成 / 发布前不足
 
-- **医学终审**：`MEDICAL-FACT-AUDIT.md` 的患者、科室、急症和教育内容尚未完成临床医师/药师终审；
-  AI 辅助流程复核不能替代专业审核。
-- **首屏体积**：生产构建已完成 Phaser 拆包，游戏包约 939.50 kB、Phaser 包约 1,199.04 kB，且无超大 chunk 警告。
-- **触屏收尾**：事件/对话卡取消入口已补齐；仍需真机验证刘海安全区、横竖屏切换和长时间操作手感。
-- **玩法深度**：求职后的医院事件池仍需按三甲/基层/私立等路线进一步差异化；普通策略的结局可达性和图鉴线索仍待验证；
-  编制/合同制、病假调休、公积金仍未完全覆盖；多点执业与线上问诊已接入持续副业结算并有专项验证。权威任务表见 `REVIEW-PLAYABILITY.md`。
+> 2026-08-13 核对：M10 诊断/用药/工作流**代码与流程预审已完成**（26 条 `flow_checked`）；
+> **full** 发布仍被 `npm run release:check:full` 挡住——医学终审、外部证据、人工验收均为 `pending`。
+> **preview** 可通过 `vX.Y.Z-preview` 标签或 `npm run release:check:preview` 部署可玩包（不宣称医学认证）。
+> Phase 1 派工见 `sources/review-workpacks/batch-1-m10-chains.md` 与平衡改进计划。
+
+- **医学终审（full 阻塞 / preview 推迟）**：JSON 共 78 条仍 `pending`；Batch 1 优先审 M10 三链。
+  AI/`flow_checked` 不能标 `verified`。真相源：`sources/medical-fact-audit.json`。
+- **外部证据（full 阻塞 / preview 推迟）**：`sources/evidence.json` 8 条外部证据源字段已齐，缺审阅人结论；
+  运行时仅展示 `verifiedEvidence()`。
+- **人工验收（full 阻塞 / preview 推迟）**：`sources/release-acceptance.json` 桌面 8 场景 + iOS/Android 真机仍全 `pending`。
+- **首屏体积**：Phaser 已拆包（游戏包 ~940 kB、Phaser ~1.2 MB）；非当前阻塞。
+- **触屏收尾**：触控主流程已有回归；刘海/横竖屏/长时手感仍需真机写入 acceptance。
+- **玩法深度（Phase 2，不挡自动化门禁）**：医院路线事件池差异化；编制/合同制、病假调休、公积金；
+  实习手写密度；M11 诉讼长尾；M12 NPC。详见 `DEVPLAN.md` M10–M13。
 
 ## 场景转换测试经验（写新测试前先读）
 

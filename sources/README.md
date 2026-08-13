@@ -8,9 +8,9 @@ This directory stores review evidence and redistribution records. It must not co
 - `medical-fact-audit.json`: the machine-readable source of truth for all medical review items. `flow_checked` records are still `pending` until the appropriate clinician or pharmacist completes final review and records evidence.
 - `medical-news-sources.md`: working notes only. A generic portal URL does not make a claim verified.
 - `research/`: reproducible candidate-source retrieval logs. These files help reviewers repeat searches but are not approvals by themselves.
-- `review-workpacks/`: generated Markdown workpacks for human review. Regenerate with `npm run release:review -- --write`; these are queues for assignment and annotation, not approval records.
+- `review-workpacks/`: generated Markdown workpacks for human review. Regenerate with `npm run release:review:write`; these are queues for assignment and annotation, not approval records. Priority Batch 1 packet: `review-workpacks/batch-1-m10-chains.md` (M10 diagnostic / medication / workflow final review).
 - `review-artifacts/`: reviewer-supplied screenshots, console logs, recordings, or notes referenced from `release-acceptance.json` as relative `sources/review-artifacts/...` paths. Do not use local absolute paths.
 - `src/data/evidence.ts`: typed runtime adapter for `evidence.json`; do not duplicate evidence records in TypeScript.
 - `docs/release-review-runbook.md`, `npm run release:review`, and `npm run release:review -- --write`: reviewer workflow plus terminal or file-based queues for all pending medical, evidence, and acceptance records.
 
-Run `npm run release:schema` while editing manifests and `npm run release:check` before deployment. Missing human review is a release blocker, not a warning to suppress. The Markdown audit is a readable checklist; release decisions use the JSON manifest.
+Run `npm run release:schema` while editing manifests. Use `npm run release:check:full` before a certified release, or `npm run release:check:preview` for a `vX.Y.Z-preview` playable deploy that explicitly defers medical / evidence / acceptance human gates (content-safety checks still apply). Missing human review remains a **full**-track blocker, not something to silence by editing manifests. The Markdown audit is a readable checklist; release decisions use the JSON manifest.

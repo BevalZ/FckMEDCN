@@ -36,8 +36,24 @@ npm run test:preview:subpath
 npm run test:ci
 ```
 
-普通 push 和 pull request 会执行上述自动化并上传 `dist` 预览产物。GitHub Pages 正式发布仅由
-`v*` 版本标签或手动 workflow 触发，并额外要求 `npm run release:check` 通过。
+普通 push 和 pull request 会执行上述自动化并上传 `dist` 预览产物。GitHub Pages 发布由 `v*` 标签或手动
+workflow 触发，并额外要求 `npm run release:check`（或对应 track）通过。
+
+### 发布轨道
+
+| Track | 触发方式 | 门禁 |
+|---|---|---|
+| **preview** | 标签 `vX.Y.Z-preview`（可带后缀，如 `v0.1.0-preview.1`），或手动 workflow 选 preview | 仍强制：manifest schema、禁止 ungated「真实*」措辞、结局卡必须 `evidenceId`、音频授权。**推迟**：医学终审、外部证据终审、桌面/真机人工验收 |
+| **full** | 其它 `v*` 标签（如 `v1.0.0`），或手动 workflow 默认 full | 上述硬门禁 + 全部人工项必须 `verified` |
+
+本地：
+
+```bash
+npm run release:check:preview   # 可玩预览门禁
+npm run release:check:full      # 认证发布门禁
+```
+
+预览构建会设置 `VITE_RELEASE_TRACK=preview`，标题页声明“医学内容尚未终审”；未 `verified` 的结局事实卡仍不展示。
 
 ## 医学内容声明
 

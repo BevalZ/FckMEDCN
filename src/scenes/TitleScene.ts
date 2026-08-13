@@ -63,6 +63,10 @@ export class TitleScene extends Phaser.Scene {
     };
 
     overlay?.classList.add('show');
+    if (disclaimer && import.meta.env.VITE_RELEASE_TRACK === 'preview') {
+      disclaimer.textContent =
+        '预览版：叙事模拟，医学内容尚未完成临床医师/药师终审；游戏内快讯、机构与数值为匿名综合改写或趋势推演，不构成现实事实、医学建议或诊疗依据。';
+    }
     fadeIn(main, 200);
     fadeIn(sub, 800);
     fadeIn(disclaimer, 1000);

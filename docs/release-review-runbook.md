@@ -6,18 +6,28 @@
 
 ```powershell
 npm run release:schema
-npm run release:review > release-review-workpack.md
+npm run release:review:write
 ```
 
 工作包来自 `sources/medical-fact-audit.json`、`sources/evidence.json` 和 `sources/release-acceptance.json`。它是派工视图，不应直接提交为事实来源，也不能据此自动修改状态。
 
 ## 医学与药学复核
 
-1. 按工作包中的 `id` 和 `review focus` 定位源码内容：
+优先按批次派工，避免 78 条一次摊开：
+
+1. **Batch 1**：[`sources/review-workpacks/batch-1-m10-chains.md`](../sources/review-workpacks/batch-1-m10-chains.md)
+   （诊断 / 用药 / 工作流，已流程预审）
+2. Batch 2：教育题与高风险沟通
+3. Batch 3：患者档案
+4. Batch 4：生成临床模板
+
+每条记录：
+
+1. 按工作包中的 `id` 和 `review focus` 定位源码：
    `rg -n "<record-id>|<label 的关键字>" src tests`。
-2. `patient`、`diagnostic`、`workflow`、`clinical-template` 和 `education` 记录由具备相应资质的临床医师复核；`medication` 记录必须由药师复核。
-3. 逐条记录：是否需要修改、修改后的结论、引用的可追溯来源、审阅人身份和日期。流程预审 (`flow_checked`) 不等于终审。
-4. 只有在结论已落地代码并有回归测试时，才把记录设为 `verified`；同时填写 `reviewerRole`、`reviewedBy`、`reviewedAt`、`evidenceRefs` 和 `notes`。
+2. `patient`、`diagnostic`、`workflow`、`clinical-template` 和 `education` 由临床医师复核；`medication` 必须由药师复核。
+3. 逐条记录：是否需要修改、结论、可追溯来源、审阅人与日期。`flow_checked` ≠ 终审。
+4. 只有结论已落地代码并有回归时，才把记录设为 `verified`；填写 `reviewerRole`、`reviewedBy`、`reviewedAt`、`evidenceRefs` 和 `notes`。
 
 ## 外部事实证据
 
@@ -35,9 +45,28 @@ npm run check
 
 ## 发布顺序
 
+### 预览版（可玩，不宣称医学认证）
+
+标签必须匹配 `vX.Y.Z-preview`（例如 `v0.1.0-preview`）。门禁推迟医学/证据/验收人工项，但仍禁止
+ungated「真实*」措辞与自由文本事实卡来源。
+
 ```powershell
 npm run release:schema
-npm run release:check
+npm run release:check:preview
+# 打标签前请用同一轨道构建，使标题页显示预览声明：
+$env:VITE_RELEASE_TRACK = 'preview'; npm run build
+git tag v0.1.0-preview
+git push origin v0.1.0-preview
 ```
 
-`release:check` 失败时不得通过改门禁、删记录或把流程预审冒充终审来发布。所有人工项目通过后，再以独立提交整理当前工作树并创建候选版标签。
+也可在 GitHub Actions「Release to GitHub Pages」手动运行并选择 `track=preview`。
+
+### 正式版（医学/证据/验收全绿）
+
+```powershell
+npm run release:schema
+npm run release:check:full
+```
+
+`release:check:full`（默认 `release:check`）失败时不得通过改门禁、删记录或把流程预审冒充终审来发布。
+所有人工项目通过后，再以独立提交整理当前工作树并创建**不含** `-preview` 的候选版标签（如 `v1.0.0`）。

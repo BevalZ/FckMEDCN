@@ -5,6 +5,22 @@
 >
 > 状态：`待核对` / `已核对` / `需修改`。完成复核时填写审阅人、日期、依据与修改提交。
 
+## 机器可读事实源
+
+发布门禁读的是 [`sources/medical-fact-audit.json`](../sources/medical-fact-audit.json)，不是本 Markdown。
+本文件是可读清单；两者冲突时以 JSON 为准。
+
+## Phase 1 派工顺序（发布前）
+
+1. **Batch 1（优先）**：M10 诊断 / 用药 / 工作流 26 条（已 `flow_checked`）→
+   [`sources/review-workpacks/batch-1-m10-chains.md`](../sources/review-workpacks/batch-1-m10-chains.md)
+2. Batch 2：教育题与高风险沟通（`education_*` 等）
+3. Batch 3：患者档案（`patient_*`）
+4. Batch 4：生成模板（`template_*` / `eventGen.ts`）
+
+角色已在 JSON 预填：`medication` → `clinical-pharmacist`；其余 → `licensed-clinician`。
+终审仍须真实 `reviewedBy` / `reviewedAt` / `evidenceRefs` / `notes`，禁止把流程预审标成 `verified`。
+
 ## 复核规则
 
 - [ ] 疾病、症状、检查和治疗的组合符合常见临床语境，未把筛查、诊断、治疗混为一谈。

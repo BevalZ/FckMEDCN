@@ -4,6 +4,15 @@ on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      track:
+        description: 'Release track (preview defers medical/evidence/acceptance human gates)'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - preview
 
 permissions:
   contents: read
@@ -23,16 +32,32 @@ jobs:
         with:
           node-version: 20
           cache: npm
+      - id: track
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TRACK="${{ inputs.track }}"
+          elif [[ "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-preview([.-][0-9A-Za-z.-]+)?$ ]]; then
+            TRACK=preview
+          else
+            TRACK=full
+          fi
+          echo "track=${TRACK}" >> "$GITHUB_OUTPUT"
+          echo "Resolved release track: ${TRACK} (ref=${GITHUB_REF_NAME})"
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run release:schema
       - run: npm run typecheck
       - run: npm run typecheck:test
       - run: npm run build
+        env:
+          VITE_RELEASE_TRACK: ${{ steps.track.outputs.track }}
       - run: npm run test:preview:subpath
       - run: npm run audit:prod
       - run: npm run test:ci
-      - run: npm run release:check
+      - run: npm run release:check -- --track=${{ steps.track.outputs.track }}
+        env:
+          RELEASE_TRACK: ${{ steps.track.outputs.track }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
