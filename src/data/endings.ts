@@ -354,10 +354,10 @@ export function determineEnding(state: GameState): Ending {
   // 6. 早期职业倦怠（未崩但濒临）
   else if (age < 35 && (stats.sanity < 30 || (state.spirit?.meaning ?? 50) < 20)) ending = ENDINGS_BY_ID['burnout_early'];
 
-  // 7. 深陷负债（真实经济后果：现金+资产 长期为负才算真破产）
+  // 7. 深陷负债（实际经济后果：现金+资产 长期为负才算真破产）
   else if (money + (state.assets ?? 0) < -30000) ending = ENDINGS_BY_ID['exhausted_attending'];
 
-  // 8. 稳定晋升路（成家者门槛略低，体现家庭支撑这一真实变量）
+  // 8. 稳定晋升路（成家者门槛略低，体现家庭支撑这一叙事变量）
   // 正高已评上：直接进主任医师结局—— exhausted_attending 的"主治编外"叙事与正高矛盾。
   // 位置在 lucky_fraud(0.5) 之后：造假者即便评上正高，仍先被"侥幸"截住。
   else if (flags.has('passed_zhenggao')) ending = ENDINGS_BY_ID['chief_at_45'];
@@ -369,8 +369,8 @@ export function determineEnding(state: GameState): Ending {
   // 默认：精疲力竭的主治
   else ending = ENDINGS_BY_ID['exhausted_attending'];
 
-  // 动态化叙事年龄：结局 title/subtitle/desc 里的固定年龄（"45岁的稳定"等）按玩家真实年龄改写，
-  // 与 EndingScene 左侧真实年龄（state.stats.age，38 岁收尾）保持一致，消除"左 38 右 45"矛盾。
+  // 动态化叙事年龄：结局 title/subtitle/desc 里的固定年龄（"45岁的稳定"等）按玩家实际年龄改写，
+  // 与 EndingScene 左侧实际年龄（state.stats.age，38 岁收尾）保持一致，消除"左 38 右 45"矛盾。
   if (!ending) ending = ENDINGS_BY_ID['exhausted_attending'];
   const withRealAge = (t: string) => t.replace(/\d+岁/g, `${age}岁`);
   return {

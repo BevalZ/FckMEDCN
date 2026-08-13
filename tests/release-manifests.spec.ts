@@ -168,12 +168,39 @@ test('verified 外部证据必须记录复核日期与原句支持结论', async
   }
 });
 
+function copyReleaseCheckFixture(tempRoot: string) {
+  fs.cpSync(path.join(ROOT, 'scripts'), path.join(tempRoot, 'scripts'), { recursive: true });
+  fs.cpSync(path.join(ROOT, 'sources'), path.join(tempRoot, 'sources'), { recursive: true });
+  fs.mkdirSync(path.join(tempRoot, 'src', 'data'), { recursive: true });
+  fs.cpSync(path.join(ROOT, 'src', 'data', 'endings.ts'), path.join(tempRoot, 'src', 'data', 'endings.ts'));
+}
+
+test('release:check 要求结局事实卡只能通过 EvidenceRef 引用来源', () => {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'fckmedcn-ending-evidence-'));
+  try {
+    copyReleaseCheckFixture(tempRoot);
+    const endingsPath = path.join(tempRoot, 'src', 'data', 'endings.ts');
+    let source = fs.readFileSync(endingsPath, 'utf8');
+    source = source.replace("evidenceId: '国家卫健委'", "source: '国家卫健委'");
+    fs.writeFileSync(endingsPath, source);
+
+    const result = spawnSync(process.execPath, ['scripts/release-check.mjs'], {
+      cwd: tempRoot,
+      encoding: 'utf8',
+    });
+    const output = `${result.stdout}\n${result.stderr}`;
+    expect(result.status, output).toBe(1);
+    expect(output).toContain('结局事实卡必须通过 evidenceId 引用 EvidenceRef');
+    expect(output).toContain('结局事实卡存在未引用 evidenceId 的卡片对象');
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
+
 test('release:check 阻止源码数据中的未经门禁现实声明', () => {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'fckmedcn-release-content-'));
   try {
-    fs.cpSync(path.join(ROOT, 'scripts'), path.join(tempRoot, 'scripts'), { recursive: true });
-    fs.cpSync(path.join(ROOT, 'sources'), path.join(tempRoot, 'sources'), { recursive: true });
-    fs.mkdirSync(path.join(tempRoot, 'src', 'data'), { recursive: true });
+    copyReleaseCheckFixture(tempRoot);
     fs.writeFileSync(
       path.join(tempRoot, 'src', 'data', 'unsafe.ts'),
       "export const unsafe = '真实数据：未经 evidence registry 复核';\n",

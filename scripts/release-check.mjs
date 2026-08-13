@@ -39,6 +39,24 @@ for (const file of collectSourceDataFiles(sourceDataRoot)) {
   }
 }
 
+const endingsSourcePath = path.join(root, 'src', 'data', 'endings.ts');
+if (fs.existsSync(endingsSourcePath)) {
+  const endingsSource = fs.readFileSync(endingsSourcePath, 'utf8');
+  if (/realDataCard\s*:\s*\[[\s\S]*?\bsource\s*:/u.test(endingsSource)) {
+    failures.push('结局事实卡必须通过 evidenceId 引用 EvidenceRef，不得使用自由文本 source 字段');
+  }
+  const cardArrays = endingsSource.match(/realDataCard\s*:\s*\[[\s\S]*?\]/gu) ?? [];
+  for (const block of cardArrays) {
+    const cards = block.match(/\{[^{}]*\}/gu) ?? [];
+    for (const card of cards) {
+      if (!/\bevidenceId\s*:/u.test(card)) {
+        failures.push('结局事实卡存在未引用 evidenceId 的卡片对象');
+        break;
+      }
+    }
+  }
+}
+
 const medicalRecords = Array.isArray(manifests.medical?.records) ? manifests.medical.records : [];
 const medicalOutstanding = medicalRecords.filter(record => record?.status !== 'verified');
 if (medicalOutstanding.length > 0) {
