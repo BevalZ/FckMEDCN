@@ -52,6 +52,9 @@ export class EndingScene extends Phaser.Scene {
       ['感情', maritalLabel[state.marital]],
       ['家人/子女', `${state.familyAlive}/4 在世 · ${state.hasChild ? '有娃' : '无娃'}`],
       ['现金 / 资产', `现金${fmt(finance.cash)} · 资产${fmt(finance.assets)}`],
+      ['养老金', finance.pension > 0
+        ? `账户${fmt(finance.pension)} · 季度领取约${fmt(finance.pensionPayout)}`
+        : '未建立账户 / 余额为 0'],
       ['职业现金流', `${finance.region} ${finance.title} · 季度收入${fmt(finance.quarterlyIncome)} · 可支配${fmt(finance.disposable)}`],
       ['房贷', finance.mortgageBalance > 0
         ? `余额约${fmt(finance.mortgageBalance)} · 季度还款${fmt(finance.housePayment)}`

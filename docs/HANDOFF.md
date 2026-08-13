@@ -139,7 +139,8 @@ attr-allocation 补贷款开关用例。
 - **首屏体积**：Phaser 已拆包（游戏包 ~940 kB、Phaser ~1.2 MB）；非当前阻塞。
 - **触屏收尾**：触控主流程已有回归；刘海/横竖屏/长时手感仍需真机写入 acceptance。
 - **玩法深度（Phase 2）**：医院路线职业事件池已按三甲/基层/私立/省属+编制/合同制门控接入
-  （`events_career_routes.ts`）；公积金季度缴存与编制/合同差异已进 `economy.ts`。
+  （`events_career_routes.ts`）；公积金与养老金季度缴存与编制/合同差异已进 `economy.ts`
+  （养老金为独立账户，不并入可提现资产；退休期按余额领取）。
   M11 诉讼长尾（鉴定节点 / 延迟回声 / 二审窗口）已接入 `events_career_litigation.ts`。
   M12 林主治多阶段弧 + QuestLog 完成飘字 + `docs/EVENT-LAYERING.md` 已落地。
   M13 HUD 资产闪色、结构化季度账单、理财 toast、ESC/Q·E 帮助与首次引导、空 stub 清理已落地；

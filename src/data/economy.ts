@@ -66,6 +66,7 @@ export interface QuarterEconomy {
   cityPremiumPct: number;
   financeNote: string;
   assets?: number;
+  pension?: number;
 }
 
 export interface AssetWithdrawal {
@@ -100,6 +101,8 @@ export interface CareerFinancialSnapshot {
   mortgageBalance: number;
   cash: number;
   assets: number;
+  pension: number;
+  pensionPayout: number;
 }
 
 const ASSET_LEDGER_LIMIT = 100;
@@ -270,6 +273,40 @@ export function housingFundForIncome(grossIncome: number): { employee: number; d
   return { employee, deposit: employee + employer };
 }
 
+/**
+ * 养老保险缴存比例（游戏简化口径）：
+ * 编制单位对等更高；合同/民营雇主部分更薄。个人部分进支出，合计入独立养老金账户（不进资产）。
+ */
+export function pensionRates(): { employeeRate: number; employerRate: number } {
+  const f = getState().flags;
+  if (f.has('jh_bianzhi_in')) return { employeeRate: 0.08, employerRate: 0.16 };
+  if (f.has('contract') || f.has('jh_bianzhi_out') || f.has('took_private')) {
+    return { employeeRate: 0.08, employerRate: 0.12 };
+  }
+  return { employeeRate: 0.08, employerRate: 0.14 };
+}
+
+/** 按税前口径估算养老金：个人部分进支出，个人+单位部分进 pension 账户。 */
+export function pensionForIncome(grossIncome: number): { employee: number; deposit: number } {
+  const safe = Math.max(0, Math.floor(grossIncome));
+  const { employeeRate, employerRate } = pensionRates();
+  const employee = Math.round(safe * employeeRate);
+  const employer = Math.round(safe * employerRate);
+  return { employee, deposit: employee + employer };
+}
+
+/** 退休/归途阶段按账户余额估算的季度养老金领取（不扣减本金，便于结局对照）。 */
+export function pensionQuarterlyPayout(balance = getState().pension ?? 0): number {
+  if (balance <= 0) return 0;
+  return Math.max(0, Math.round(balance * 0.025));
+}
+
+function applyPensionDeposit(amount: number): number {
+  const next = Math.max(0, (getState().pension ?? 0) + amount);
+  patchState({ pension: next });
+  return next;
+}
+
 /** 结局页财务数据卡使用的动态职业画像，明确拆分现金、资产、房贷和季度可支配收入。 */
 export function careerFinancialSnapshot(regionTier?: RegionTier): CareerFinancialSnapshot {
   const state = getState();
@@ -288,6 +325,8 @@ export function careerFinancialSnapshot(regionTier?: RegionTier): CareerFinancia
     mortgageBalance,
     cash: state.stats.money,
     assets: state.assets ?? 0,
+    pension: state.pension ?? 0,
+    pensionPayout: pensionQuarterlyPayout(state.pension ?? 0),
   };
 }
 
@@ -368,7 +407,14 @@ export function getQuarterEconomy(stage: string, regionTier?: RegionTier): Quart
     }
     const fund = housingFundForIncome(income);
     cost += fund.employee;
+    const pen = pensionForIncome(income);
+    cost += pen.employee;
     if (s.flags.has('bought_house')) cost += houseMonthly(tier);      // 房贷月供按地区档位
+  }
+
+  // —— 退休/归途：按养老金账户余额增发季度领取 ——
+  if (stage === 'retirement' || stage === 'eternity') {
+    income += pensionQuarterlyPayout();
   }
 
   // —— 人生状态对收支的持续影响 ——
@@ -394,13 +440,24 @@ export function applyStageEconomy(stage: string): QuarterEconomy {
 
   // 职业期公积金：个人部分已计入 getQuarterEconomy.cost；单位+个人合计入资产（不重复扣现金）
   let housingFundDeposit = 0;
+  // 职业期养老金：个人部分已计入 cost；单位+个人合计入独立 pension 账户（不进资产、不可提现）
+  let pensionDeposit = 0;
   if (stage === 'career' || stage === 'pinnacle') {
     housingFundDeposit = housingFundForIncome(e.income).deposit;
     if (housingFundDeposit > 0) {
       applyAssetTransaction('deposit', housingFundDeposit, 0, `公积金入账 ¥${housingFundDeposit}`);
       assets = getState().assets;
     }
+    pensionDeposit = pensionForIncome(e.income).deposit;
+    if (pensionDeposit > 0) {
+      applyPensionDeposit(pensionDeposit);
+    }
   }
+
+  const fundNoteBits: string[] = [];
+  if (housingFundDeposit > 0) fundNoteBits.push(`公积金 +${housingFundDeposit}`);
+  if (pensionDeposit > 0) fundNoteBits.push(`养老金 +${pensionDeposit}`);
+  const fundNote = fundNoteBits.length > 0 ? fundNoteBits.join('，') : '';
 
   if (st.financeStrategy === 'thrifty') {
     // 节流：支出已通过 getQuarterEconomy 压一成；此处把正结余的 30% 转储蓄，储蓄每季 0.5% 计息
@@ -417,7 +474,7 @@ export function applyStageEconomy(stage: string): QuarterEconomy {
     if (interest > 0) applyAssetTransaction('interest', interest, 0, `季度利息 ¥${interest}`);
     assets = getState().assets;
     financeNote = `（节流省 ${Math.round(e.cost * 0.1)}，转储蓄 ${deposit}，利息 +${interest}`
-      + (housingFundDeposit > 0 ? `，公积金 +${housingFundDeposit}` : '')
+      + (fundNote ? `，${fundNote}` : '')
       + '）';
   } else if (st.financeStrategy === 'invest') {
     // 投资：正结余的 50% 投入资产；资产每季 ±8% 波动
@@ -434,14 +491,14 @@ export function applyStageEconomy(stage: string): QuarterEconomy {
     if (swing !== 0) applyAssetTransaction('market', swing, 0, `季度市场波动 ${swing >= 0 ? '+' : ''}¥${swing}`);
     assets = getState().assets;
     financeNote = `（投入 ${invested}，资产 ${swing >= 0 ? '+' : ''}${swing}`
-      + (housingFundDeposit > 0 ? `，公积金 +${housingFundDeposit}` : '')
+      + (fundNote ? `，${fundNote}` : '')
       + '）';
   } else {
     if (net !== 0) updateStats({ money: net } as StatDelta);
-    if (housingFundDeposit > 0) financeNote = `（公积金 +${housingFundDeposit}）`;
+    if (fundNote) financeNote = `（${fundNote}）`;
   }
 
-  return { ...e, net, financeNote, assets };
+  return { ...e, net, financeNote, assets, pension: getState().pension ?? 0 };
 }
 
 // 进入阶段时的一次性收支（如学费押金 / 安家费）。用 flag 守护，避免读档重入重复扣费。
@@ -491,6 +548,14 @@ export function describeStageEconomy(stage: string): string | null {
     const fund = housingFundForIncome(e.income);
     const rates = housingFundRates();
     lines.push(`住房公积金：个人 ¥${fund.employee}/季（${Math.round(rates.employeeRate * 100)}%），合计入账资产 ¥${fund.deposit}`);
+    const pen = pensionForIncome(e.income);
+    const penRates = pensionRates();
+    lines.push(`养老保险：个人 ¥${pen.employee}/季（${Math.round(penRates.employeeRate * 100)}%），合计入账养老金账户 ¥${pen.deposit}`);
+  }
+  if (stage === 'retirement' || stage === 'eternity') {
+    const bal = s.pension ?? 0;
+    const payout = pensionQuarterlyPayout(bal);
+    lines.push(`养老金账户：余额 ¥${bal.toLocaleString()}，本季领取约 ¥${payout.toLocaleString()}`);
   }
   if (familyLine) lines.splice(2, 0, familyLine);
   if (mentorLine) lines.splice(2, 0, mentorLine);

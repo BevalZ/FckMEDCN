@@ -20,5 +20,8 @@ export function formatQuarterBill(e: {
   if ((s.assets ?? 0) > 0 || (e.financeNote && e.financeNote.length > 0)) {
     rows.push(`  资产 ¥${(s.assets ?? 0).toLocaleString()}${e.financeNote ?? ''}`);
   }
+  if ((s.pension ?? 0) > 0) {
+    rows.push(`  养老金账户 ¥${(s.pension ?? 0).toLocaleString()}`);
+  }
   return rows.join('\n');
 }

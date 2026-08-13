@@ -326,7 +326,7 @@ export const NEWS_TICKER: NewsTickerItem[] = [
 - 移动端适配（触控优化）
 - 性能优化
 - 无障碍支持
-- SEO / 分享卡片
+- SEO / 分享卡片（薄方案已落地：OG meta + `og-share.svg`）
 - 部署到 GitHub Pages / Vercel
 
 ## 后续开发计划（2026-08-04 重排）
