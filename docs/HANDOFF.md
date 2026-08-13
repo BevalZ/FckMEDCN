@@ -148,6 +148,7 @@ attr-allocation 补贷款开关用例。
   亚专科累积：外科压体力上限、儿科抬危机阈值（`specialtyLoad.ts`）。
   急诊第五亚专科：体/心双轨全速累积；非急诊第 6 季起急诊轮转一季，急诊病房支援一季
   （`events_career_rotation.ts`；强制优先级低于诉讼 2 / 二审）。
+  实习手写核心池补至 40+（轮转门控 / 技能操作 / 带教沟通，`events_internship.ts`）。
   住院总一年：第 5 季起任命、任期内双压、满 4 季结业奖（`events_career_chief.ts`）。
   护士长/师姐迷你弧：修复→再合作→职业回声（与林主治弧同形缩短）。
   结局页地区对照：同职称下一线三甲 vs 基层/县城季度可支配（`regionDisposableCompare`）。

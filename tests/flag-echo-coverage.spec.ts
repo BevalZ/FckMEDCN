@@ -151,6 +151,9 @@ const NARRATIVE_ONLY = new Set([
   'era6_crisis_covered', 'era6_crisis_delegated', 'era6_crisis_escalated',
   'era7_identity_soft', 'era7_identity_clung', 'era7_identity_quiet',
   'er_rotation_done', 'ward_rotation_done',
+  // 实习补厚：技能/轮转经历标记（数值已由当次 delta 承接）
+  'intern_suture_ok', 'intern_ecg_ok', 'intern_er_triage', 'intern_abg_ok',
+  'intern_presented', 'intern_handoff_fixed', 'intern_saw_delivery',
   'era8_family_called', 'era8_records_donated', 'era8_records_kept',
   'era8_records_destroyed', 'era8_returned_department', 'era8_returned_first_ward',
   'era8_sat_outside', 'era8_last_person_met', 'era8_last_letter',

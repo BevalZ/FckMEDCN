@@ -3,6 +3,7 @@ import { getState, hasFlag } from './gameState';
 import type { GameState } from './gameState';
 import { UNDERGRAD_EVENTS } from './events_undergrad';
 import { INTERNSHIP_EVENTS } from './events_internship';
+export { INTERNSHIP_EVENTS };
 import { GUIPEI_EVENTS } from './events_guipei';
 import { MASTER_PHD_EVENTS } from './events_master_phd';
 import { JOBHUNT_EVENTS } from './events_jobhunt';
