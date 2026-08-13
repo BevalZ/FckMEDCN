@@ -1,15 +1,15 @@
 import type { GameState } from './gameState';
 
-// 结局页"你的数据 vs 真实数据"逐项对比（原 M4 规划曾实现后被移除，本文件为完善版恢复）。
+// 结局页"你的数据 vs 模拟参照"逐项对比（原 M4 规划曾实现后被移除，本文件为完善版恢复）。
 // 每个结局给出 3 个可比指标：年龄 / 存款 / 论文。
-// range 为真实区间（与玩家数值同量纲），用于"偏低/在区间内/偏高"判定；无 range 则只展示文本。
-// 数据来源沿用结局页 realDataCard 使用的公开口径（丁香园薪酬调查/中国医师协会年报/行业公开数据）。
+// range 为游戏模拟参照区间（与玩家数值同量纲），用于"偏低/在区间内/偏高"判定；无 range 则只展示文本。
+// 这些参照值是游戏平衡用的匿名模拟基准，不作为现实事实或权威来源展示。
 
 export interface CompareRow {
   label: string;
   unit: string;          // 值后缀：'岁' / '¥' / '篇'
   yours: (s: GameState) => number;
-  real: string;          // 真实参照展示文本
+  real: string;          // 模拟参照展示文本
   range?: [number, number];
 }
 

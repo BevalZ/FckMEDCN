@@ -59,7 +59,7 @@ perk，临床/科研 2 点其余 1 点；TitleScene.create 对每次新开局统
 不受污染）；图鉴第三页签空格购买；legacy-inheritance 回归）。
 **数据对比系统**（恢复原 M4 规划：comparison.ts 给 15 结局各配 3 个可比指标——年龄/存款/论文，
 带真实区间与"低于参考/在参考区间内/高于参考"判定；EndingScene 中部改为逐项对齐对比表
-[你的值 vs 真实值 + 判定]，感情/家人/状态 行与真实数据卡保留；data-comparison 回归）。
+[你的值 vs 真实值 + 判定]，感情/家人/状态 行与事实卡保留；data-comparison 回归）。
 **ESC 交互完善**（ConsequencePopup 键盘 handler 改为构造时注册一次——旧 addKey Key 对象在多弹窗
 共用 KeyboardPlugin 时会互相 removeAllListeners 误清；支持 opts.escape 'dismiss'/'cancel'；事件卡
 卡片阶段 ESC 跳过 [skipCurrentEvent，不耗 once、按无事件推进]；EventCard.hide/cancel 补 container

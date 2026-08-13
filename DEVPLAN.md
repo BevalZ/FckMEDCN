@@ -35,7 +35,7 @@ BootScene → TitleScene → GaokaoScene → UndergradScene → InternshipScene
 | 8维属性 | `src/data/stats.ts` | stamina/knowledge/money/sanity/relations/reputation/papers/age |
 | 全局状态 | `src/data/gameState.ts` | 单例 GameState，含 stats/stage/school/track/degree/flags/newsLog |
 | 事件系统 | `src/data/events.ts` | Storylet 架构，加权随机抽取，按 stage/flag/stat/turn 过滤 |
-| 结局系统 | `src/data/endings.ts` | 根据 flags + stats 判定结局，附带真实数据卡 |
+| 结局系统 | `src/data/endings.ts` | 根据 flags + stats 判定结局，附带受 evidence gate 控制的事实卡 |
 | 常量定义 | `src/data/constants.ts` | 学校/学制/医院定义（谐音替代真实名称） |
 | HUD | `src/ui/HUD.ts` | 顶部8维属性条 |
 | 事件卡 | `src/ui/EventCard.ts` | 叙事选项卡，支持多选项 |
@@ -277,10 +277,10 @@ export const NEWS_TICKER: NewsTickerItem[] = [
 - `grassroots_hero` — 基层英雄（县城/社区，高relations）
 
 #### 结局数据对比
-结局画面展示"你的数据 vs 真实数据"：
+结局画面展示"你的数据 vs 模拟参照"（不作为现实事实来源）：
 ```
-你的存款: ¥300,000  |  真实主治平均存款: ¥80,000-200,000
-你的年龄: 35岁      |  真实主治平均年龄: 32-38岁
+你的存款: ¥300,000  |  模拟参照存款: ¥80,000-200,000
+你的年龄: 35岁      |  模拟参照年龄: 32-38岁
 ```
 
 ### M5: 像素美术增强 ✅ 已完成
@@ -351,7 +351,7 @@ export const NEWS_TICKER: NewsTickerItem[] = [
    提前还贷降低后续房贷，专项资产守恒/防重复扣款/菜单持久化回归已覆盖。
 3. [x] 增加属性成长：职业暴露及时救助/隐瞒分别改变运气；职业期每 4 季长期夜班磨损外貌；
    变化限制在 0–5，写入新闻历史，HUD 复用属性行实时显示，`attr-growth.spec.ts` 覆盖上限与解释。
-4. [x] 完善结局真实数据卡：按职称和地区刷新季度收入/支出/可支配区间；结局页拆分现金、资产、
+4. [x] 完善结局事实卡：按职称和地区刷新季度收入/支出/可支配区间；结局页拆分现金、资产、
    房贷估算余额和季度还款，购房/提前还贷会同步更新数据卡。
 
 验收：新增经济矩阵、资产操作和结局财务卡回归；地区收入顺序保持三甲 > 市级/私立 > 基层，资产操作前后
@@ -456,7 +456,7 @@ src/
 4. **Flag 命名约定**: `阶段_动作`，如 `passed_zhuzhi`、`enrolled_xieha`
 5. **谐音一致性**: 所有谐音映射在 `realEvents.ts` 中统一定义，场景内引用
 6. **属性平衡**: 每个选项的 delta 总和应大致平衡，避免某个选择明显最优
-7. **真实数据引用**: 结局数据卡需标注来源（如"丁香园薪酬调查2024"）
+7. **事实来源引用**: 结局事实卡需通过 `sources/evidence.json`，未复核来源不得在 UI 中展示
 
 ## 快速上手指南（给其他 Agent）
 

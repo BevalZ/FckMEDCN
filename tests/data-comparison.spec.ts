@@ -53,6 +53,21 @@ test('数据对比：判定/格式化/覆盖/降级', async ({ page }) => {
   expect(r.missing, '每个结局都应有对比表').toEqual([]);
 });
 
+test('数据对比：参照文案不得冒充已核实真实来源', async ({ page }) => {
+  await boot(page);
+
+  const audit = await page.evaluate(() => {
+    const { cmp } = (window as any).__mod;
+    const text = JSON.stringify(cmp.ENDING_COMPARISONS);
+    return {
+      hasRealDataClaim: text.includes('真实数据') || text.includes('真实参照'),
+      hasPrunedSources: /丁香园|中国医师协会|行业公开数据/.test(text),
+    };
+  });
+
+  expect(audit.hasRealDataClaim, '模拟参照不得标成真实数据').toBe(false);
+  expect(audit.hasPrunedSources, '已裁剪的未核实来源名不得回流').toBe(false);
+});
 test('数据对比：EndingScene 隐藏未复核参照，只显示本局记录', async ({ page }) => {
   await boot(page);
 
