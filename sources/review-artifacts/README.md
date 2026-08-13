@@ -1,6 +1,6 @@
 # Review artifacts
 
-Store human acceptance evidence referenced by `sources/release-acceptance.json` here.
+Store human acceptance evidence referenced by `sources/release-acceptance.json` here. Start from `TEMPLATE.md`, then copy it to a scenario-specific artifact path before referencing it.
 
 Allowed examples:
 
@@ -14,4 +14,5 @@ Rules:
 - Do not record local absolute paths such as `C:/Users/...` or temporary download folders.
 - Do not commit protected health information, real patient data, private account data, or reviewer personal secrets.
 - Prefer short Markdown notes for manual observations, screenshots for layout issues, and copied console logs for console-clean failures.
+- Do not reference `sources/review-artifacts/TEMPLATE.md` from `release-acceptance.json`; it is only a starter file.
 - A scenario may be marked `verified` or `rejected` only after `notes` and at least one `evidenceArtifacts` entry are recorded.

@@ -53,6 +53,12 @@ test('人工验收证据目录记录 artifact 路径规范', () => {
   expect(readme).toContain('Do not record local absolute paths');
   expect(readme).toContain('protected health information');
   expect(readme).toContain('evidenceArtifacts');
+  expect(readme).toContain('TEMPLATE.md');
+  const template = fs.readFileSync(path.join(ROOT, 'sources', 'review-artifacts', 'TEMPLATE.md'), 'utf8');
+  expect(template).toContain('Acceptance artifact template');
+  expect(template).toContain('Privacy check');
+  const acceptance = JSON.stringify(readJson('sources/release-acceptance.json'));
+  expect(acceptance).not.toContain('sources/review-artifacts/TEMPLATE.md');
 });
 
 test('人工验收清单覆盖桌面生命周期与移动端必测场景', () => {
