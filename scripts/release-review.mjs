@@ -60,6 +60,11 @@ if (failures.length > 0) {
   console.log('## 1. Medical and pharmacy review queue');
   console.log('');
   const outstandingMedical = medical.filter(record => record.status !== 'verified');
+  const suggestedClinician = outstandingMedical.filter(record => suggestedRoleFor(record.category) === 'licensed-clinician').length;
+  const suggestedPharmacist = outstandingMedical.filter(record => suggestedRoleFor(record.category) === 'clinical-pharmacist').length;
+  const flowCheckedMedical = outstandingMedical.filter(record => record.preReviewStatus === 'flow_checked').length;
+  const notStartedMedical = outstandingMedical.filter(record => record.preReviewStatus === 'not_started').length;
+  const missingMedicalEvidence = outstandingMedical.filter(record => !Array.isArray(record.evidenceRefs) || record.evidenceRefs.length === 0).length;
   const medicalGroups = [
     ['unassigned', 'Unassigned medical/pharmacy reviews'],
     ['licensed-clinician', 'Assigned licensed-clinician reviews'],
@@ -69,6 +74,10 @@ if (failures.length > 0) {
     .map(([role, label]) => `${label}: ${outstandingMedical.filter(record => assignedRoleFor(record) === role).length}`)
     .join('; ');
   console.log(`Medical queue by reviewerRole: ${groupCounts}`);
+  console.log('');
+  console.log(`Suggested reviewer split: licensed-clinician ${suggestedClinician}; clinical-pharmacist ${suggestedPharmacist}`);
+  console.log(`Pre-review split: flow_checked ${flowCheckedMedical}; not_started ${notStartedMedical}`);
+  console.log(`Medical records missing evidenceRefs: ${missingMedicalEvidence}`);
   console.log('');
   console.log('Rows with reviewerRole `unassigned` must be assigned to a real reviewer before they can be marked verified. The suggested role is derived from category only and is not an approval.');
   console.log('');
