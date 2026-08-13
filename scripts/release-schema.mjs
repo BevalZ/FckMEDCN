@@ -61,7 +61,6 @@ function isHttpUrl(value, requireDirectPath = false) {
 
 function isReviewArtifactPath(value) {
   return typeof value === 'string'
-    && value !== 'sources/review-artifacts/TEMPLATE.md'
     && value.startsWith('sources/review-artifacts/')
     && !path.isAbsolute(value)
     && !value.includes('\\')
@@ -276,10 +275,13 @@ function validateAcceptance(manifest, failures) {
           || scenario.evidenceArtifacts.some(artifact => typeof artifact !== 'string')) {
           failures.push(`${scenarioPrefix}.evidenceArtifacts 必须是字符串数组`);
         } else {
-          const invalidArtifacts = scenario.evidenceArtifacts.filter(artifact => hasText({ artifact }, 'artifact')
-            && !isReviewArtifactPath(artifact));
+          const nonEmptyArtifacts = scenario.evidenceArtifacts.filter(artifact => hasText({ artifact }, 'artifact'));
+          const invalidArtifacts = nonEmptyArtifacts.filter(artifact => !isReviewArtifactPath(artifact));
           if (invalidArtifacts.length > 0) {
             failures.push(`${scenarioPrefix}.evidenceArtifacts 必须使用 sources/review-artifacts/ 下的相对路径`);
+          }
+          if (nonEmptyArtifacts.includes('sources/review-artifacts/TEMPLATE.md')) {
+            failures.push(`${scenarioPrefix}.evidenceArtifacts 不能引用 sources/review-artifacts/TEMPLATE.md 模板`);
           }
         }
         if (scenario.status !== 'pending' && !hasText(scenario, 'notes')) {

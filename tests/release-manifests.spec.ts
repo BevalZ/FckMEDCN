@@ -147,7 +147,7 @@ test('verified 人工验收必须逐场景通过并填写完整环境', async ()
     desktop.scenarios[0].evidenceArtifacts = ['sources/review-artifacts/TEMPLATE.md'];
     fs.writeFileSync(acceptancePath, JSON.stringify(acceptance));
     expect(validateReleaseManifests(tempRoot).failures)
-      .toContain('release-acceptance.json[desktop-lifecycle].scenarios[new-game].evidenceArtifacts 必须使用 sources/review-artifacts/ 下的相对路径');
+      .toContain('release-acceptance.json[desktop-lifecycle].scenarios[new-game].evidenceArtifacts 不能引用 sources/review-artifacts/TEMPLATE.md 模板');
 
     desktop.scenarios[0].evidenceArtifacts = ['sources/review-artifacts/desktop-lifecycle/new-game.md'];
     fs.writeFileSync(acceptancePath, JSON.stringify(acceptance));
