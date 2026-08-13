@@ -90,7 +90,7 @@ if (failures.length > 0) {
   emit('# Release review workpack');
   emit('');
   emit(`Generated at: ${generatedAt}`);
-  emit(`Git commit: ${gitCommit}`);
+  emit(`Source HEAD at generation: ${gitCommit}`);
   emit(`Manifest schema versions: ${manifestVersions(manifests)}`);
   emit('');
   emit('Generated from the four release manifests. This report is a queue, not an approval record. Do not change `pending` to `verified` without the named reviewer, date, evidence reference, and written conclusion.');

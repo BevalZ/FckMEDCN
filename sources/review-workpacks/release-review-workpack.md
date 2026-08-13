@@ -1,7 +1,7 @@
 # Release review workpack
 
-Generated at: 2026-08-13T09:52:13.836Z
-Git commit: 8215f45
+Generated at: 2026-08-13T09:54:02.896Z
+Source HEAD at generation: 08f4820
 Manifest schema versions: evidence v1; medical v1; audio v1; acceptance v1
 
 Generated from the four release manifests. This report is a queue, not an approval record. Do not change `pending` to `verified` without the named reviewer, date, evidence reference, and written conclusion.

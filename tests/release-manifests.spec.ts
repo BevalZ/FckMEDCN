@@ -261,7 +261,7 @@ test('release:review --write 生成可归档 Markdown 工作包', () => {
     const workpack = fs.readFileSync(workpackPath, 'utf8');
     expect(workpack).toContain('# Release review workpack');
     expect(workpack).toMatch(/Generated at: \d{4}-\d{2}-\d{2}T/);
-    expect(workpack).toMatch(/Git commit: [0-9a-f]{7,}|Git commit: unknown/);
+    expect(workpack).toMatch(/Source HEAD at generation: [0-9a-f]{7,}|Source HEAD at generation: unknown/);
     expect(workpack).toContain('Manifest schema versions: evidence v1; medical v1; audio v1; acceptance v1');
     expect(workpack).toContain('used by ending cards');
     expect(workpack).toContain('Medical queue by reviewerRole');
@@ -280,7 +280,7 @@ test('release:review 生成完整的人工复核工作包，不改变 pending �
   expect(result.status, output).toBe(0);
   expect(output).toContain('# Release review workpack');
   expect(output).toMatch(/Generated at: \d{4}-\d{2}-\d{2}T/);
-  expect(output).toMatch(/Git commit: [0-9a-f]{7,}|Git commit: unknown/);
+  expect(output).toMatch(/Source HEAD at generation: [0-9a-f]{7,}|Source HEAD at generation: unknown/);
   expect(output).toContain('Manifest schema versions: evidence v1; medical v1; audio v1; acceptance v1');
   expect(output).toContain('Medical queue by reviewerRole: Unassigned medical/pharmacy reviews: 78; Assigned licensed-clinician reviews: 0; Assigned clinical-pharmacist reviews: 0');
   expect(output).toContain('Suggested reviewer split: licensed-clinician 66; clinical-pharmacist 12');
