@@ -137,3 +137,28 @@ test('妇产科轻累积：体/心双轨半速，慢于外/儿专轨', async ({ 
   expect(r.internal.wear).toBe(0);
   expect(r.internal.floor).toBe(0);
 });
+
+test('急诊双轨全速累积，快于妇产科半速', async ({ page }) => {
+  await boot(page);
+  const r = await page.evaluate(() => {
+    const { gs, tf, stats: st, specialtyLoad: sl } = (window as any).__mod;
+    Math.random = () => 0.999999;
+    const run = (flag: string, turns = 10) => {
+      gs.resetGame();
+      gs.patchState({
+        stage: 'career', turnsInStage: 0,
+        stats: { ...st.createDefaultStats(), stamina: 90 },
+      });
+      gs.setFlag(flag);
+      for (let t = 0; t < turns; t++) {
+        gs.patchState({ turnsInStage: t });
+        tf.advanceQuarter('career');
+      }
+      return { wear: gs.getCounter(sl.SURG_WEAR_KEY), floor: sl.sanityCrisisFloor() };
+    };
+    return { er: run('sub_emergency'), obgyn: run('sub_obgyn') };
+  });
+  expect(r.er.wear).toBeGreaterThan(r.obgyn.wear);
+  expect(r.er.floor).toBeGreaterThan(r.obgyn.floor);
+  expect(r.er.floor).toBe(10);
+});

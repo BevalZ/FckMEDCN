@@ -7,6 +7,7 @@ export const SUB_SPECIALTIES: Array<{ flag: string; label: string; desc: string 
   { flag: 'sub_surgery', label: '外科', desc: '站台久、体力消耗大；长期站台会压低体力上限' },
   { flag: 'sub_obgyn', label: '妇产科', desc: '急诊多、节奏紧；长期双压会半速磨损体力上限与危机阈值' },
   { flag: 'sub_pediatrics', label: '儿科', desc: '压力大、沟通累；长期高压会抬升心理危机阈值' },
+  { flag: 'sub_emergency', label: '急诊', desc: '分诊抢救、体心双压；长期双轨磨损体力上限与危机阈值' },
 ];
 
 export function currentSubspecialty(): string {
@@ -61,6 +62,13 @@ export class CareerScene extends BaseStageScene {
       else if (flags.has('chief_resident_year') && !flags.has('chief_graduated')
         && (getState().counters['chief_quarters'] ?? 0) >= 4) {
         this.forcedEventId = 'career_chief_graduate';
+      }
+      // 薄轮转：第 6 季起——非急诊强制急诊轮转；急诊强制病房支援（优先于第二起诉讼）
+      else if (turn >= 6 && flags.has('sub_emergency') && !flags.has('ward_rotation_done')) {
+        this.forcedEventId = 'career_ward_rotation';
+      }
+      else if (turn >= 6 && hasSub && !flags.has('sub_emergency') && !flags.has('er_rotation_done')) {
+        this.forcedEventId = 'career_er_rotation';
       }
       else if (turn >= 9 && !flags.has('lawsuit_done_2')) this.forcedEventId = lawsuitEventId(2);
       else if (turn >= 12 && turn <= 16

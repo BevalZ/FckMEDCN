@@ -1,9 +1,11 @@
-import { getState, getCounter, setCounter, patchState } from './gameState';
+import { getState, getCounter, setCounter, patchState, hasFlag } from './gameState';
 
 // 亚专科累积效应（OPTIMIZATION R6 / REVIEW-PATIENT-DIVERSITY P1）：
 // 外科：连续站台 → surg_stamina_wear 升高 → 体力上限下降（最低 70）
 // 儿科：连续高压沟通 → peds_crisis_floor 升高 → sanity≤阈值即进心理危机（最高 15）
 // 妇产科：体/心双轨各半速（每 2 季 +1），上限同外/儿但爬升更慢
+// 急诊：体/心双轨全速（每季各 +1）；病房支援轮转当季暂停
+// 急诊轮转当季：非急诊也会各 +1（er_rotation_active）
 // 内科：只吃单季被动，不累积
 
 export const SURG_WEAR_KEY = 'surg_stamina_wear';
@@ -65,6 +67,8 @@ export function tickSpecialtyCumulative(stage: string): string | null {
   if (stage !== 'career' && stage !== 'pinnacle') return null;
   const f = getState().flags;
   const notes: string[] = [];
+  const onWardRot = hasFlag('ward_rotation_active');
+  const onErRot = hasFlag('er_rotation_active');
 
   if (f.has('sub_surgery')) {
     const tired = getState().stats.stamina < 40;
@@ -85,6 +89,19 @@ export function tickSpecialtyCumulative(stage: string): string | null {
     }
   }
 
+  // 急诊：体/心双轨全速；病房支援轮转当季暂停累积
+  if (f.has('sub_emergency') && !onWardRot) {
+    const tired = getState().stats.stamina < 40;
+    bumpWear(tired ? 2 : 1, notes);
+    bumpCrisisFloor(1, notes, '急诊高压');
+  }
+
+  // 非急诊的急诊轮转当季：各 +1（不叠疲劳加速，避免一轮转直接崩）
+  if (onErRot) {
+    bumpWear(1, notes);
+    bumpCrisisFloor(1, notes, '急诊轮转');
+  }
+
   enforceStaminaCap();
   return notes.length > 0 ? notes.join('；') : null;
 }
@@ -93,8 +110,8 @@ export function tickSpecialtyCumulative(stage: string): string | null {
 export function specialtyLoadHudHint(): string {
   const f = getState().flags;
   const bits: string[] = [];
-  const showStamina = f.has('sub_surgery') || f.has('sub_obgyn');
-  const showCrisis = f.has('sub_pediatrics') || f.has('sub_obgyn');
+  const showStamina = f.has('sub_surgery') || f.has('sub_obgyn') || f.has('sub_emergency');
+  const showCrisis = f.has('sub_pediatrics') || f.has('sub_obgyn') || f.has('sub_emergency');
   if (showStamina && getCounter(SURG_WEAR_KEY) > 0) bits.push(`体限${staminaCap()}`);
   if (showCrisis && sanityCrisisFloor() > 0) bits.push(`危阈${sanityCrisisFloor()}`);
   return bits.length ? bits.join(' ') : '';

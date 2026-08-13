@@ -45,7 +45,10 @@ export function patientIncidentLevel(context: PatientSafetyContext, severityRoll
 
 export function rollPatientSafety(stage: string, random: () => number = Math.random): PatientSafetyOutcome {
   const state = getState();
-  const specialtyRisk = state.flags.has('sub_surgery') ? 1.7 : state.flags.has('sub_obgyn') ? 1.5 : state.flags.has('sub_pediatrics') ? 1.25 : 1;
+  const specialtyRisk = state.flags.has('sub_emergency') ? 1.75
+    : state.flags.has('sub_surgery') ? 1.7
+    : state.flags.has('sub_obgyn') ? 1.5
+    : state.flags.has('sub_pediatrics') ? 1.25 : 1;
   const context: PatientSafetyContext = {
     stage,
     luck: state.attrs?.luck ?? 0,

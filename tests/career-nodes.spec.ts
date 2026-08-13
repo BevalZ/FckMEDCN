@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
 
 // 职业人生节点回归：
-// 1) 第 0 季强制选择亚专科（内科/外科/妇产科/儿科），flag 写入；
+// 1) 第 0 季强制选择亚专科（内科/外科/妇产科/儿科/急诊），flag 写入；
 // 2) 第 3 季起强制第一起医患诉讼（法庭）；第 9 季第二起（仲裁）——ESC 跳过也会补上；
 // 3) 管理层事件（took_admin）可达。
 
@@ -90,13 +90,13 @@ test('职业期强制选亚专科 → 第3季强制医患诉讼', async ({ page 
   expect(await currentEventId(page), 'ESC 后应继续补触发外科诉讼').toBe('career_lawsuit_1_surgery');
 });
 
-test('两轮诉讼按四个亚专科分化且赔付按职级缩放', async ({ page }) => {
+test('两轮诉讼按五个亚专科分化且赔付按职级缩放', async ({ page }) => {
   await page.goto(BASE, { waitUntil: 'load' });
   await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 60000 });
 
   const r = await page.evaluate(() => {
     const { gs, tf, ev, stats: st } = (window as any).__mod;
-    const specs = ['internal', 'surgery', 'obgyn', 'pediatrics'];
+    const specs = ['internal', 'surgery', 'obgyn', 'pediatrics', 'emergency'];
     const base = st.createDefaultStats();
     const rows = specs.flatMap((spec) => ([1, 2] as const).map((round) => {
       const id = `career_lawsuit_${round}_${spec}`;
@@ -121,7 +121,7 @@ test('两轮诉讼按四个亚专科分化且赔付按职级缩放', async ({ pa
     return { rows, residentLoss: loss([]), chiefLoss: loss(['passed_zhenggao']) };
   });
 
-  expect(r.rows).toHaveLength(8);
+  expect(r.rows).toHaveLength(10);
   for (const row of r.rows) {
     expect(row.own, `${row.id} 应在本专科可达`).toBe(true);
     expect(row.cross, `${row.id} 不应串入其它专科`).toBe(false);
@@ -129,7 +129,7 @@ test('两轮诉讼按四个亚专科分化且赔付按职级缩放', async ({ pa
     expect(row.body.length, `${row.id} 应有差异化案件描述`).toBeGreaterThan(30);
     expect(row.rankScaled, `${row.id} 应启用职级赔付缩放`).toBe(true);
   }
-  expect(new Set(r.rows.map(row => row.title)).size, '8 个诉讼节点标题应各不相同').toBe(8);
+  expect(new Set(r.rows.map(row => row.title)).size, '10 个诉讼节点标题应各不相同').toBe(10);
   expect(r.residentLoss, '住院医律师费按 0.7 缩放').toBe(5600);
   expect(r.chiefLoss, '主任律师费按 1.5 缩放').toBe(12000);
 });
@@ -165,6 +165,7 @@ test('职业初期压力事件按亚专科差异化', async ({ page }) => {
       ['career_early_peds_pressure', 'sub_pediatrics'],
       ['career_early_obgyn_pressure', 'sub_obgyn'],
       ['career_early_internal_pressure', 'sub_internal'],
+      ['career_early_emergency_pressure', 'sub_emergency'],
     ];
     return CASES.map(([id, flag]) => {
       const own = ev.getAvailableEvents('career', new Set([flag]), { ...base }, new Set(), 3, 'single')

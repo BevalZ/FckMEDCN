@@ -1,4 +1,4 @@
-import { addNews, changeAttr, getCounter, getState, setCounter, updateStats, advanceTurn, hasFlag, setFlag, patchState } from './gameState';
+import { addNews, changeAttr, getCounter, getState, setCounter, updateStats, advanceTurn, hasFlag, setFlag, clearFlag, patchState } from './gameState';
 import type { LifeStage } from './gameState';
 import { applyChoiceEffect } from './effects';
 import { getAvailableEvents, weightedRandom } from './events';
@@ -314,7 +314,8 @@ export function advanceQuarter(stageName: string): {
     stage: stageName,
     turn: afterPolicy.turnsInStage,
     stamina: afterPolicy.stats.stamina,
-    specialtyRisk: afterPolicy.flags.has('sub_surgery') ? 1.6
+    specialtyRisk: afterPolicy.flags.has('sub_emergency') ? 1.7
+      : afterPolicy.flags.has('sub_surgery') ? 1.6
       : afterPolicy.flags.has('sub_obgyn') ? 1.4
       : afterPolicy.flags.has('sub_pediatrics') ? 1.2 : 1,
     administrative: afterPolicy.flags.has('took_admin'),
@@ -393,18 +394,25 @@ export function advanceQuarter(stageName: string): {
   // 放在共享季度结算层，保证真实游戏（场景调用）与纯模拟（直接调 advanceQuarter）行为一致。
   if (stageName === 'career' || stageName === 'pinnacle') {
     const f = getState().flags;
+    const onWardRot = f.has('ward_rotation_active');
+    const onErRot = f.has('er_rotation_active');
     const isPeds = f.has('sub_pediatrics');
     const isSurg = f.has('sub_surgery');
     const isObgyn = f.has('sub_obgyn');
-    // 被动消耗：外科最费体力、儿科最费心理
-    const drain: StatDelta = isSurg ? { stamina: -13, knowledge: 3, sanity: -2 }
+    const isEr = f.has('sub_emergency');
+    // 被动消耗：急诊体心双压最狠；外科最费体力；儿科最费心理；病房支援轮转当季减压
+    const drain: StatDelta = onWardRot ? { stamina: -6, knowledge: 2, sanity: -1 }
+      : isEr ? { stamina: -12, knowledge: 2, sanity: -4 }
+      : isSurg ? { stamina: -13, knowledge: 3, sanity: -2 }
       : isObgyn ? { stamina: -10, knowledge: 2, sanity: -2 }
       : isPeds ? { stamina: -8, knowledge: 2, sanity: -5 }
       : { stamina: -8, knowledge: 2, sanity: -2 };
     // 日常回血：在职靠门诊/科室生活回 +2；儿科额外 +2（暖色时刻）
-    const heal: StatDelta = isPeds ? { sanity: 4 } : { sanity: 2 };
+    const heal: StatDelta = isPeds && !onWardRot ? { sanity: 4 } : { sanity: 2 };
     updateStats(heal);
     updateStats(drain);
+    // 急诊轮转当季：在本科室消耗之上再加一截红区负荷
+    if (onErRot) updateStats({ stamina: -6, sanity: -3, clinical: 2 });
     // 职业期每四季结算一次长期夜班/疲劳磨损，属性只在 0..5 内变化。
     if (getState().turnsInStage > 0 && getState().turnsInStage % 4 === 0) {
       changeAttr('looks', -1, '长期夜班与职业疲劳留下了痕迹');
@@ -416,6 +424,9 @@ export function advanceQuarter(stageName: string): {
     }
   }
   const specialtyNote = tickSpecialtyCumulative(stageName);
+  // 轮转当季效果结算完毕后清掉 active（done flag 保留）
+  if (hasFlag('er_rotation_active')) clearFlag('er_rotation_active');
+  if (hasFlag('ward_rotation_active')) clearFlag('ward_rotation_active');
   const grieving = hasFlag('grieving');
   if (grieving) updateStats({ sanity: -2 });
   const mentalDecline = tickLowSavingsMentalDecline(stageName);

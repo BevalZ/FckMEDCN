@@ -105,7 +105,7 @@
 - [ ] 新增"职业暴露"事件链：针刺伤 → 上报/预防用药 → 感染风险 → 心理阴影
 - [ ] 新增"医保飞检/科室自查"事件（经济+合规压力）
 - [x] 亚专科劳累改"累积效应"：外科连续高体力→体力上限降；儿科连续高心理→危机阈值升（`specialtyLoad.ts`）
-- [ ] 考虑第 5 亚专科"急诊"或轮转机制
+- [x] 第 5 亚专科"急诊" + 薄轮转（`sub_emergency` / `events_career_rotation.ts`）
 
 ---
 
@@ -192,7 +192,7 @@
 | P2 | 值班错过家庭 / 子女叙事 | 8 | 共鸣向粘性 | ✅ 已落地（career_missed_family_moment / career_spouse_strain / career_child_asks_medicine 三链，2026-08-06） |
 | P2 | 极端组合 balance 断言 / 强制事件回归 | 9/10 | 测试防线 | ✅ 已落地（balance-matrix + career-nodes ESC） |
 | P3 | 事件池去重回归 / 阶段索引 | 10 | 防重复并降低每回合全池扫描成本 | ✅ 已落地（event-pool-diversity.spec，2026-08-04） |
-| P3 | 亚专科第 5 项(急诊)/时间轴重构 | 3/6 | 结构改造，风险大 | ⬜ 待做 |
+| P3 | 亚专科第 5 项(急诊)/薄轮转 | 3/6 | 已落地急诊专科+强制轮转一季 | ✅ |
 
 > 验收基线沿用：`npx tsc --noEmit` + `npm run build` + `npx playwright test`（全量）。
 

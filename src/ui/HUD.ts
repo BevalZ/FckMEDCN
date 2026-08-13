@@ -196,7 +196,10 @@ export class HUD {
     let careerContext = '';
     if (stage === 'career' || stage === 'pinnacle') {
       const bits: string[] = [];
-      const subMap: Record<string, string> = { sub_internal: '内科', sub_surgery: '外科', sub_obgyn: '妇产科', sub_pediatrics: '儿科' };
+      const subMap: Record<string, string> = {
+        sub_internal: '内科', sub_surgery: '外科', sub_obgyn: '妇产科',
+        sub_pediatrics: '儿科', sub_emergency: '急诊',
+      };
       for (const [f, l] of Object.entries(subMap)) {
         if (s.flags.has(f)) { bits.push(`科:${l}`); break; }
       }

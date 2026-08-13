@@ -23,6 +23,11 @@ const LAWSUIT_CASES = [
     first: '一名高热患儿病情进展很快，转入重症监护。家长认为首诊判断过于乐观，把医院和你告上法庭。',
     second: '一名反复喘息患儿再次急诊住院，家长申请医疗损害鉴定，争议焦点是出院交代、随访和吸入治疗指导。',
   },
+  {
+    key: 'emergency', flag: 'sub_emergency', label: '急诊分诊争议',
+    first: '一名胸痛患者在绿区等待时突然恶化。家属认为分诊分级偏低、延误进红区，把医院和你告上法庭。',
+    second: '一次夜间多发伤抢救后，家属申请医疗损害鉴定，争议焦点是预检分级、会诊时效与知情告知是否充分。',
+  },
 ] as const;
 
 function lawsuitEvents(): GameEvent[] {
@@ -1110,18 +1115,19 @@ export const CAREER_EVENTS: GameEvent[] = [
     ],
   },
 
-  // —— 开局选亚专科（第 0 季强制）：内科/外科/妇产科/儿科，劳累程度不同 ——
+  // —— 开局选亚专科（第 0 季强制）：内科/外科/妇产科/儿科/急诊，劳累程度不同 ——
   {
     id: 'career_specialty_choice',
     stage: 'career',
     title: '选择亚专科',
-    body: '执业方向定了。内科平稳，外科最累但手术有成就感，妇产科节奏紧，儿科心理消耗大。选一个吧。',
+    body: '执业方向定了。内科平稳，外科最累但手术有成就感，妇产科节奏紧，儿科心理消耗大，急诊体心双压最狠。选一个吧。',
     category: 'career', weight: 1, once: true, minTurn: 0,
     choices: [
       { text: '内科：动脑多，动身少', delta: { knowledge: 3 }, flagSet: 'sub_internal', consequence: '你在内科扎下根，节奏稳，细水长流。' },
       { text: '外科：站台久，最累', delta: { stamina: -4, clinical: 3 }, flagSet: 'sub_surgery', consequence: '外科的手术台，把你练成了"站神"。' },
       { text: '妇产科：节奏紧，急诊多', delta: { stamina: -2, clinical: 2, sanity: -1 }, flagSet: 'sub_obgyn', consequence: '产科急诊的铃一响，你比谁都快。' },
       { text: '儿科：压力大，心理消耗高', delta: { relations: 2, sanity: -2 }, flagSet: 'sub_pediatrics', consequence: '儿科难，难在家长比孩子更难哄。' },
+      { text: '急诊：分诊抢救，体心双压', delta: { clinical: 3, stamina: -3, sanity: -2 }, flagSet: 'sub_emergency', consequence: '红区的灯常亮。你学会了在不确定里做决定。' },
     ],
   },
 
@@ -1198,6 +1204,18 @@ export const CAREER_EVENTS: GameEvent[] = [
     choices: [
       { text: '虚心记下，回去改', delta: { knowledge: 3, sanity: -3, reputation: 1 }, consequence: '你把那条医嘱背了下来，从此再没犯过。' },
       { text: '当场辩解两句', delta: { relations: -2, sanity: -3, reputation: -2 }, consequence: '主任没再追问，但查房的气氛冷了下来。' },
+    ],
+  },
+  {
+    id: 'career_early_emergency_pressure',
+    stage: 'career',
+    title: '红区同时两台抢救',
+    body: '分诊护士冲进抢救室："绿区转红，两台！"监护仪尖叫重叠。你刚按住一条气道，另一张床在喊去甲肾上腺素。',
+    category: 'clinical', weight: 55, once: true, minTurn: 2, maxTurn: 5,
+    requireFlag: 'sub_emergency',
+    choices: [
+      { text: '分派优先级，自己顶最重的一台', delta: { clinical: 5, stamina: -14, sanity: -5 }, consequence: '天亮时两台都稳住了。你的手还在抖。' },
+      { text: '立刻拉二线、呼叫支援', delta: { relations: 3, stamina: -6, sanity: -2, reputation: -1 }, consequence: '场面稳住了。你记下：急诊不是一个人的英雄戏。' },
     ],
   },
 ];
