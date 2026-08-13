@@ -265,6 +265,7 @@ test('release:review --write 生成可归档 Markdown 工作包', () => {
     expect(workpack).toContain('Manifest schema versions: evidence v1; medical v1; audio v1; acceptance v1');
     expect(workpack).toContain('used by ending cards');
     expect(workpack).toContain('Medical queue by reviewerRole');
+    expect(workpack).toContain('| scenario id | check | steps | pass criteria | evidence to record | status | notes |');
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true });
   }
@@ -300,6 +301,11 @@ test('release:review 生成完整的人工复核工作包，不改变 pending �
   expect(output).toContain('8 source-complete awaiting reviewer, 0 source-incomplete');
   expect(output).toContain('reviewedBy, reviewedAt, notes');
   expect(output).toContain('0/8 verified');
+  expect(output).toContain('| scenario id | check | steps | pass criteria | evidence to record | status | notes |');
+  expect(output).toContain('new-game | 新开局 | Launch production build, start a new game, allocate attrs');
+  expect(output).toContain('Clinical route reaches a route-appropriate ending');
+  expect(output).toContain('Record late-life phases visited, ending id, age/year');
+  expect(output).toContain('Audio starts only after user gesture and does not throw browser autoplay errors');
   expect(output).toContain('late-life-route');
   expect(output).toContain('audio-unlock');
   for (const record of manifest.records) expect(output).toContain(record.id);

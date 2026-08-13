@@ -56,6 +56,27 @@ if (failures.length > 0) {
     !record.reviewedAt && 'reviewedAt',
     !record.notes && 'notes',
   ].filter(Boolean).join(', ') || 'none';
+  const acceptanceChecklist = {
+    'new-game': { steps: 'Launch production build, start a new game, allocate attrs, enter first playable scene.', pass: 'No crash; state initializes from defaults; first scene is interactable.', evidence: 'Record device/browser, route notes, screenshot if layout is suspect.' },
+    'continue-save': { steps: 'Create or load an existing save, reload browser, continue from title.', pass: 'Save loads without unsafe migration; age/year/stage and key flags remain coherent.', evidence: 'Record save origin/version and resumed stage.' },
+    'clinical-route': { steps: 'Play a full clinical-oriented lifecycle through job/career into a final ending.', pass: 'Clinical route reaches a route-appropriate ending; no early dropout/quit ending after full practice.', evidence: 'Record route choices, final stage, ending id, age/year.' },
+    'research-route': { steps: 'Play a research-oriented lifecycle through master/PhD/career into a final ending.', pass: 'Research route reaches a route-appropriate ending; papers/reputation effects are visible.', evidence: 'Record route choices, final stage, ending id, age/year/papers.' },
+    'exit-route': { steps: 'Choose a supported exit path such as leaving undergrad or quitting guipei.', pass: 'Route terminates immediately at the matching exit ending and does not continue later seasons.', evidence: 'Record exit choice, ending id, age/year.' },
+    'late-life-route': { steps: 'Reach pinnacle/retirement/eternity phases and play through late-life decisions.', pass: 'Late-life personal echoes appear; age/year/quarter remain coherent; final ending matches legacy/health state.', evidence: 'Record late-life phases visited, ending id, age/year.' },
+    'restart-save': { steps: 'From a populated save, start over and then reload once.', pass: 'New run resets prior flags/resources and persists its own fresh state.', evidence: 'Record old/new stage and any reset anomalies.' },
+    'console-clean': { steps: 'Open production build with DevTools console while exercising the target scenarios.', pass: 'No uncaught errors, failed asset loads, or persistent console error spam.', evidence: 'Record console status; paste exact errors if any.' },
+    portrait: { steps: 'Open on the target phone in portrait and navigate title, HUD, event cards, endings.', pass: 'No clipped primary controls; text remains readable; scrolling/taps work.', evidence: 'Record device model, OS/browser version, screenshots for issues.' },
+    landscape: { steps: 'Rotate to landscape and repeat title, HUD, event cards, endings.', pass: 'Layout adapts without hidden controls or unusable hit targets.', evidence: 'Record rotation behavior and screenshots for issues.' },
+    'safe-area': { steps: 'Check notch/home-indicator/status-bar areas on title, gameplay, modal/card, ending.', pass: 'Interactive UI stays outside unsafe areas or remains comfortably tappable.', evidence: 'Record affected screens and screenshots if unsafe.' },
+    'touch-minigames': { steps: 'Play touch-driven minigames and dismiss overlays using only touch.', pass: 'Gestures register reliably; no keyboard-only blocker; ESC alternatives exist where needed.', evidence: 'Record minigames tried and any missed taps.' },
+    'long-session': { steps: 'Play continuously with multiple scene transitions, save/load, and orientation changes.', pass: 'No memory/performance degradation, stuck overlay, or lost input after long operation.', evidence: 'Record duration, transitions, and final state.' },
+    'audio-unlock': { steps: 'Start from a fresh browser session, perform first user gesture, trigger sound.', pass: 'Audio starts only after user gesture and does not throw browser autoplay errors.', evidence: 'Record gesture used, sound status, console status.' },
+  };
+  const checklistFor = scenario => acceptanceChecklist[scenario.id] ?? {
+    steps: 'Execute the scenario named by the manifest.',
+    pass: 'Scenario behavior matches the label with no production console errors.',
+    evidence: 'Record concrete steps, result, and environment.',
+  };
   const parseEndingEvidenceUsage = () => {
     const endingsPath = path.join(root, 'src', 'data', 'endings.ts');
     if (!fs.existsSync(endingsPath)) return new Map();
@@ -173,10 +194,11 @@ if (failures.length > 0) {
   for (const record of acceptance) {
     emit(`### ${cell(record.label)}`);
     emit('');
-    emit('| scenario id | check | status | notes |');
-    emit('|---|---|---|---|');
+    emit('| scenario id | check | steps | pass criteria | evidence to record | status | notes |');
+    emit('|---|---|---|---|---|---|---|');
     for (const scenario of record.scenarios ?? []) {
-      emit(`| ${cell(scenario.id)} | ${cell(scenario.label)} | ${cell(scenario.status)} | ${cell(scenario.notes || '—')} |`);
+      const checklist = checklistFor(scenario);
+      emit(`| ${cell(scenario.id)} | ${cell(scenario.label)} | ${cell(checklist.steps)} | ${cell(checklist.pass)} | ${cell(checklist.evidence)} | ${cell(scenario.status)} | ${cell(scenario.notes || '—')} |`);
     }
     emit('');
   }
