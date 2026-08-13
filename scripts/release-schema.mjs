@@ -61,6 +61,7 @@ function isHttpUrl(value, requireDirectPath = false) {
 
 function isReviewArtifactPath(value) {
   return typeof value === 'string'
+    && value !== 'sources/review-artifacts/TEMPLATE.md'
     && value.startsWith('sources/review-artifacts/')
     && !path.isAbsolute(value)
     && !value.includes('\\')
