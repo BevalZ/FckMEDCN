@@ -18,8 +18,20 @@ abstract class LateEraSceneBase extends BaseStageScene {
     const turn = getState().turnsInStage;
     const flags = getState().flags;
     const forcedByStage: Record<string, Record<number, string>> = {
-      pinnacle: { 0: 'era6_role_choice', 2: 'health_hand_tremor', 4: 'era6_last_round', 6: 'era6_succession' },
-      retirement: { 0: 'era7_retirement_day', 1: 'health_retirement_recovery', 3: 'era7_memoir', 5: 'era7_old_friends' },
+      pinnacle: {
+        0: 'era6_role_choice',
+        2: 'health_hand_tremor',
+        4: 'era6_last_round',
+        5: 'era6_dept_crisis',
+        6: 'era6_succession',
+      },
+      retirement: {
+        0: 'era7_retirement_day',
+        1: 'health_retirement_recovery',
+        3: 'era7_memoir',
+        4: 'era7_identity_gap',
+        5: 'era7_old_friends',
+      },
       eternity: { 0: 'era8_fireplace', 1: 'era8_last_record', 3: 'era8_last_hospital_visit', 4: 'era8_last_person', 5: 'era8_will', 7: 'era8_final_clarity', 8: 'era8_memorial', 9: 'era8_tombstone' },
     };
     const id = forcedByStage[this.lateStage]?.[turn];

@@ -20,7 +20,7 @@ export class EndingScene extends Phaser.Scene {
     sound.ending(ending.tone);
     clearSave();
     // 收录进人生图鉴（跨周目累计，不受 clearSave 影响）
-    const rec = recordEnding(ending.id);
+    const rec = recordEnding(ending.id, getState().attrs);
     const bg = this.add.graphics();
     bg.fillStyle(ending.bgColor);
     bg.fillRect(0, 0, 960, 540);

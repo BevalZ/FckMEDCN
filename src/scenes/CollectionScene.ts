@@ -1,8 +1,9 @@
 import Phaser from 'phaser';
-import { ENDINGS, ENDING_HINTS } from '../data/endings';
+import { ENDINGS } from '../data/endings';
 import { BADGES } from '../data/badges';
 import { LEGACY_PERKS, tryBuyPerk } from '../data/legacy';
 import { getCollection } from '../data/collection';
+import { endingHintForGallery } from '../data/endingHints';
 
 // 人生图鉴：跨周目收集界面。三个页签——结局图鉴 / 生涯里程碑 / 传承。
 // TAB 或点击页签切换；结局页 15 条一屏，里程碑页 22 条分两页（←/→ 翻页），
@@ -237,10 +238,12 @@ export class CollectionScene extends Phaser.Scene {
         mk(304, `结局判词：${e.stats.verdict}`, { fontSize: '12px', color: '#4fc3f7', wordWrap: { width: w } });
         mk(344, `（${e.stats.title} · ${e.stats.hospital}）`, { fontSize: '11px', color: '#777777', wordWrap: { width: w } });
       } else {
+        const hint = endingHintForGallery(e.id);
         mk(128, '？？？', { fontSize: '18px', color: '#666666', fontStyle: 'bold' });
         mk(164, '尚未走过这条人生。', { fontSize: '12px', color: '#777777' });
-        mk(194, `提示：${ENDING_HINTS[e.id] ?? '继续你的故事。'}`, {
-          fontSize: '12px', color: '#888888', wordWrap: { width: w }, lineSpacing: 5,
+        mk(194, hint.label, { fontSize: '12px', color: hint.clarity === 'clear' ? '#4fc3f7' : '#888888' });
+        mk(220, hint.text, {
+          fontSize: '12px', color: '#999999', wordWrap: { width: w }, lineSpacing: 5,
         });
       }
       return;

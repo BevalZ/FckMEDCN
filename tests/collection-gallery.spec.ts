@@ -58,20 +58,30 @@ test('人生图鉴：收录持久化 + 场景往返 + 解锁渲染', async ({ pa
   await waitForScene(page, 'CollectionScene');
   const rendered = await page.evaluate(() => {
     const scene = (window as any).game.scene.getScene('CollectionScene');
+    // 选到第一个未解锁结局，详情应出现渐进线索
+    const { en, col } = (window as any).__mod;
+    const lockedIdx = en.ENDINGS.findIndex((e: any) => !col.getCollection().endings.has(e.id));
+    if (lockedIdx >= 0) {
+      scene.selEnding = lockedIdx;
+      scene.refreshList();
+      scene.refreshDetail();
+    }
     const texts = scene.children.list.filter((o: any) => o.type === 'Text').map((o: any) => o.text as string);
     return {
       hasHeader: texts.some((t: string) => t.includes('人生图鉴')),
       hasProgress: texts.some((t: string) => /已解锁 2 \/ \d+/.test(t)),
       hasLocked: texts.some((t: string) => t.includes('？？？')),
       hasUnlockedTitle: texts.some((t: string) => t.includes('45岁的稳定')),
-      hasHint: texts.some((t: string) => t.includes('提示：')),
+      hasHint: texts.some((t: string) => t.includes('线索：')),
+      lockedIdx,
     };
   });
+  expect(rendered.lockedIdx, '应存在未解锁结局').toBeGreaterThanOrEqual(0);
   expect(rendered.hasHeader, '图鉴标题').toBe(true);
   expect(rendered.hasProgress, '进度行').toBe(true);
   expect(rendered.hasLocked, '未解锁应显示？？？').toBe(true);
   expect(rendered.hasUnlockedTitle, '已解锁应显示结局标题').toBe(true);
-  expect(rendered.hasHint, '未解锁详情应有提示').toBe(true);
+  expect(rendered.hasHint, '未解锁详情应有线索分级').toBe(true);
 
   // 键盘导航不报错（选中移到最后一项再越界回绕）
   for (let i = 0; i < 14; i++) await page.keyboard.press('ArrowDown');

@@ -135,10 +135,12 @@ if (import.meta.env.DEV) {
     import('./ui/QuestLog'),
     import('./ui/quarterBill'),
     import('./data/specialtyLoad'),
-  ]).then(([gs, ig, npc, stats, tf, ev, cm, en, hm, gm, crm, np, tm, col, bad, leg, cmp, ngn, pt, ec, kn, pandemic, dating, patientSafety, tr, nh, nr, news, newsScheduler, evidence, quest, qb, specialtyLoad]) => {
+    import('./data/attrReshape'),
+    import('./data/endingHints'),
+  ]).then(([gs, ig, npc, stats, tf, ev, cm, en, hm, gm, crm, np, tm, col, bad, leg, cmp, ngn, pt, ec, kn, pandemic, dating, patientSafety, tr, nh, nr, news, newsScheduler, evidence, quest, qb, specialtyLoad, attrReshape, endingHints]) => {
     w.__state = gs.getState;
     w.__setFlag = gs.setFlag;
     w.__patchState = gs.patchState;
-    w.__mod = { gs, ig, npc, stats, tf, ev, cm, en, hm, gm, crm, np, tm, col, bad, leg, cmp, ngn, pt, ec, kn, pandemic, dating, patientSafety, tr, nh, nr, news, newsScheduler, evidence, quest, qb, specialtyLoad };
+    w.__mod = { gs, ig, npc, stats, tf, ev, cm, en, hm, gm, crm, np, tm, col, bad, leg, cmp, ngn, pt, ec, kn, pandemic, dating, patientSafety, tr, nh, nr, news, newsScheduler, evidence, quest, qb, specialtyLoad, attrReshape, endingHints };
   });
 }

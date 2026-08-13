@@ -16,6 +16,8 @@ import { academicBaseScore, approximateRank, estimateFromChoice, familyScoreModi
 import type { Era0FamilyStatus, EstimateChoice, ExamEveChoice, ExamSiteChoice } from '../data/era0';
 import { normalizeFamily } from '../data/family';
 import { normalizeSpirit } from '../data/spirit';
+import { reshapeAccess, randomAttrAlloc } from '../data/attrReshape';
+import { getLastAttrs } from '../data/collection';
 
 interface OptionSpec {
   x: number;
@@ -57,6 +59,9 @@ export class GaokaoScene extends Phaser.Scene {
   private loanOn = false;
   private loanToggleText!: Phaser.GameObjects.Text;
   private loanBarText!: Phaser.GameObjects.Text;
+  // 多周目重塑：剩余随机次数；提示文案
+  private reshapeLeft = 0;
+  private reshapeHintText: Phaser.GameObjects.Text | null = null;
   // 开局阶段标记（ESC 返回用）
   private inGenderPhase = false;
   private inAttrPhase = false;
@@ -216,9 +221,17 @@ export class GaokaoScene extends Phaser.Scene {
 
     this.attrFocus = 0;
     this.loanOn = getState().flags.has('student_loan');
+    const access = reshapeAccess();
+    this.reshapeLeft = access.maxRerolls;
+    this.reshapeHintText = this.add.text(480, 444, '', {
+      fontFamily: '"Courier New", monospace', fontSize: '11px', color: '#8fa8c8',
+    }).setOrigin(0.5);
+    this.container.add(this.reshapeHintText);
     this.refreshAttrUI();
 
-    const foot = this.add.text(480, 466, '↑↓ 选择 · ←/→ 调整 · 空格 确认 · ESC 返回', {
+    const foot = this.add.text(480, 466, access.unlocked
+      ? '↑↓ 选择 · ←/→ 调整 · R 重塑 · I 继承上局 · 空格 确认 · ESC 返回'
+      : '↑↓ 选择 · ←/→ 调整 · 空格 确认 · ESC 返回', {
       fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#888899',
     }).setOrigin(0.5);
     this.container.add(foot);
@@ -241,6 +254,18 @@ export class GaokaoScene extends Phaser.Scene {
           this.refreshAttrUI();
         } else {
           this.adjustAttr(keys[this.attrFocus], e.key === 'ArrowRight' ? 1 : -1);
+        }
+      } else if ((e.key === 'r' || e.key === 'R') && reshapeAccess().unlocked && this.reshapeLeft > 0) {
+        e.preventDefault();
+        this.attrValues = randomAttrAlloc();
+        this.reshapeLeft -= 1;
+        this.refreshAttrUI();
+      } else if ((e.key === 'i' || e.key === 'I') && reshapeAccess().canInherit) {
+        e.preventDefault();
+        const last = getLastAttrs();
+        if (last) {
+          this.attrValues = { ...last };
+          this.refreshAttrUI();
         }
       } else if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -276,6 +301,16 @@ export class GaokaoScene extends Phaser.Scene {
     this.loanToggleText.setText(this.loanOn ? '开' : '关');
     this.loanToggleText.setColor(this.attrFocus === 4 ? '#ffc107' : this.loanOn ? '#69f0ae' : '#ffffff');
     this.loanBarText.setText(this.loanOn ? '[贷]' : '[ ]');
+    if (this.reshapeHintText) {
+      const access = reshapeAccess();
+      if (!access.unlocked) {
+        this.reshapeHintText.setText('');
+      } else {
+        const bits = [`多周目重塑 剩余 ${this.reshapeLeft}/${access.maxRerolls}`];
+        if (access.canInherit) bits.push('I 可继承上局');
+        this.reshapeHintText.setText(bits.join(' · '));
+      }
+    }
   }
 
   private commitAttrs() {

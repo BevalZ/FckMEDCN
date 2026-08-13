@@ -1,4 +1,6 @@
 import { ENDINGS } from './endings';
+import type { AttrAlloc } from './gameState';
+import { normalizeAttrAlloc } from './gameState';
 
 // 人生图鉴（跨周目收集）：记录玩家见过哪些结局、累计通关次数。
 // 独立于单局存档（save.ts 的 fckmedcn_save_v1）——clearSave/resetGame 都不碰这里，
@@ -13,6 +15,7 @@ interface CollectionBlob {
   runs: number;      // 累计通关次数（到达结局页算一次）
   points: number;    // 传承点（未使用余额）
   purchased: string[]; // 已购买的传承 perk id
+  lastAttrs?: AttrAlloc; // 最近一次通关时的开局属性（供下局继承）
 }
 
 let cache: CollectionBlob | null = null;
@@ -32,6 +35,7 @@ function load(): CollectionBlob {
           runs: parsed.runs ?? 0,
           points: parsed.points ?? 0,
           purchased: Array.isArray(parsed.purchased) ? parsed.purchased : [],
+          lastAttrs: parsed.lastAttrs ? normalizeAttrAlloc(parsed.lastAttrs) : undefined,
         };
       }
     }
@@ -56,12 +60,14 @@ export interface RecordResult {
 
 // 到达结局页时调用：收录结局并累计通关次数。返回本次收录情况供 UI 提示。
 // 每次通关 +1 传承点（多周目传承的经济来源）。
-export function recordEnding(id: string): RecordResult {
+// 可选写入本次开局 attrs，供下局「继承上局」重塑。
+export function recordEnding(id: string, attrs?: AttrAlloc): RecordResult {
   const blob = load();
   const isNew = !blob.endings.includes(id);
   if (isNew) blob.endings.push(id);
   blob.runs += 1;
   blob.points += 1;
+  if (attrs) blob.lastAttrs = normalizeAttrAlloc(attrs);
   persist(blob);
   return { isNew, unlocked: blob.endings.length, total: ENDINGS.length, runs: blob.runs };
 }
@@ -93,9 +99,15 @@ export function buyPerk(id: string, cost: number): boolean {
   return true;
 }
 
+export function getLastAttrs(): AttrAlloc | null {
+  const blob = load();
+  return blob.lastAttrs ? normalizeAttrAlloc(blob.lastAttrs) : null;
+}
+
 export function getCollection(): {
   endings: ReadonlySet<string>; badges: ReadonlySet<string>;
   runs: number; total: number; points: number; purchased: readonly string[];
+  lastAttrs: AttrAlloc | null;
 } {
   const blob = load();
   return {
@@ -105,6 +117,7 @@ export function getCollection(): {
     total: ENDINGS.length,
     points: blob.points,
     purchased: blob.purchased,
+    lastAttrs: blob.lastAttrs ? normalizeAttrAlloc(blob.lastAttrs) : null,
   };
 }
 

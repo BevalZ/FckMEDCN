@@ -31,6 +31,41 @@ export const LATE_ERA_EVENTS: GameEvent[] = [
       { text: '不表态，让竞争自行决定', delta: { relations: -4, sanity: 2 }, flagSet: 'era6_no_successor', consequence: '你退出了争夺，也留下了一段不确定。' },
     ],
   },
+  // —— 巅峰薄节奏：交接前一次科室危机（强制 turn 5）——
+  {
+    id: 'era6_dept_crisis',
+    stage: 'pinnacle',
+    title: '缺人的夜班表',
+    body: '三名住院医同时请病假。护士长把排班表拍在你桌上："今晚红区谁顶？"你知道自己可以亲自顶，也可以把责任推给还没准备好的年轻人。',
+    category: 'career',
+    weight: 1,
+    once: true,
+    manualOnly: true,
+    minTurn: 5,
+    maxTurn: 5,
+    choices: [
+      {
+        text: '自己顶上去，先把夜班扛住',
+        delta: { stamina: -12, clinical: 3, sanity: -4, reputation: 3 },
+        flagSet: 'era6_crisis_covered',
+        effect: { kind: 'changeHealth', field: 'strain', amount: 4 },
+        consequence: '天亮时病房稳住了。年轻医生松了口气，也少练了一回独立判断。',
+      },
+      {
+        text: '让二线学生主责，你远程补位',
+        delta: { relations: 4, reputation: 2, stamina: -4, sanity: -2 },
+        flagSet: 'era6_crisis_delegated',
+        effect: { kind: 'completeBucket', item: 'lastVisit', legacy: 8, completion: 5 },
+        consequence: '凌晨两点电话响了两次。学生扛住了——你第一次真的把位置让出去半寸。',
+      },
+      {
+        text: '向上级要支援，宁可缓一缓声誉',
+        delta: { relations: -2, reputation: -2, sanity: 3 },
+        flagSet: 'era6_crisis_escalated',
+        consequence: '院值班调来了支援。科室安全了，也有人私下说你"不像以前那么拼"。',
+      },
+    ],
+  },
   {
     id: 'era7_retirement_day', stage: 'retirement', title: '退休那天',
     body: '门诊系统里的名字被移出排班。抽屉清空后只剩一支旧笔。走出医院时，没有戏剧性的音乐，门口仍有人匆匆赶来看病。',
@@ -59,6 +94,40 @@ export const LATE_ERA_EVENTS: GameEvent[] = [
       { text: '约一次见面', delta: { sanity: 8, relations: 6 }, flagSet: 'era7_reconnected', effect: { kind: 'completeBucket', item: 'lastPerson', legacy: 5, completion: 10 }, consequence: '见面没有解决衰老，却让孤独短了一截。' },
       { text: '在电话里慢慢聊完', delta: { sanity: 5, relations: 3 }, consequence: '有些陪伴不需要抵达同一间屋子。' },
       { text: '不知道说什么，很快挂断', delta: { sanity: -4 }, consequence: '沉默也是真实的，只是之后更难补上。' },
+    ],
+  },
+  // —— 退休薄节奏：身份抽离（强制 turn 4）——
+  {
+    id: 'era7_identity_gap',
+    stage: 'retirement',
+    title: '谁还叫你医生',
+    body: '社区诊所里，年轻护士看了眼你的身份证："您是家属吧？"白大褂不在身上时，"医生"两个字突然需要解释。',
+    category: 'mental',
+    weight: 1,
+    once: true,
+    manualOnly: true,
+    minTurn: 4,
+    maxTurn: 4,
+    choices: [
+      {
+        text: '笑着纠正，然后认真听她介绍流程',
+        delta: { sanity: 6, relations: 2 },
+        flagSet: 'era7_identity_soft',
+        effect: { kind: 'completeBucket', item: 'lastPerson', legacy: 5, completion: 8 },
+        consequence: '你发现身份可以放下，并不等于一生被抹掉。',
+      },
+      {
+        text: '亮出旧工作证，强调你是谁',
+        delta: { reputation: 2, sanity: -4 },
+        flagSet: 'era7_identity_clung',
+        consequence: '对方连声道歉。你走出门，却觉得那张证件比以前更沉。',
+      },
+      {
+        text: '什么也不说，把号挂完就走',
+        delta: { sanity: -2 },
+        flagSet: 'era7_identity_quiet',
+        consequence: '匿名有时是一种保护。回家后你把旧胸牌收进抽屉最深处。',
+      },
     ],
   },
   {

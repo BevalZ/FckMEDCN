@@ -57,6 +57,10 @@ ConsequencePopup 弹窗顶部金色展示，图鉴第二页签 TAB 切换 + ←/
 **多周目传承**（collection.ts 加点数经济——通关 +1/每 5 徽章 +1；legacy.ts 8 条克制式开局加成
 perk，临床/科研 2 点其余 1 点；TitleScene.create 对每次新开局统一应用加成（继续游戏读档会覆盖，
 不受污染）；图鉴第三页签空格购买；legacy-inheritance 回归）。
+**多周目属性重塑**（通关≥1 解锁：R 随机重分配 10 点、I 继承上局 attrs；通关/结局≥3 可重塑 2 次；
+`attrReshape.ts` + `attr-reshape.spec.ts`）。
+**图鉴线索渐进**（`endingHints.ts`：未通关 / 雾面 / 清晰；负向结局也给方向感）。
+**巅峰/退休薄节奏**：强制 `era6_dept_crisis`（第 5 季缺人夜班）、`era7_identity_gap`（第 4 季身份抽离）。
 **数据对比系统**（恢复原 M4 规划：comparison.ts 给 15 结局各配 3 个可比指标——年龄/存款/论文，
 带真实区间与"低于参考/在参考区间内/高于参考"判定；EndingScene 中部改为逐项对齐对比表
 [你的值 vs 真实值 + 判定]，感情/家人/状态 行与事实卡保留；data-comparison 回归）。
