@@ -45,6 +45,10 @@ export const MENTOR_LABEL: Record<string, string> = {
   equal: '导师按人头平均分', pyramid: '导师金字塔式分配（你拿小头）',
   generous: '导师出手大方', tight: '导师能扣则扣',
 };
+/** HUD 短标签（完整说明见 MENTOR_LABEL / 阶段简报）。 */
+export const MENTOR_HUD_LABEL: Record<string, string> = {
+  equal: '均分', pyramid: '金字塔', generous: '大方', tight: '抠门',
+};
 
 const FAMILY_FACTOR: Record<string, number> = { rich: 1.5, middle: 1.0, tight: 0.6 };
 export const FAMILY_LABEL: Record<string, string> = { rich: '家境殷实', middle: '家境普通', tight: '家境拮据' };
@@ -209,6 +213,8 @@ export function currentRegionTier(): RegionTier {
   }
   if (f.has('offer_grass') || f.has('base_home') || f.has('city_home')) return 'county';
   if (f.has('city_tier1')) return 'top';
+  // 省属/华溪等 took_public：非一线顶尖，按市级档计（避免漏算掉回默认）
+  if (f.has('took_public')) return 'city';
   return 'city'; // 默认市级
 }
 
@@ -243,6 +249,25 @@ export function houseMonthly(): number {
 
 export function childQuarterCost(): number {
   return hasFlag('child_education_fund') ? 800 : 1200;
+}
+
+/** 住房公积金缴存比例：编制对等缴存更高；合同制/编外/民营更薄。 */
+export function housingFundRates(): { employeeRate: number; employerRate: number } {
+  const f = getState().flags;
+  if (f.has('jh_bianzhi_in')) return { employeeRate: 0.08, employerRate: 0.08 };
+  if (f.has('contract') || f.has('jh_bianzhi_out') || f.has('took_private')) {
+    return { employeeRate: 0.05, employerRate: 0.05 };
+  }
+  return { employeeRate: 0.07, employerRate: 0.07 };
+}
+
+/** 按税前口径的当季收入估算公积金：个人部分进支出，个人+单位部分进资产。 */
+export function housingFundForIncome(grossIncome: number): { employee: number; deposit: number } {
+  const safe = Math.max(0, Math.floor(grossIncome));
+  const { employeeRate, employerRate } = housingFundRates();
+  const employee = Math.round(safe * employeeRate);
+  const employer = Math.round(safe * employerRate);
+  return { employee, deposit: employee + employer };
 }
 
 /** 结局页财务数据卡使用的动态职业画像，明确拆分现金、资产、房贷和季度可支配收入。 */
@@ -302,6 +327,14 @@ export function getQuarterEconomy(stage: string): QuarterEconomy {
     income = fixedIncome + Math.round(performanceIncome * policyPerformanceMultiplier(s.policy, stage));
     // 医院/地区系数：三甲/私立上浮、基层/县城下调（求职选择真正影响收入）
     income = Math.round(income * REGION_INCOME[currentRegionTier()]);
+    // 合同制现金略高、编制略低：差异主要体现在公积金对等缴存（见下方）
+    if (s.flags.has('contract') || s.flags.has('jh_bianzhi_out')) {
+      income = Math.round(income * 1.04);
+    } else if (s.flags.has('jh_bianzhi_in')) {
+      income = Math.round(income * 0.98);
+    }
+    const fund = housingFundForIncome(income);
+    cost += fund.employee;
     if (s.flags.has('bought_house')) cost += houseMonthly();      // 房贷月供按地区档位
   }
 
@@ -326,6 +359,16 @@ export function applyStageEconomy(stage: string): QuarterEconomy {
   let financeNote = '';
   let assets = st.assets ?? 0;
 
+  // 职业期公积金：个人部分已计入 getQuarterEconomy.cost；单位+个人合计入资产（不重复扣现金）
+  let housingFundDeposit = 0;
+  if (stage === 'career' || stage === 'pinnacle') {
+    housingFundDeposit = housingFundForIncome(e.income).deposit;
+    if (housingFundDeposit > 0) {
+      applyAssetTransaction('deposit', housingFundDeposit, 0, `公积金入账 ¥${housingFundDeposit}`);
+      assets = getState().assets;
+    }
+  }
+
   if (st.financeStrategy === 'thrifty') {
     // 节流：支出已通过 getQuarterEconomy 压一成；此处把正结余的 30% 转储蓄，储蓄每季 0.5% 计息
     let deposit = 0;
@@ -340,7 +383,9 @@ export function applyStageEconomy(stage: string): QuarterEconomy {
     const interest = Math.max(0, Math.round(assets * 0.005));
     if (interest > 0) applyAssetTransaction('interest', interest, 0, `季度利息 ¥${interest}`);
     assets = getState().assets;
-    financeNote = `（节流省 ${Math.round(e.cost * 0.1)}，转储蓄 ${deposit}，利息 +${interest}）`;
+    financeNote = `（节流省 ${Math.round(e.cost * 0.1)}，转储蓄 ${deposit}，利息 +${interest}`
+      + (housingFundDeposit > 0 ? `，公积金 +${housingFundDeposit}` : '')
+      + '）';
   } else if (st.financeStrategy === 'invest') {
     // 投资：正结余的 50% 投入资产；资产每季 ±8% 波动
     let invested = 0;
@@ -355,9 +400,12 @@ export function applyStageEconomy(stage: string): QuarterEconomy {
     const swing = Math.round(assets * (Math.random() * 0.16 - 0.08));
     if (swing !== 0) applyAssetTransaction('market', swing, 0, `季度市场波动 ${swing >= 0 ? '+' : ''}¥${swing}`);
     assets = getState().assets;
-    financeNote = `（投入 ${invested}，资产 ${swing >= 0 ? '+' : ''}${swing}）`;
+    financeNote = `（投入 ${invested}，资产 ${swing >= 0 ? '+' : ''}${swing}`
+      + (housingFundDeposit > 0 ? `，公积金 +${housingFundDeposit}` : '')
+      + '）';
   } else {
     if (net !== 0) updateStats({ money: net } as StatDelta);
+    if (housingFundDeposit > 0) financeNote = `（公积金 +${housingFundDeposit}）`;
   }
 
   return { ...e, net, financeNote, assets };
@@ -407,6 +455,9 @@ export function describeStageEconomy(stage: string): string | null {
   ];
   if (stage === 'career' || stage === 'pinnacle') {
     lines.splice(1, 0, `工作单位：${REGION_LABEL[currentRegionTier()]}`);
+    const fund = housingFundForIncome(e.income);
+    const rates = housingFundRates();
+    lines.push(`住房公积金：个人 ¥${fund.employee}/季（${Math.round(rates.employeeRate * 100)}%），合计入账资产 ¥${fund.deposit}`);
   }
   if (familyLine) lines.splice(2, 0, familyLine);
   if (mentorLine) lines.splice(2, 0, mentorLine);

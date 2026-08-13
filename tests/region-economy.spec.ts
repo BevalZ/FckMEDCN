@@ -56,3 +56,29 @@ test('地区档位决定职业收入与房贷', async ({ page }) => {
   expect(r.house.top.monthly, '三甲月供应最高').toBeGreaterThan(r.house.county.monthly);
   expect(r.house.city.down, '市级首付介于两者之间').toBeGreaterThan(r.house.county.down);
 });
+
+test('took_public 落在市级档且公积金入账', async ({ page }) => {
+  await boot(page);
+  const r = await page.evaluate(() => {
+    const { gs, ec } = (window as any).__mod;
+    gs.resetGame();
+    gs.patchState({
+      stage: 'career', financeStrategy: 'stable', assets: 0,
+      stats: { ...gs.getState().stats, reputation: 40, money: 0 },
+    });
+    gs.setFlag('took_public');
+    const tier = ec.currentRegionTier();
+    const before = gs.getState().assets;
+    const economy = ec.applyStageEconomy('career');
+    return {
+      tier,
+      label: ec.REGION_LABEL[tier],
+      assetDelta: gs.getState().assets - before,
+      fund: ec.housingFundForIncome(economy.income).deposit,
+    };
+  });
+  expect(r.tier).toBe('city');
+  expect(r.label).toBe('市级医院');
+  expect(r.assetDelta).toBe(r.fund);
+  expect(r.fund).toBeGreaterThan(0);
+});

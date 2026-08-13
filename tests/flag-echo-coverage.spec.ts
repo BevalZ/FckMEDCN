@@ -66,11 +66,19 @@ const NARRATIVE_ONLY = new Set([
   'phd_target_top_advisor', 'phd_target_home_advisor', 'phd_reapply', 'phd_second_choice',
   'ms_thesis_secured', 'ms_thesis_phd_crunch', 'ms_thesis_job_crunch',
   'phd_dissertation_secured', 'phd_dissertation_job_crunch', 'phd_dissertation_referral_crunch',
-  // 求职：选择了哪条线（由 offer_* / took_* 等后续承接）
-  'signed', 'took_hospital_a', 'took_hospital_b', 'took_public', 'offer_sanjia', 'jh_chase_bianzhi',
+  // 求职：选择了哪条线（地区/编制主 flag 已由 economy + CAREER_ROUTE_EVENTS 消费）
+  'signed', 'took_hospital_b', 'jh_chase_bianzhi',
   'jh_platform', 'jh_phd_apply', 'jh_research_platform', 'jh_clinical_ace', 'jh_dual_role',
   'jh_referral_in', 'jh_fake_confessed', 'jh_fake_gambled', 'jh_hid_ug_fake', 'jh_disclosed_ug_fake',
-  'contract', 'go_guipei', 'jh_cdc', 'city_tier1', 'jh_bianzhi_in', 'jh_bianzhi_out',
+  'go_guipei', 'jh_cdc', 'city_tier1',
+  // 职业路线/雇佣事件终端标记（有回声或经济后果的已不在此列）
+  'route_sanjia_rushed', 'route_city_platform_push', 'route_city_platform_steady',
+  'route_grass_rushed', 'route_private_kpi_push', 'route_public_applied', 'route_public_favor',
+  'emp_bianzhi_craft', 'emp_bianzhi_quiet', 'emp_contract_negotiated', 'emp_contract_rushed',
+  'emp_out_reframed', 'emp_out_retry', 'comp_time_used', 'comp_time_banked', 'sick_leave_pushed',
+  // M11 诉讼长尾终端标记
+  'appraisal_win_taught', 'appraisal_win_quiet', 'appraisal_lose_reformed', 'appraisal_lose_defensive',
+  'lawsuit_shadow_talked', 'lawsuit_shadow_buried', 'second_appeal_done',
   // 职业：应对方式标记（后续有回声链但非 must-have）
   'dispute_happened', 'picked_side', 'multi_site', 'internet_doc', 'burnout_seen',
   'bought_house', 'fin_appealed', 'led_project', 'admin_trained', 'admin_drilled', 'admin_covered',
@@ -93,6 +101,8 @@ const NARRATIVE_ONLY = new Set([
   'overwork_aware', 'conflict_prone', 'in_couple', 'exp_failed',
   // NPC 好感度事件分支标记（修复关系/接受内推等叙事结果）
   'roommate_repaired', 'senior_referral', 'senior_repaired', 'teacher_repaired', 'counselor_repaired',
+  'headnurse_repaired', // 修复完成终端；信任门控另走 trust_headnurse
+  'guide_qe_walk', // 行走场景首次 Q/E 引导，纯 UI
   // R8 家庭链终端标记（修复完成/关系落定/子女入学，叙事终点无后续消费）
   'family_anchored', 'family_repaired', 'spouse_reconciled', 'marriage_cold', 'child_in_medschool',
   // 时代3规培/硕博并轨：阶段选择与阶段收束标记，数值后果已由 effect/state 承接。

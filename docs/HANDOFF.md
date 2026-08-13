@@ -130,8 +130,22 @@ attr-allocation 补贷款开关用例。
 - **人工验收（full 阻塞 / preview 推迟）**：`sources/release-acceptance.json` 桌面 8 场景 + iOS/Android 真机仍全 `pending`。
 - **首屏体积**：Phaser 已拆包（游戏包 ~940 kB、Phaser ~1.2 MB）；非当前阻塞。
 - **触屏收尾**：触控主流程已有回归；刘海/横竖屏/长时手感仍需真机写入 acceptance。
-- **玩法深度（Phase 2，不挡自动化门禁）**：医院路线事件池差异化；编制/合同制、病假调休、公积金；
-  实习手写密度；M11 诉讼长尾；M12 NPC。详见 `DEVPLAN.md` M10–M13。
+- **玩法深度（Phase 2）**：医院路线职业事件池已按三甲/基层/私立/省属+编制/合同制门控接入
+  （`events_career_routes.ts`）；公积金季度缴存与编制/合同差异已进 `economy.ts`。
+  M11 诉讼长尾（鉴定节点 / 延迟回声 / 二审窗口）已接入 `events_career_litigation.ts`。
+  M12 林主治多阶段弧 + QuestLog 完成飘字 + `docs/EVENT-LAYERING.md` 已落地。
+  M13 HUD 资产闪色、结构化季度账单、理财 toast、ESC/Q·E 帮助与首次引导、空 stub 清理已落地；
+  职业期 HUD 显示科室+医院档位（+编制/合同），硕博显示导师风格短标签。
+
+## 人工门禁（工程无法代签）
+
+| 门禁 | 真相源 | 状态 | 备注 |
+|------|--------|------|------|
+| 医学终审 | `sources/medical-fact-audit.json` | 78 条 `pending` | 不得伪造 `verified`；Batch 1 见 review-workpacks |
+| 外部证据 | `sources/evidence.json` | 待审阅人结论 | preview 不强制 |
+| 人工验收 | `sources/release-acceptance.json` | 桌面+真机 `pending` | `release:check:preview` 可过；full 不可 |
+
+发布路径：`npm run release:check:preview` + 标签 `vX.Y.Z-preview`。
 
 ## 场景转换测试经验（写新测试前先读）
 

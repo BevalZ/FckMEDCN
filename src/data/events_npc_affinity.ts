@@ -23,7 +23,7 @@ export const NPC_AFFINITY_EVENTS: GameEvent[] = [
     body: '你们已经一周没怎么说话了。今晚张宁打游戏到两点，你翻了个身，他也没关小音量。宿舍的灯亮着，却比夜还黑。',
     category: 'mental', weight: 45, minTurn: 2, requireFlag: 'distant_roommate', excludeFlag: 'trust_roommate',
     choices: [
-      { text: '先开口，问他"最近是不是有事"', delta: { relations: 10, sanity: 6 }, flagSet: 'roommate_repaired', consequence: '他愣了半天，说"我家里出了点事，没处说"。那晚你们聊到很晚。' },
+      { text: '先开口，问他"最近是不是有事"', delta: { relations: 10, sanity: 6 }, flagSet: 'roommate_repaired', effect: { kind: 'changeAffinity', npcId: 'roommate', amount: 15 }, consequence: '他愣了半天，说"我家里出了点事，没处说"。那晚你们聊到很晚。' },
       { text: '戴上耳机，各过各的', delta: { sanity: -6, relations: -4 }, consequence: '你在自己的世界里待着，宿舍更安静了。' },
     ],
   },
@@ -44,7 +44,7 @@ export const NPC_AFFINITY_EVENTS: GameEvent[] = [
     body: '路上遇到陈师兄，你打招呼，他只"嗯"了一声就走。你想起上次借他资料没还、他问话你爱答不理——攒下的疏远，都在这一刻显形。',
     category: 'social', weight: 40, minTurn: 2, requireFlag: 'distant_senior',
     choices: [
-      { text: '追上去，诚恳道歉补关系', delta: { relations: 10, sanity: 4, stamina: -3 }, flagSet: 'senior_repaired', consequence: '他说"不是生你的气，是我最近烦"。话开了，关系还有救。' },
+      { text: '追上去，诚恳道歉补关系', delta: { relations: 10, sanity: 4, stamina: -3 }, flagSet: 'senior_repaired', effect: { kind: 'changeAffinity', npcId: 'senior', amount: 15 }, consequence: '他说"不是生你的气，是我最近烦"。话开了，关系还有救。' },
       { text: '也冷着脸走开', delta: { sanity: -4, relations: -5 }, consequence: '你们互相绕道走了很久。' },
     ],
   },
@@ -101,6 +101,69 @@ export const NPC_AFFINITY_EVENTS: GameEvent[] = [
       { text: '紧张到漏了一项', delta: { clinical: 2, sanity: -6, reputation: -2 }, consequence: '她补上了你漏的那一项，没多说，但你记住了。' },
     ],
   },
+  {
+    id: 'aff_attending_distant', stage: 'internship',
+    title: '林主治不再叫你',
+    body: '晨会点名汇报时，林主治跳过了你。你想起上次交班含糊、被追问时还顶嘴——疏远不是一天攒下的。',
+    category: 'clinical', weight: 45, minTurn: 1, requireFlag: 'distant_attending', excludeFlag: 'trust_attending',
+    choices: [
+      {
+        text: '会后单独道歉，把漏项补成书面交班',
+        delta: { relations: 4, clinical: 3, stamina: -4, sanity: 2 },
+        flagSet: 'attending_repaired',
+        effect: { kind: 'changeAffinity', npcId: 'attending', amount: 18 },
+        consequence: '她看完补交的记录，只说"下次当面说清楚"。关系还有救。',
+      },
+      {
+        text: '觉得她故意为难，赌气不吭声',
+        delta: { relations: -4, sanity: -5, reputation: -2 },
+        effect: { kind: 'changeAffinity', npcId: 'attending', amount: -6 },
+        consequence: '你俩更少对视。查房时你站在最外圈。',
+      },
+    ],
+  },
+  {
+    id: 'aff_attending_after_repair', stage: 'internship',
+    title: '补过的交班被重新看见',
+    body: '几天后林主治把你叫到示教室："那份补交班我看了。今晚跟我上一台急诊，你主刀缝合收尾。"',
+    category: 'clinical', weight: 50, once: true, minTurn: 2,
+    requireFlag: 'attending_repaired', excludeFlag: 'trust_attending',
+    choices: [
+      {
+        text: '认真跟台，把步骤问清楚',
+        delta: { clinical: 5, relations: 4, stamina: -8, reputation: 3 },
+        effect: { kind: 'changeAffinity', npcId: 'attending', amount: 15 },
+        flagSet: 'attending_arc_complete',
+        consequence: '她开始把你当"能托付的人"。误会过后的信任，更沉。',
+      },
+      {
+        text: '紧张得只敢递器械',
+        delta: { clinical: 2, sanity: -3, relations: 2 },
+        effect: { kind: 'changeAffinity', npcId: 'attending', amount: 8 },
+        flagSet: 'attending_arc_complete',
+        consequence: '她没苛责，只让你下次提前看手术步骤。',
+      },
+    ],
+  },
+  {
+    id: 'echo_attending_career', stage: 'career',
+    title: '当年的林主治发来消息',
+    body: '职业期某天，你收到一条短信——林主治："看到你的病例分享了。交班还记得写清楚吗？"语气像当年，却多了一点笑意。',
+    category: 'social', weight: 35, once: true, minTurn: 2,
+    requireFlag: 'attending_arc_complete',
+    choices: [
+      {
+        text: '回她一份规范交班模板致谢',
+        delta: { relations: 4, reputation: 2, sanity: 3 },
+        consequence: '她回了个"嗯"。你知道，那是最高评价。',
+      },
+      {
+        text: '简单回复"还记得"',
+        delta: { sanity: 2, relations: 1 },
+        consequence: '对话很短，却把实习那年的冷空气吹散了些。',
+      },
+    ],
+  },
   // ============ 护士长 刘护士长 ============
   {
     id: 'aff_headnurse_trust', stage: 'internship',
@@ -112,6 +175,27 @@ export const NPC_AFFINITY_EVENTS: GameEvent[] = [
       { text: '觉得她多管闲事', delta: { relations: -5, sanity: -2 }, consequence: '后来你再有麻烦，护士站没人替你说话了。' },
     ],
   },
+  {
+    id: 'aff_headnurse_distant', stage: ['internship', 'guipei'],
+    title: '护士站不接你的茬',
+    body: '你请护士对一下医嘱，对方只说"等护士长"。刘护士长路过，目光淡淡掠过你——上次你当众质疑她排班，还没道过歉。',
+    category: 'social', weight: 42, minTurn: 1, requireFlag: 'distant_headnurse', excludeFlag: 'trust_headnurse',
+    choices: [
+      {
+        text: '私下道歉，承认沟通方式不妥',
+        delta: { relations: 5, sanity: 3, stamina: -2 },
+        flagSet: 'headnurse_repaired',
+        effect: { kind: 'changeAffinity', npcId: 'headnurse', amount: 16 },
+        consequence: '她说"知道错就好，医嘱还是要一起对"。护士站重新肯搭理你了。',
+      },
+      {
+        text: '觉得自己没错，继续硬碰',
+        delta: { relations: -4, sanity: -3, reputation: -1 },
+        effect: { kind: 'changeAffinity', npcId: 'headnurse', amount: -5 },
+        consequence: '医嘱核对变得更慢。你开始独自扛小纰漏。',
+      },
+    ],
+  },
   // ============ 高年资规培 赵师姐 ============
   {
     id: 'aff_fellow_trust', stage: 'guipei',
@@ -121,6 +205,27 @@ export const NPC_AFFINITY_EVENTS: GameEvent[] = [
     choices: [
       { text: '睡了一觉，第二天帮她分担', delta: { relations: 6, sanity: 8, stamina: 4 }, consequence: '她说"算你有良心"。你俩成了搭档。' },
       { text: '心安理得地接受', delta: { relations: -3, sanity: 4 }, consequence: '她没说什么，但下次有事不一定想到你了。' },
+    ],
+  },
+  {
+    id: 'aff_fellow_distant', stage: 'guipei',
+    title: '师姐把你晾在值班室',
+    body: '交班时赵师姐只跟别人对细节，轮到你只丢下一句"自己看系统"。你想起自己推过她的求助，还在背后抱怨她"爱出风头"。',
+    category: 'social', weight: 42, minTurn: 1, requireFlag: 'distant_fellow', excludeFlag: 'trust_fellow',
+    choices: [
+      {
+        text: '主动请她喝杯咖啡，把话说开',
+        delta: { relations: 5, sanity: 4, money: -40 },
+        flagSet: 'fellow_repaired',
+        effect: { kind: 'changeAffinity', npcId: 'fellow', amount: 16 },
+        consequence: '她白你一眼："下次别背后嘀咕。"气氛松了。',
+      },
+      {
+        text: '也冷着，自己硬扛',
+        delta: { relations: -3, sanity: -4, stamina: -3 },
+        effect: { kind: 'changeAffinity', npcId: 'fellow', amount: -5 },
+        consequence: '值班室更安静。你少了一个能换班的人。',
+      },
     ],
   },
 

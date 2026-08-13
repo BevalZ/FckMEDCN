@@ -4,6 +4,7 @@ import { STAT_LABELS, STAT_ICONS, HUD_STATS } from '../data/constants';
 import { getPalette } from './pixelArt';
 import { sound } from '../audio/sound';
 import { getState } from '../data/gameState';
+import { currentRegionTier, MENTOR_HUD_LABEL, REGION_LABEL } from '../data/economy';
 
 export class HUD {
   private scene: Phaser.Scene;
@@ -16,6 +17,9 @@ export class HUD {
   private balanceLabel!: Phaser.GameObjects.Text;
   private riskLabel!: Phaser.GameObjects.Text;
   private attrsLabel!: Phaser.GameObjects.Text;
+  private prevAssets = 0;
+  private assetsInitialized = false;
+  private assetFlashTween: Phaser.Tweens.Tween | null = null;
 
   constructor(scene: Phaser.Scene, stage: string) {
     this.scene = scene;
@@ -187,14 +191,26 @@ export class HUD {
     const finWord = { thrifty: '节流', stable: '稳健', invest: '投资' }[s.financeStrategy] ?? '稳健';
     const loanMark = s.flags.has('student_loan') ? '贷' : '';
     const assetStr = (s.assets ?? 0) > 0 ? ` · 资产¥${(s.assets ?? 0).toLocaleString()}` : '';
-    // 职业阶段显示科室（亚专科 flag），让玩家知道自己"在什么科"（深挖第五部分 R38 落地）
-    let subLabel = '';
-    if (stage === 'career') {
+    // 职业：科室 + 医院/地区档位（经济系数已算，必须可见）
+    let careerContext = '';
+    if (stage === 'career' || stage === 'pinnacle') {
+      const bits: string[] = [];
       const subMap: Record<string, string> = { sub_internal: '内科', sub_surgery: '外科', sub_obgyn: '妇产科', sub_pediatrics: '儿科' };
       for (const [f, l] of Object.entries(subMap)) {
-        if (s.flags.has(f)) { subLabel = ` ｜ 科室:${l}`; break; }
+        if (s.flags.has(f)) { bits.push(`科:${l}`); break; }
       }
+      bits.push(`档:${REGION_LABEL[currentRegionTier()]}`);
+      if (s.flags.has('jh_bianzhi_in') || s.flags.has('emp_bianzhi_craft') || s.flags.has('emp_bianzhi_quiet')) {
+        bits.push('编制');
+      } else if (s.flags.has('contract') || s.flags.has('jh_bianzhi_out') || s.flags.has('emp_contract_negotiated') || s.flags.has('emp_contract_rushed')) {
+        bits.push('合同');
+      }
+      careerContext = bits.length ? ` ｜ ${bits.join(' ')}` : '';
     }
+    // 硕博：导师绩效风格（影响补助，简报有长文，HUD 用短标签）
+    const mentorHud = (stage === 'master' || stage === 'phd')
+      ? ` ｜ 导师:${MENTOR_HUD_LABEL[s.mentorStyle] ?? s.mentorStyle}`
+      : '';
     const e3 = (stage === 'guipei' || stage === 'master' || stage === 'phd') ? s.era3 : null;
     const era3Label = e3?.initialized
       ? ` ｜ 临床压${e3.clinicalPressure} 科研压${e3.researchPressure} 睡眠${e3.estimatedSleep}h`
@@ -206,11 +222,36 @@ export class HUD {
       : '';
     const lateStage = ['career', 'pinnacle', 'retirement', 'eternity'].includes(stage);
     const lifeSystems = this.compactLifeSystems();
-    const earlyLine = `家境${a.family}/${wealthWord} 成绩${a.academic} 运气${a.luck} 外貌${a.looks}${loanMark ? ` 助学${loanMark}` : ''}${assetStr} 理财:${finWord}${era3Label}`;
+    const earlyLine = `家境${a.family}/${wealthWord} 成绩${a.academic} 运气${a.luck} 外貌${a.looks}${loanMark ? ` 助学${loanMark}` : ''}${assetStr} 理财:${finWord}${mentorHud}${era3Label}`;
     this.attrsLabel.setText(lateStage
-      ? `${subLabel}${systems} ｜ ${lifeSystems}`
+      ? `${careerContext}${systems}${assetStr} 理财:${finWord} ｜ ${lifeSystems}`
       : `${earlyLine} ｜ ${lifeSystems}`,
     );
+
+    const assetsNow = s.assets ?? 0;
+    if (!this.assetsInitialized) {
+      this.prevAssets = assetsNow;
+      this.assetsInitialized = true;
+    } else if (assetsNow !== this.prevAssets) {
+      this.flashAttrs(assetsNow > this.prevAssets ? '#69f0ae' : '#ff8a80');
+      this.prevAssets = assetsNow;
+    }
+  }
+
+  private flashAttrs(color: string) {
+    this.assetFlashTween?.stop();
+    this.attrsLabel.setColor(color);
+    this.assetFlashTween = this.scene.tweens.add({
+      targets: this.attrsLabel,
+      alpha: { from: 1, to: 0.55 },
+      yoyo: true,
+      duration: 160,
+      repeat: 1,
+      onComplete: () => {
+        this.attrsLabel.setColor('#9aa0b5');
+        this.attrsLabel.setAlpha(1);
+      },
+    });
   }
 
   getContainer() { return this.container; }

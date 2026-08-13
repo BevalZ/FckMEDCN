@@ -11,6 +11,8 @@ import { JOBHUNT_REAL_EVENTS } from './events_jobhunt_real';
 // —— 求职季回响：博士学历 / 双线偏向 / 造假隐患 / 学术背景在求职时兑现 ——
 import { JOBHUNT_ECHO_EVENTS } from './events_jobhunt_echo';
 import { CAREER_EVENTS } from './events_career';
+import { CAREER_ROUTE_EVENTS } from './events_career_routes';
+import { CAREER_LITIGATION_EVENTS } from './events_career_litigation';
 import { GENERATED_EVENTS } from './eventGen';
 import { CURATED_M2_EVENTS } from './events_curated_m2';
 import { LIFE_EVENTS } from './events_life';
@@ -133,6 +135,7 @@ export type ChoiceEffect =
       luckBonus?: number;                                  // × attrs.luck(0-5)
       overseasBonus?: number; overseasFlag?: string;       // 置该 flag 时再加 overseasBonus（海归认可度，R30）
       postdocBonus?: number; postdocFlag?: string;         // 置该 flag 时再加 postdocBonus（博士后过渡加成，R24）
+      flagAdjust?: { flag: string; delta: number }[];      // 置位时加减成功概率（病历瑕疵/知情同意等）
     }
   // applyUnit：投简历到某单位——置 jh_applied_<id>；若本校匹配该单位 affiliatedSchoolId，再置 jh_affil_<id>
   | { kind: 'applyUnit'; unitId: string }
@@ -186,6 +189,8 @@ export const ALL_EVENTS: GameEvent[] = [
   ...JOBHUNT_REAL_EVENTS,
   ...JOBHUNT_ECHO_EVENTS,
   ...CAREER_EVENTS,
+  ...CAREER_ROUTE_EVENTS,
+  ...CAREER_LITIGATION_EVENTS,
   // —— M2 程序化生成器产出的海量变体事件（确定性，ID 稳定）——
   ...GENERATED_EVENTS,
   // —— M2 手写叙事核心（研究接地、分支链、逻辑门）——

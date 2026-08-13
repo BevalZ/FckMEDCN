@@ -1,12 +1,14 @@
 import Phaser from 'phaser';
 
-// 简易任务清单（M5）：把本季目标 / 链式 nextEventId / 关键 flag 缺口可视化。
+// 简易任务清单（M5 + M12）：地点/NPC 指向 + 完成时可回传提示文案。
 // 不引入新存档字段——只读当前 flags 与场景传入的 hints。
 
 export type QuestItem = {
   id: string;
   label: string;
   done: boolean;
+  /** 刚完成时飘字/新闻用 */
+  rewardHint?: string;
 };
 
 export class QuestLog {
@@ -14,6 +16,7 @@ export class QuestLog {
   private lines: Phaser.GameObjects.Text[] = [];
   private title!: Phaser.GameObjects.Text;
   private visible = true;
+  private lastDone = new Set<string>();
 
   constructor(scene: Phaser.Scene) {
     this.root = scene.add.container(760, 86).setDepth(110);
@@ -47,16 +50,24 @@ export class QuestLog {
     this.root.setVisible(this.visible);
   }
 
-  setItems(items: QuestItem[]) {
+  /** 更新条目；返回本帧新完成的任务提示（供场景飘字）。 */
+  setItems(items: QuestItem[]): string[] {
+    const freshlyDone: string[] = [];
     const show = items.slice(0, 4);
     for (let i = 0; i < this.lines.length; i++) {
       const it = show[i];
       if (!it) { this.lines[i].setText(''); continue; }
+      if (it.done && !this.lastDone.has(it.id)) {
+        this.lastDone.add(it.id);
+        freshlyDone.push(it.rewardHint ?? `任务完成：${it.label}`);
+      }
+      if (!it.done) this.lastDone.delete(it.id);
       const mark = it.done ? '✓' : '·';
       this.lines[i]
         .setText(`${mark} ${it.label}`)
         .setColor(it.done ? '#69f0ae' : '#cfd8e8');
     }
+    return freshlyDone;
   }
 
   destroy() { this.root.destroy(true); }
@@ -65,10 +76,21 @@ export class QuestLog {
 /** 根据 flags 生成本科阶段默认可视目标 */
 export function undergradQuests(flags: Set<string>, actionsLeft: number, storyletUsed: boolean): QuestItem[] {
   return [
-    { id: 'ap', label: `行动点剩余 ${actionsLeft}`, done: actionsLeft === 0 },
-    { id: 'story', label: storyletUsed ? '本季事件已领' : '去地点领一件事', done: storyletUsed },
-    { id: 'skills', label: '技能中心练缝合', done: flags.has('suture_done') || flags.has('suture_perfect') || flags.has('suture_failed') },
-    { id: 'social', label: '和一位同学聊聊', done: flags.has('trust_roommate') || flags.has('trust_senior') || flags.has('got_senior_notes') },
+    { id: 'ap', label: `行动点剩余 ${actionsLeft}`, done: actionsLeft === 0, rewardHint: '本季行动点已用完，可回宿舍睡觉推进' },
+    { id: 'story', label: storyletUsed ? '本季事件已领' : '去教学楼/技能中心领事件', done: storyletUsed, rewardHint: '本季地点事件已领取' },
+    {
+      id: 'skills',
+      label: '去技能中心练缝合',
+      done: flags.has('suture_done') || flags.has('suture_perfect') || flags.has('suture_failed'),
+      rewardHint: '缝合练习完成 · 技能目标达成',
+    },
+    {
+      id: 'social',
+      label: '去宿舍找室友/学长聊聊',
+      done: flags.has('trust_roommate') || flags.has('trust_senior') || flags.has('got_senior_notes')
+        || flags.has('roommate_repaired') || flags.has('senior_repaired'),
+      rewardHint: '社交目标完成 · 关系有回响',
+    },
   ];
 }
 
@@ -76,9 +98,19 @@ export function undergradQuests(flags: Set<string>, actionsLeft: number, storyle
 export function internshipQuests(flags: Set<string>, actionsLeft: number, storyletUsed: boolean): QuestItem[] {
   return [
     { id: 'ap', label: `行动点剩余 ${actionsLeft}`, done: actionsLeft === 0 },
-    { id: 'story', label: storyletUsed ? '本季已领' : '去科室领一件事', done: storyletUsed },
-    { id: 'cpr', label: '练习 CPR 技能', done: flags.has('cpr_done') || flags.has('cpr_saved') },
-    { id: 'night', label: '值一次夜班', done: flags.has('night_shift_done') || flags.has('night_shift_ace') },
+    { id: 'story', label: storyletUsed ? '本季已领' : '去病房/办公室领事件', done: storyletUsed },
+    {
+      id: 'cpr',
+      label: '在技能点练习 CPR',
+      done: flags.has('cpr_done') || flags.has('cpr_saved'),
+      rewardHint: 'CPR 练习完成',
+    },
+    {
+      id: 'attending',
+      label: '找林主治沟通或修复关系',
+      done: flags.has('trust_attending') || flags.has('attending_repaired') || flags.has('attending_arc_complete'),
+      rewardHint: '与带教关系推进 · 任务完成',
+    },
   ];
 }
 
@@ -87,7 +119,17 @@ export function guipeiQuests(flags: Set<string>, actionsLeft: number, storyletUs
   return [
     { id: 'ap', label: `行动点剩余 ${actionsLeft}`, done: actionsLeft === 0 },
     { id: 'story', label: storyletUsed ? '本季已领' : '去科室领一件事', done: storyletUsed },
-    { id: 'license', label: '考取执业医师', done: flags.has('licensed') || flags.has('licensure_risk') },
-    { id: 'survive', label: '熬过规培期', done: flags.has('gp_grew') || flags.has('left_med') },
+    {
+      id: 'license',
+      label: '考取执业医师',
+      done: flags.has('licensed') || flags.has('licensure_risk'),
+      rewardHint: '执业相关节点已推进',
+    },
+    {
+      id: 'fellow',
+      label: '与赵师姐修复或巩固关系',
+      done: flags.has('trust_fellow') || flags.has('fellow_repaired'),
+      rewardHint: '规培搭档关系推进',
+    },
   ];
 }

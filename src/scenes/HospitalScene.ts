@@ -22,6 +22,8 @@ import type { StatDelta } from '../data/stats';
 import { scheduleNewsForQuarter } from '../data/newsScheduler';
 import { STAT_LABELS, STAT_ICONS, HUD_STATS } from '../data/constants';
 import { applyStageEntry, describeStageEconomy } from '../data/economy';
+import { formatQuarterBill } from '../ui/quarterBill';
+import { maybeShowWalkQEGuide } from '../ui/walkGuide';
 import { ACTIONS_PER_QUARTER, SLEEP_RECOVER } from '../data/campusMap';
 import type { Spot } from '../data/hospitalMap';
 import { HOSPITAL_SPEC, HOSPITAL_SPOTS, HOSPITAL_SPAWN, HOSPITAL_ORIGIN_Y, internshipExhaustion } from '../data/hospitalMap';
@@ -127,10 +129,11 @@ export class HospitalScene extends Phaser.Scene {
     const coreBusy = () => this.minigame !== null || this.eventCard.busy || this.consequence.busy;
     let menu!: ReturnType<typeof bindGameMenu>;
     const helpPanel = new HelpPanel(this, [
-      '移动 WASD/方向键 · 交互 E',
-      '任务清单 Q',
+      '移动 WASD/方向键 · 交互 E（靠近地点/NPC）',
+      '任务清单 Q · 完成目标会飘字提示',
       '游戏菜单 R · 帮助 H · 静音 M',
-      'ESC 取消当前交互',
+      'ESC · 关闭当前后果弹窗 / 取消菜单',
+      'ESC · 事件卡打开时：跳过本事件（不消耗 once）',
       '提示：行动点用完后可直接确认进入下一季度。',
       '练习 CPR / 值夜班 能完成实习任务。',
     ], () => coreBusy() || menu?.busy);
@@ -174,7 +177,8 @@ export class HospitalScene extends Phaser.Scene {
     const left = Math.max(0, this.actionsLeft);
     const dots = '●'.repeat(left) + '○'.repeat(Math.max(0, ACTIONS_PER_QUARTER - left));
     this.apLabel.setText(`行动点 ${dots}`);
-    this.questLog?.setItems(internshipQuests(s.flags, this.actionsLeft, this.storyletUsed));
+    const doneHints = this.questLog?.setItems(internshipQuests(s.flags, this.actionsLeft, this.storyletUsed)) ?? [];
+    for (const hint of doneHints) this.floatMessage(hint, '#69f0ae', 120);
   }
 
   private presentStageBriefing() {
@@ -198,6 +202,7 @@ export class HospitalScene extends Phaser.Scene {
     this.refreshAvailability();
     this.refreshInfoBar();
     this.setBusy(false);
+    maybeShowWalkQEGuide((text, color) => this.floatMessage(text, color, 120));
   }
 
   // —— NPC：按季度轮换所在地点，站在该地点门口旁边 ——
@@ -627,12 +632,12 @@ export class HospitalScene extends Phaser.Scene {
   }
 
   private showQuarterBill(e: { income: number; cost: number; net: number; financeNote?: string }) {
-    if (e.income === 0 && e.cost === 0) return;
-    const netStr = `${e.net >= 0 ? '+' : ''}¥${e.net}`;
-    const text = `季度结算 ▸ 收¥${e.income} 支¥${e.cost} = 净 ${netStr}${e.financeNote ?? ""}`;
+    const text = formatQuarterBill(e);
+    if (!text) return;
     const color = e.net >= 0 ? '#69f0ae' : '#ff8a80';
     const t = this.add.text(480, 128, text, {
-      fontFamily: '"Courier New", monospace', fontSize: '13px', color, fontStyle: 'bold',
+      fontFamily: '"Courier New", monospace', fontSize: '12px', color, fontStyle: 'bold',
+      align: 'center', lineSpacing: 3,
     }).setOrigin(0.5, 0).setDepth(120).setAlpha(0);
     this.tweens.add({
       targets: t, alpha: 1, duration: 240, ease: 'Cubic.easeOut',

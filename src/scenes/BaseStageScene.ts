@@ -12,7 +12,8 @@ import { addTouchShortcuts } from '../ui/TouchShortcuts';
 import { showNewsToast } from '../ui/newsToast';
 import { scheduleNewsForQuarter } from '../data/newsScheduler';
 import { STAT_LABELS, STAT_ICONS, HUD_STATS } from '../data/constants';
-import { applyStageEntry, childQuarterCost, describeStageEconomy, getQuarterEconomy, houseMonthly } from '../data/economy';
+import { applyStageEntry, describeStageEconomy, getQuarterEconomy } from '../data/economy';
+import { formatQuarterBill } from '../ui/quarterBill';
 import { getPalette, createBgTexture, createStageDecor, addScanlineOverlay, addVignette, stageAmbientTint } from '../ui/pixelArt';
 import type { PaletteName } from '../ui/pixelArt';
 import { CharacterSprite } from '../ui/CharacterSprite';
@@ -134,7 +135,9 @@ export abstract class BaseStageScene extends Phaser.Scene {
       '选择：数字键 / 字母键 / ↑↓ + 回车',
       '导师对话 T（可用阶段）',
       '游戏菜单 R · 帮助 H · 静音 M',
-      'ESC 跳过本事件（不消耗、可再遇）',
+      'ESC · 事件卡：跳过本事件（不消耗 once，可再遇）',
+      'ESC · 后果弹窗：关闭当前后果（默认 dismiss）',
+      'ESC · 游戏菜单：返回上级或关闭菜单',
       `本阶段：${this.getStageLabelText()}`,
       '提示：心理归零会触发危机结局，注意休息。',
     ], () => coreBusy() || menu.busy);
@@ -326,19 +329,8 @@ export abstract class BaseStageScene extends Phaser.Scene {
   }
 
   private showQuarterBill(e: { income: number; cost: number; net: number; financeNote?: string }) {
-    if (e.income === 0 && e.cost === 0) return;
-    const s = getState();
-    // 结构化小账单（深挖第五部分 R38 / REVIEW-PLAYABILITY R15 落地）：
-    // 收入 / 支出（含房贷、育儿的拆分行）/ 净额 / 资产。
-    const rows: string[] = [];
-    rows.push(`季度结算 ▸ 收入 ¥${e.income.toLocaleString()}`);
-    if (s.flags.has('bought_house')) {
-      rows.push(`  其中 房贷 ¥-${houseMonthly().toLocaleString()}`);
-    }
-    if (s.hasChild) rows.push(`  其中 育儿 ¥-${childQuarterCost().toLocaleString()}`);
-    rows.push(`  支出 ¥${e.cost.toLocaleString()} = 净 ${e.net >= 0 ? '+' : ''}¥${e.net.toLocaleString()}`);
-    if ((s.assets ?? 0) > 0) rows.push(`  资产 ¥${(s.assets ?? 0).toLocaleString()}${e.financeNote ?? ''}`);
-    const text = rows.join('\n');
+    const text = formatQuarterBill(e);
+    if (!text) return;
     const color = e.net >= 0 ? '#69f0ae' : '#ff8a80';
     const t = this.add.text(480, 122, text, {
       fontFamily: '"Courier New", monospace', fontSize: '12px', color, fontStyle: 'bold',

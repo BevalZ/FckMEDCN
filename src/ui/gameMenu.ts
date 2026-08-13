@@ -64,14 +64,21 @@ export function bindGameMenu(
     } catch { /* 存档不可用时静默 */ }
   };
 
-  /** 理财策略：即时写入状态并写回存档 */
+  /** 理财策略：即时写入状态并写回存档，并弹 toast 确认 */
   const setFinance = (f: 'thrifty' | 'stable' | 'invest') => {
+    const labels = { thrifty: '节流储蓄', stable: '稳健生活', invest: '适度投资' } as const;
     patchState({ financeStrategy: f });
     try {
       const blob = loadSave();
       if (blob) saveGame(blob.sceneKey, blob.firedEvents ?? [], blob.firedNews ?? []);
     } catch { /* 静默 */ }
     onStateChange?.();
+    close();
+    consequence.show(
+      `【理财策略】\n已切换为：${labels[f]}\n下季度起收支与资产收益将按此策略结算。`,
+      {},
+      () => {},
+    );
   };
 
   const persistCurrentState = () => {
@@ -153,7 +160,6 @@ export function bindGameMenu(
       close();
     } else if (mode === 'finance') {
       setFinance(selected === 0 ? 'thrifty' : selected === 2 ? 'invest' : 'stable');
-      close();
     } else if (mode === 'assets') {
       if (selected === 4) { mode = 'main'; selected = 0; redraw(); }
       else if (selected <= 1) withdraw(selected === 0 ? 5000 : 10000);

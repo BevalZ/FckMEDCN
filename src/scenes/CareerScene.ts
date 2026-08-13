@@ -44,7 +44,14 @@ export class CareerScene extends BaseStageScene {
     if (!flags.has('no_college')) {
       if (turn === 0 && !hasSub) this.forcedEventId = 'career_specialty_choice';
       else if (turn >= 3 && !flags.has('lawsuit_done_1')) this.forcedEventId = lawsuitEventId(1);
+      else if (turn >= 5 && flags.has('lawsuit_done_1') && !flags.has('appraisal_resolved')) {
+        this.forcedEventId = 'career_lawsuit_appraisal';
+      }
       else if (turn >= 9 && !flags.has('lawsuit_done_2')) this.forcedEventId = lawsuitEventId(2);
+      else if (turn >= 12 && turn <= 16
+        && flags.has('appraisal_adverse') && !flags.has('second_appeal_done')) {
+        this.forcedEventId = 'career_second_appeal';
+      }
       else if (turn >= 5 && !flags.has('legal_complaint_handled')) {
         setFlag('legal_complaint_due');
         this.forcedEventId = 'legal_first_complaint';

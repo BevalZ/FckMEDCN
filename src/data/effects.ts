@@ -435,6 +435,11 @@ export function applyChoiceEffect(effect: ChoiceEffect) {
       if (effect.postdocFlag && hasFlag(effect.postdocFlag) && effect.postdocBonus) {
         p += effect.postdocBonus;
       }
+      if (Array.isArray(effect.flagAdjust)) {
+        for (const adj of effect.flagAdjust) {
+          if (adj?.flag && hasFlag(adj.flag) && typeof adj.delta === 'number') p += adj.delta;
+        }
+      }
       p = Math.max(0.05, Math.min(0.98, p));
       if (Math.random() < p) setFlag(effect.successFlag);
       else setFlag(effect.failFlag);

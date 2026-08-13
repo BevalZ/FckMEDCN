@@ -23,6 +23,8 @@ import { scheduleNewsForQuarter } from '../data/newsScheduler';
 import { determineEnding } from '../data/endings';
 import { STAT_LABELS, STAT_ICONS, HUD_STATS } from '../data/constants';
 import { applyStageEntry, describeStageEconomy } from '../data/economy';
+import { formatQuarterBill } from '../ui/quarterBill';
+import { maybeShowWalkQEGuide } from '../ui/walkGuide';
 import { isBurnout, triggerBurnout } from '../data/burnout';
 import { checkExamCrisis, noteStudied, holdbackSanityPenalty, holdbackExtraTurns } from '../data/knowledge';
 import {
@@ -155,10 +157,11 @@ export class CampusScene extends Phaser.Scene {
     const coreBusy = () => this.minigame !== null || this.eventCard.busy || this.consequence.busy;
     let menu!: ReturnType<typeof bindGameMenu>;
     const helpPanel = new HelpPanel(this, [
-      '移动 WASD/方向键 · 交互 E',
-      '任务清单 Q',
+      '移动 WASD/方向键 · 交互 E（靠近地点/NPC）',
+      '任务清单 Q · 完成目标会飘字提示',
       '游戏菜单 R · 帮助 H · 静音 M',
-      'ESC 取消当前交互',
+      'ESC · 关闭当前后果弹窗 / 取消菜单',
+      'ESC · 事件卡打开时：跳过本事件（不消耗 once）',
       '提示：行动点用完后可直接确认进入下一季度。',
       '技能中心可练缝合（完成任务目标）。',
     ], () => coreBusy() || menu?.busy);
@@ -211,7 +214,12 @@ export class CampusScene extends Phaser.Scene {
     const storylet = this.storyletUsed ? '（本季事件已领）' : '';
     const ug = s.undergrad;
     this.apLabel.setText(`认同 ${ug.professionalIdentity} · 危机 L${ug.crisisLevel}(${ug.crisisCredits}) · 行动点 ${dots} ${storylet}`);
-    this.questLog?.setItems(undergradQuests(s.flags, this.actionsLeft, this.storyletUsed));
+    const doneHints = this.questLog?.setItems(undergradQuests(s.flags, this.actionsLeft, this.storyletUsed)) ?? [];
+    let hintY = 92;
+    for (const hint of doneHints) {
+      this.floatMessage(hint, '#69f0ae', hintY);
+      hintY += 16;
+    }
   }
 
   // 首次进入本阶段：一次性入学收支 + 经济简报
@@ -238,6 +246,7 @@ export class CampusScene extends Phaser.Scene {
     this.refreshAvailability();
     this.refreshInfoBar();
     this.setBusy(false);
+    maybeShowWalkQEGuide((text, color) => this.floatMessage(text, color, 92));
   }
 
   // —— NPC：按季度轮换所在地点，站在该地点门口旁边 ——
@@ -822,12 +831,19 @@ export class CampusScene extends Phaser.Scene {
   }
 
   private showQuarterBill(e: { income: number; cost: number; net: number; financeNote?: string }) {
-    if (e.income === 0 && e.cost === 0) return;
-    const netStr = `${e.net >= 0 ? '+' : ''}¥${e.net}`;
-    this.floatMessage(
-      `季度结算 ▸ 收¥${e.income} 支¥${e.cost} = 净 ${netStr}${e.financeNote ?? ""}`,
-      e.net >= 0 ? '#69f0ae' : '#ff8a80', 110, 13,
-    );
+    const text = formatQuarterBill(e);
+    if (!text) return;
+    const color = e.net >= 0 ? '#69f0ae' : '#ff8a80';
+    const t = this.add.text(480, 110, text, {
+      fontFamily: '"Courier New", monospace', fontSize: '12px', color, fontStyle: 'bold',
+      align: 'center', lineSpacing: 3,
+    }).setOrigin(0.5, 0).setDepth(120).setAlpha(0);
+    this.tweens.add({
+      targets: t, alpha: 1, duration: 240, ease: 'Cubic.easeOut',
+      onComplete: () => {
+        this.tweens.add({ targets: t, alpha: 0, y: 94, duration: 900, delay: 500, onComplete: () => t.destroy() });
+      },
+    });
   }
 
   private showAffinityQuarter(affinity: { delta: StatDelta; messages: string[] }, y = 166) {

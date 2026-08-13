@@ -132,10 +132,12 @@ if (import.meta.env.DEV) {
     import('./data/news'),
     import('./data/newsScheduler'),
     import('./data/evidence'),
-  ]).then(([gs, ig, npc, stats, tf, ev, cm, en, hm, gm, crm, np, tm, col, bad, leg, cmp, ngn, pt, ec, kn, pandemic, dating, patientSafety, tr, nh, nr, news, newsScheduler, evidence]) => {
+    import('./ui/QuestLog'),
+    import('./ui/quarterBill'),
+  ]).then(([gs, ig, npc, stats, tf, ev, cm, en, hm, gm, crm, np, tm, col, bad, leg, cmp, ngn, pt, ec, kn, pandemic, dating, patientSafety, tr, nh, nr, news, newsScheduler, evidence, quest, qb]) => {
     w.__state = gs.getState;
     w.__setFlag = gs.setFlag;
     w.__patchState = gs.patchState;
-    w.__mod = { gs, ig, npc, stats, tf, ev, cm, en, hm, gm, crm, np, tm, col, bad, leg, cmp, ngn, pt, ec, kn, pandemic, dating, patientSafety, tr, nh, nr, news, newsScheduler, evidence };
+    w.__mod = { gs, ig, npc, stats, tf, ev, cm, en, hm, gm, crm, np, tm, col, bad, leg, cmp, ngn, pt, ec, kn, pandemic, dating, patientSafety, tr, nh, nr, news, newsScheduler, evidence, quest, qb };
   });
 }
