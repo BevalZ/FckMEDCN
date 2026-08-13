@@ -37,6 +37,7 @@
 - [x] 验证诚实玩家可达负向结局：职业期强制「职称论文压力 / 科室挂名风暴」薄路径
   （`events_career_integrity.ts` → `has_faked` / `exposed_ruin` → `lucky_fraud` / `disgraced`）
 - [x] 结局图鉴加"线索"提示（`endingHints.ts`：未通关 / 雾面 / 清晰三级渐进揭示）
+- [x] 结局可达矩阵：各结局最短路径与判定优先级（`docs/ENDING-REACHABILITY.md`）
 
 ---
 

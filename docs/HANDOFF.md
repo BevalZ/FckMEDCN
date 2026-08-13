@@ -62,6 +62,7 @@ perk，临床/科研 2 点其余 1 点；TitleScene.create 对每次新开局统
 **图鉴线索渐进**（`endingHints.ts`：未通关 / 雾面 / 清晰；负向结局也给方向感）。
 **负向结局薄路径**（普通局可触达）：第 7 季起职称论文压力、第 11 季挂名风暴
   （`events_career_integrity.ts` → `lucky_fraud` / `disgraced`）。
+**结局可达矩阵**：各结局判定优先级与最短路径见 `docs/ENDING-REACHABILITY.md`。
 **巅峰/退休薄节奏**：强制 `era6_dept_crisis`（第 5 季缺人夜班）、`era7_identity_gap`（第 4 季身份抽离）。
 **数据对比系统**（恢复原 M4 规划：comparison.ts 给 15 结局各配 3 个可比指标——年龄/存款/论文，
 带真实区间与"低于参考/在参考区间内/高于参考"判定；EndingScene 中部改为逐项对齐对比表
