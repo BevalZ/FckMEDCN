@@ -141,10 +141,13 @@ function validateMedical(manifest, evidence, failures) {
     if (!MEDICAL_CATEGORIES.has(record.category)) failures.push(`${prefix}.category 非法`);
     if (!MEDICAL_STATUSES.has(record.status)) failures.push(`${prefix}.status 非法`);
     if (!MEDICAL_PRE_REVIEW_STATUSES.has(record.preReviewStatus)) failures.push(`${prefix}.preReviewStatus 非法`);
-    for (const field of ['label', 'focus', 'reviewedBy', 'reviewedAt', 'notes']) {
+    for (const field of ['label', 'focus', 'reviewerRole', 'reviewedBy', 'reviewedAt', 'notes']) {
       if (!hasString(record, field)) failures.push(`${prefix}.${field} 必须是字符串`);
     }
     if (!hasText(record, 'label') || !hasText(record, 'focus')) failures.push(`${prefix} 缺少名称或复核重点`);
+    if (hasText(record, 'reviewerRole') && !MEDICAL_REVIEWER_ROLES.has(record.reviewerRole)) {
+      failures.push(`${prefix}.reviewerRole 非法`);
+    }
     if (!Array.isArray(record.evidenceRefs) || record.evidenceRefs.some(id => typeof id !== 'string')) {
       failures.push(`${prefix}.evidenceRefs 必须是字符串数组`);
     } else {

@@ -25,10 +25,28 @@ test('医学事实清单完整保留当前 78 个复核对象，流程预审不�
   expect(manifest.records).toHaveLength(78);
   expect(new Set(ids).size).toBe(ids.length);
   expect(manifest.records.filter((record: any) => record.preReviewStatus === 'flow_checked')).toHaveLength(26);
+  expect(manifest.records.every((record: any) => Object.prototype.hasOwnProperty.call(record, 'reviewerRole'))).toBe(true);
+  expect(manifest.records.filter((record: any) => record.status === 'pending').map((record: any) => record.reviewerRole)).toEqual(manifest.records.map(() => ''));
   expect(manifest.records.filter((record: any) =>
     record.preReviewStatus === 'flow_checked' && record.status === 'verified')).toEqual([]);
 });
 
+test('医学终审 reviewerRole 必须是空值或白名单角色', async () => {
+  // @ts-expect-error Runtime release validator is intentionally plain ESM JavaScript.
+  const { validateReleaseManifests } = await import('../scripts/release-schema.mjs');
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'fckmedcn-medical-schema-'));
+  try {
+    fs.cpSync(path.join(ROOT, 'sources'), path.join(tempRoot, 'sources'), { recursive: true });
+    const manifestPath = path.join(tempRoot, 'sources', 'medical-fact-audit.json');
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    manifest.records[0].reviewerRole = 'ai-reviewer';
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+    expect(validateReleaseManifests(tempRoot).failures)
+      .toContain('medical-fact-audit.json[patient_lonely_elder_hypertension].reviewerRole 非法');
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
 test('人工验收清单覆盖桌面生命周期与移动端必测场景', () => {
   const manifest = readJson('sources/release-acceptance.json');
   const expectedScenarios: Record<string, string[]> = {
