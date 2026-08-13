@@ -12,6 +12,8 @@ export interface EvidenceRef {
   accessedAt: string;
   status: EvidenceStatus;
   reviewedBy: string;
+  reviewedAt: string;
+  notes: string;
 }
 
 /**

@@ -16,7 +16,7 @@ async function boot(page: Page) {
 test('地区档位决定职业收入与房贷', async ({ page }) => {
   await boot(page);
   const r = await page.evaluate(() => {
-    const { gs, tf, ec } = (window as any).__mod;
+    const { gs, ec } = (window as any).__mod;
     // 同职称同声望下，只改地区 flag，比较季度收入
     const incomeOf = (flags: string[]) => {
       gs.resetGame();
@@ -26,8 +26,10 @@ test('地区档位决定职业收入与房贷', async ({ page }) => {
       });
       for (const f of flags) gs.setFlag(f);
       const m0 = gs.getState().stats.money;
-      tf.advanceQuarter('career');
-      return gs.getState().stats.money - m0;
+      const economy = ec.applyStageEconomy('career');
+      const moneyDelta = gs.getState().stats.money - m0;
+      if (moneyDelta !== economy.net) throw new Error('经济落账不一致：' + moneyDelta + ' !== ' + economy.net);
+      return moneyDelta;
     };
     const top = incomeOf(['offer_sanjia']);
     const city = incomeOf([]);

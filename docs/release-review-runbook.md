@@ -21,7 +21,7 @@ npm run release:review > release-review-workpack.md
 
 ## 外部事实证据
 
-每个 `external` 条目必须对应具体出版物、机构、发布日期、直接 HTTP(S) URL、访问日期和审阅人。机构首页、搜索结果页、泛化的“行业调研”或无法追溯的二手转述不能作为 `verified` 证据。
+每个 `external` 条目必须对应具体出版物、机构、发布日期、直接 HTTP(S) URL 和访问日期。先用 `rg -n "<evidenceId>" src/data/endings.ts` 找到所有卡片原句，再核对来源是否直接支持每条表述。标为 `verified` 时还必须填写审阅人、`reviewedAt` 和具体复核结论 `notes`。机构首页、搜索结果页、泛化的“行业调研”或无法追溯的二手转述不能作为 `verified` 证据。
 
 ## 桌面与真机验收
 

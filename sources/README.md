@@ -4,7 +4,7 @@ This directory stores review evidence and redistribution records. It must not co
 
 - `audio-licenses.json`: one record per shipped prerecorded audio file. The current build ships none; sound is synthesized at runtime by `src/audio/sound.ts`. If prerecorded media is added later, record its author, original URL, license, explicit redistribution permission, reviewer, and review date before setting `verified`.
 - `release-acceptance.json`: manual desktop and real-device acceptance. A check needs a reviewer, date, and concise device/browser notes before it can be verified.
-- `evidence.json`: the single runtime and release-gate registry for ending fact cards. External entries require a traceable publication title, organization, publication date, direct URL, access date, and reviewer before `verified` is allowed.
+- `evidence.json`: the single runtime and release-gate registry for ending fact cards. External entries require a traceable publication title, organization, publication date, direct URL, access date, reviewer, ISO review date, and a written conclusion before `verified` is allowed.
 - `medical-fact-audit.json`: the machine-readable source of truth for all medical review items. `flow_checked` records are still `pending` until the appropriate clinician or pharmacist completes final review and records evidence.
 - `medical-news-sources.md`: working notes only. A generic portal URL does not make a claim verified.
 - `research/`: reproducible candidate-source retrieval logs. These files help reviewers repeat searches but are not approvals by themselves.

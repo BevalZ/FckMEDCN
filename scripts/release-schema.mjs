@@ -95,7 +95,7 @@ function validateEvidence(manifest, failures) {
     }
     if (!EVIDENCE_SCOPES.has(record.scope)) failures.push(`${prefix}.scope 非法`);
     if (!EVIDENCE_STATUSES.has(record.status)) failures.push(`${prefix}.status 非法`);
-    for (const field of ['title', 'organization', 'publishedAt', 'url', 'accessedAt', 'reviewedBy']) {
+    for (const field of ['title', 'organization', 'publishedAt', 'url', 'accessedAt', 'reviewedBy', 'reviewedAt', 'notes']) {
       if (!hasString(record, field)) failures.push(`${prefix}.${field} 必须是字符串`);
     }
     if (!hasText(record, 'title') || !hasText(record, 'organization')) {
@@ -104,10 +104,14 @@ function validateEvidence(manifest, failures) {
     if (hasText(record, 'accessedAt') && !hasIsoDate(record, 'accessedAt')) {
       failures.push(`${prefix}.accessedAt 必须是 YYYY-MM-DD`);
     }
+    if (hasText(record, 'reviewedAt') && !hasIsoDate(record, 'reviewedAt')) {
+      failures.push(`${prefix}.reviewedAt 必须是 YYYY-MM-DD`);
+    }
 
     if (record.status !== 'verified') continue;
-    if (!hasIsoDate(record, 'publishedAt') || !hasIsoDate(record, 'accessedAt') || !hasText(record, 'reviewedBy')) {
-      failures.push(`${prefix} 标为 verified 时必须有发布日期、访问日期和审阅人`);
+    if (!hasIsoDate(record, 'publishedAt') || !hasIsoDate(record, 'accessedAt')
+      || !hasText(record, 'reviewedBy') || !hasIsoDate(record, 'reviewedAt') || !hasText(record, 'notes')) {
+      failures.push(`${prefix} 标为 verified 时必须有发布日期、访问日期、审阅人、复核日期和结论`);
     }
     if (record.scope === 'external' && !isHttpUrl(record.url, true)) {
       failures.push(`${prefix} 外部 verified 证据必须使用可追溯的直接 HTTP(S) URL`);

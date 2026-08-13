@@ -180,7 +180,7 @@ test('R 菜单资产账户可应急提现并持久化流水', async ({ page }) =
 test('助学贷款：上学补贴、工作后还贷', async ({ page }) => {
   await boot(page);
   const r = await page.evaluate(() => {
-    const { gs, tf } = (window as any).__mod;
+    const { gs, ec } = (window as any).__mod;
     const net = (familyWealth: string, loan: boolean, stage: string) => {
       gs.resetGame();
       gs.patchState({
@@ -188,8 +188,12 @@ test('助学贷款：上学补贴、工作后还贷', async ({ page }) => {
         flags: loan ? new Set(['student_loan']) : new Set(),
       });
       const m = gs.getState().stats.money;
-      tf.advanceQuarter(stage);
-      return gs.getState().stats.money - m;
+      // 这里只验证贷款对固定经济结算的影响。完整 advanceQuarter 还会随机触发
+      // 患者安全赔付（重大事故恰为 -15000），会把无关随机性混入贷款断言。
+      const economy = ec.applyStageEconomy(stage);
+      const moneyDelta = gs.getState().stats.money - m;
+      if (moneyDelta !== economy.net) throw new Error(`经济落账不一致：${moneyDelta} !== ${economy.net}`);
+      return moneyDelta;
     };
     return {
       tightNoLoan: net('tight', false, 'undergrad'), // 1800-3800 = -2000

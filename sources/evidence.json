@@ -9,7 +9,9 @@
       "url": "https://www.gov.cn/zhengce/zhengceku/202412/content_6994470.htm",
       "accessedAt": "2026-08-12",
       "status": "pending",
-      "reviewedBy": ""
+      "reviewedBy": "",
+      "reviewedAt": "",
+      "notes": ""
     },
     "多项职业心理健康研究": {
       "scope": "external",
@@ -19,7 +21,9 @@
       "url": "https://doi.org/10.1016/j.heliyon.2022.e09821",
       "accessedAt": "2026-08-12",
       "status": "pending",
-      "reviewedBy": ""
+      "reviewedBy": "",
+      "reviewedAt": "",
+      "notes": ""
     },
     "普通高等学校学生管理规定": {
       "scope": "external",
@@ -29,7 +33,9 @@
       "url": "https://www.gov.cn/gongbao/content/2017/content_5220900.htm",
       "accessedAt": "2026-08-12",
       "status": "pending",
-      "reviewedBy": ""
+      "reviewedBy": "",
+      "reviewedAt": "",
+      "notes": ""
     },
     "科研诚信案件调查处理规则": {
       "scope": "external",
@@ -39,7 +45,9 @@
       "url": "https://www.gov.cn/zhengce/zhengceku/2022-09/14/content_5709819.htm",
       "accessedAt": "2026-08-12",
       "status": "pending",
-      "reviewedBy": ""
+      "reviewedBy": "",
+      "reviewedAt": "",
+      "notes": ""
     },
     "科学撤稿时滞研究": {
       "scope": "external",
@@ -49,7 +57,9 @@
       "url": "https://doi.org/10.1371/journal.pone.0068397",
       "accessedAt": "2026-08-12",
       "status": "pending",
-      "reviewedBy": ""
+      "reviewedBy": "",
+      "reviewedAt": "",
+      "notes": ""
     },
     "职称制度改革文件": {
       "scope": "external",
@@ -59,7 +69,9 @@
       "url": "https://www.gov.cn/zhengce/zhengceku/2021-08/05/content_5629566.htm",
       "accessedAt": "2026-08-12",
       "status": "pending",
-      "reviewedBy": ""
+      "reviewedBy": "",
+      "reviewedAt": "",
+      "notes": ""
     },
     "教育部历年统计": {
       "scope": "external",
@@ -69,7 +81,9 @@
       "url": "https://www.moe.gov.cn/jyb_sjzl/sjzl_fztjgb/202410/t20241024_1159002.html",
       "accessedAt": "2026-08-12",
       "status": "pending",
-      "reviewedBy": ""
+      "reviewedBy": "",
+      "reviewedAt": "",
+      "notes": ""
     },
     "人社部职业技能提升计划": {
       "scope": "external",
@@ -79,7 +93,9 @@
       "url": "https://www.gov.cn/zhengce/content/2019-05/24/content_5394415.htm",
       "accessedAt": "2026-08-12",
       "status": "pending",
-      "reviewedBy": ""
+      "reviewedBy": "",
+      "reviewedAt": "",
+      "notes": ""
     },
     "本局生涯记录": {
       "scope": "session",
@@ -89,7 +105,9 @@
       "url": "urn:fckmedcn:game-state",
       "accessedAt": "2026-08-11",
       "status": "verified",
-      "reviewedBy": "游戏状态派生规则"
+      "reviewedBy": "游戏状态派生规则",
+      "reviewedAt": "2026-08-11",
+      "notes": "由当前存档的生涯进度实时派生。"
     },
     "本局选择汇总": {
       "scope": "session",
@@ -99,7 +117,9 @@
       "url": "urn:fckmedcn:game-state",
       "accessedAt": "2026-08-11",
       "status": "verified",
-      "reviewedBy": "游戏状态派生规则"
+      "reviewedBy": "游戏状态派生规则",
+      "reviewedAt": "2026-08-11",
+      "notes": "由当前存档的选择记录实时派生。"
     },
     "时代6-8选择": {
       "scope": "session",
@@ -109,7 +129,9 @@
       "url": "urn:fckmedcn:game-state",
       "accessedAt": "2026-08-11",
       "status": "verified",
-      "reviewedBy": "游戏状态派生规则"
+      "reviewedBy": "游戏状态派生规则",
+      "reviewedAt": "2026-08-11",
+      "notes": "由当前存档的时代 6–8 选择记录实时派生。"
     },
     "全局选择汇总": {
       "scope": "session",
@@ -119,7 +141,9 @@
       "url": "urn:fckmedcn:game-state",
       "accessedAt": "2026-08-11",
       "status": "verified",
-      "reviewedBy": "游戏状态派生规则"
+      "reviewedBy": "游戏状态派生规则",
+      "reviewedAt": "2026-08-11",
+      "notes": "由当前存档的全局选择记录实时派生。"
     },
     "健康模块记录": {
       "scope": "session",
@@ -129,7 +153,9 @@
       "url": "urn:fckmedcn:game-state",
       "accessedAt": "2026-08-11",
       "status": "verified",
-      "reviewedBy": "游戏状态派生规则"
+      "reviewedBy": "游戏状态派生规则",
+      "reviewedAt": "2026-08-11",
+      "notes": "由当前存档的健康模块记录实时派生。"
     },
     "时代8最终选择": {
       "scope": "session",
@@ -139,7 +165,9 @@
       "url": "urn:fckmedcn:game-state",
       "accessedAt": "2026-08-11",
       "status": "verified",
-      "reviewedBy": "游戏状态派生规则"
+      "reviewedBy": "游戏状态派生规则",
+      "reviewedAt": "2026-08-11",
+      "notes": "由当前存档的时代 8 最终选择实时派生。"
     }
   }
 }

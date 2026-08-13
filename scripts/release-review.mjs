@@ -35,6 +35,8 @@ if (failures.length > 0) {
     !isDirectHttpUrl(record.url) && 'direct URL',
     !record.accessedAt && 'accessedAt',
     !record.reviewedBy && 'reviewedBy',
+    !record.reviewedAt && 'reviewedAt',
+    !record.notes && 'notes',
   ].filter(Boolean).join(', ') || 'none';
   const externalEvidence = evidence.filter(record => record.scope === 'external');
   const outstandingExternal = externalEvidence.filter(record => record.status !== 'verified');
@@ -73,7 +75,7 @@ if (failures.length > 0) {
     console.log(`| ${cell(record.id)} | ${cell(record.title)} | ${cell(record.organization)} | ${cell(record.status)} | ${cell(missingEvidence(record))} | ${cell(record.url || '—')} |`);
   }
   console.log('');
-  console.log('External evidence is releasable only when the publication is traceable, the URL points to the specific source rather than a portal homepage, and publication/access/reviewer fields are complete.');
+  console.log('External evidence is releasable only when the publication is traceable, the URL points to the specific source rather than a portal homepage, and publication/access/reviewer fields are complete. A reviewer must also record an ISO review date and a concise conclusion that the source supports the exact card wording.');
   console.log('');
 
   console.log('## 3. Manual acceptance queue');

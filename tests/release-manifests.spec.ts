@@ -114,8 +114,39 @@ test('候选外部来源使用直接链接但保持 pending，等待真人复核
   for (const id of retainedExternalIds) {
     expect(evidence[id].status).toBe('pending');
     expect(evidence[id].reviewedBy).toBe('');
+    expect(evidence[id].reviewedAt).toBe('');
+    expect(evidence[id].notes).toBe('');
     expect(evidence[id].publishedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(new URL(evidence[id].url).pathname).not.toBe('/');
+  }
+});
+
+test('verified 外部证据必须记录复核日期与原句支持结论', async () => {
+  // @ts-expect-error Runtime release validator is intentionally plain ESM JavaScript.
+  const { validateReleaseManifests } = await import('../scripts/release-schema.mjs');
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'fckmedcn-evidence-schema-'));
+  try {
+    fs.cpSync(path.join(ROOT, 'sources'), path.join(tempRoot, 'sources'), { recursive: true });
+    const evidencePath = path.join(tempRoot, 'sources', 'evidence.json');
+    const evidence = JSON.parse(fs.readFileSync(evidencePath, 'utf8'));
+    const record = evidence.entries['国家卫健委'];
+    record.status = 'verified';
+    record.reviewedBy = '真实证据审阅人';
+    fs.writeFileSync(evidencePath, JSON.stringify(evidence));
+    expect(validateReleaseManifests(tempRoot).failures)
+      .toContain('evidence.json[国家卫健委] 标为 verified 时必须有发布日期、访问日期、审阅人、复核日期和结论');
+
+    record.reviewedAt = '2026-08-12';
+    fs.writeFileSync(evidencePath, JSON.stringify(evidence));
+    expect(validateReleaseManifests(tempRoot).failures)
+      .toContain('evidence.json[国家卫健委] 标为 verified 时必须有发布日期、访问日期、审阅人、复核日期和结论');
+
+    record.notes = '逐字核对通知，直接支持全国统一号码 12356 的卡片表述。';
+    fs.writeFileSync(evidencePath, JSON.stringify(evidence));
+    expect(validateReleaseManifests(tempRoot).failures
+      .filter((failure: string) => failure.includes('evidence.json[国家卫健委]'))).toEqual([]);
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
   }
 });
 
@@ -153,6 +184,7 @@ test('release:review 生成完整的人工复核工作包，不改变 pending �
   expect(output).toContain('clinical-pharmacist');
   expect(output).toContain('External evidence queue');
   expect(output).toContain('8 source-complete awaiting reviewer, 0 source-incomplete');
+  expect(output).toContain('reviewedBy, reviewedAt, notes');
   expect(output).toContain('0/8 verified');
   expect(output).toContain('late-life-route');
   expect(output).toContain('audio-unlock');
