@@ -18,7 +18,7 @@ export function addTouchShortcuts(
   return actions.map((action, index) => {
     const button = scene.add.text(x, startY + index * gap, action.label, {
       fontFamily: '"Microsoft YaHei", sans-serif', fontSize: '13px', color: '#ffffff',
-      backgroundColor: '#101522dd', padding: { x: 9, y: 7 },
+      backgroundColor: '#101522dd', padding: { x: 12, y: 12 },
     }).setOrigin(1, 0.5).setDepth(130).setInteractive({ cursor: 'pointer' });
     button.on('pointerdown', action.onPress);
     return button;

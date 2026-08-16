@@ -6,6 +6,7 @@ import {
   fundChildEducation, prepayMortgage, withdrawAssets, WITHDRAWAL_FEE_RATE,
 } from '../data/economy';
 import type { ConsequencePopup } from './ConsequencePopup';
+import { announceAccessibility } from './accessibility';
 
 // 游戏内菜单（R 键）：继续游戏 / 返回标题 / 修改性别 / 理财策略 / 资产账户 / 重新开档。
 // ↑↓ 或 数字键 选择，空格/回车 确认，ESC 关闭。
@@ -53,6 +54,7 @@ export function bindGameMenu(
     if (kbHandler) { scene.input.keyboard?.off('keydown', kbHandler); kbHandler = null; }
     rowTexts.length = 0;
     mode = 'main';
+    announceAccessibility('已关闭游戏菜单。');
   };
 
   /** 修改性别：即时写入状态并写回存档（保留 firedEvents/firedNews，防止 once 事件丢失） */
@@ -214,6 +216,7 @@ export function bindGameMenu(
     mode = 'main';
     selected = 0;
     redraw();
+    announceAccessibility(`游戏菜单：${MAIN_ITEMS.join('、')}。使用方向键、数字键或点击选择。`);
 
     kbHandler = (e: KeyboardEvent) => {
       const n = items().length;

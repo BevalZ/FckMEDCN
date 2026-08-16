@@ -3,6 +3,7 @@ import type { GameEvent, EventChoice, EventCategory } from '../data/events';
 import { choiceVisible } from '../data/events';
 import { renderGendered } from '../data/gender';
 import { getPalette } from './pixelArt';
+import { announceAccessibility, clearAccessibilityAnnouncement } from './accessibility';
 
 export type ChoiceCallback = (choice: EventChoice, index: number) => void;
 
@@ -60,6 +61,11 @@ export class EventCard {
     // 若过滤后为空（配置失误），退回展示全部选项，避免出现无选项的死卡。
     const gated = event.choices.filter(choiceVisible);
     const visibleChoices = gated.length > 0 ? gated : event.choices;
+    announceAccessibility(
+      `事件：${renderGendered(event.title)}。${renderGendered(event.body)}。`
+      + `可选 ${visibleChoices.map((choice, i) => `${String.fromCharCode(65 + i)}：${renderGendered(choice.text)}`).join('；')}。`
+      + (this.onCancel ? '可按 Escape 或点击离开。' : ''),
+    );
 
     // —— 先创建并测量所有文本，计算所需高度（性别占位符在此统一渲染）——
     const title = scene.add.text(0, 0, renderGendered(event.title), {
@@ -251,6 +257,7 @@ export class EventCard {
     const choice = this.choices[i];
     if (!choice) return;
     this.removeKeyboard();
+    announceAccessibility(`已选择：${renderGendered(choice.text)}。`);
     this.onChoice(choice, i);
   }
 
@@ -260,6 +267,7 @@ export class EventCard {
       this.container.destroy();
       this.container = null;
     }
+    announceAccessibility('已离开当前事件。');
     this.onCancel?.();
   }
 
@@ -269,5 +277,6 @@ export class EventCard {
       this.container.destroy();
       this.container = null;
     }
+    clearAccessibilityAnnouncement();
   }
 }

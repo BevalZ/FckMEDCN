@@ -45,7 +45,26 @@
         width: 100%; height: 100%;
         padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
       }
+      #game-container:focus-visible, #game-container canvas:focus-visible {
+        outline: 2px solid #4fc3f7;
+        outline-offset: -2px;
+      }
       #game-container canvas { display: block; margin: auto; }
+      .visually-hidden {
+        position: fixed;
+        width: 1px; height: 1px;
+        padding: 0; margin: -1px;
+        overflow: hidden; clip: rect(0, 0, 0, 0);
+        white-space: nowrap; border: 0;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+        }
+      }
 
       /* 竖屏提示：仅触屏竖屏时显示，且不拦截点击 */
       #rotate-hint {
@@ -162,7 +181,8 @@
   </head>
   <body>
     <div id="rotate-hint">竖屏体验不佳，建议横屏游玩 🔄</div>
-    <div id="game-container"></div>
+    <div id="game-container" role="region" aria-label="白大衣模拟器游戏画布" aria-describedby="game-a11y-status" tabindex="0"></div>
+    <div id="game-a11y-status" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
     <div id="title-overlay">
       <h1 id="title-main">白大衣模拟器</h1>
       <div id="title-sub">— 临床医学专业人生模拟器 —</div>

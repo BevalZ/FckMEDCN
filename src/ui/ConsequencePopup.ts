@@ -3,6 +3,7 @@ import { getPalette } from './pixelArt';
 import type { StatDelta } from '../data/stats';
 import { takePendingBadges } from '../data/badges';
 import { renderGendered } from '../data/gender';
+import { announceAccessibility } from './accessibility';
 
 // M5 文字完整性：弹窗高度随正文自动调整，过长则整体等比缩小，保证不裁切。
 const POP_W = 600;
@@ -97,6 +98,7 @@ export class ConsequencePopup {
 
     const cancellable = this.escapeMode === 'cancel';
     const actionLabel = opts?.actionLabel ?? (cancellable ? '确认 [ 点击 / 空格 / 回车 ]' : '继续 [ 点击 / 空格 / 回车 ]');
+    announceAccessibility(`结果：${renderGendered(text)}。${actionLabel}${cancellable ? '，也可按 Escape 取消。' : ''}`);
     const actionX = cancellable ? 50 : 0;
     const btnText = scene.add.text(actionX, H / 2 - 20, actionLabel, {
       fontFamily: '"Courier New", monospace', fontSize: '12px', color: '#ffffff',
@@ -129,6 +131,7 @@ export class ConsequencePopup {
     this.container = null;
     this.onDone = null;
     this.onCancel = null;
+    announceAccessibility('已确认，继续游戏。');
     this.scene.tweens.add({
       targets: c, alpha: 0, duration: 100,
       onComplete: () => { c.destroy(); onDone?.(); },
@@ -144,6 +147,7 @@ export class ConsequencePopup {
     this.onDone = null;
     this.onCancel = null;
     c.destroy();
+    announceAccessibility('已取消。');
     onCancel?.();
   }
 }

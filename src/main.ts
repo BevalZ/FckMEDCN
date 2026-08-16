@@ -21,11 +21,14 @@ import { EndingScene, MentalCrisisScene } from './scenes/EndingScene';
 import { CollectionScene } from './scenes/CollectionScene';
 import { installTextPatch } from './ui/textPatch';
 import { installKeyboardPatch } from './ui/keyboardPatch';
+import { initAccessibility } from './ui/accessibility';
 
 // 全局文字补丁：修正中文字形顶部被裁（必须在任何场景 add.text 前安装）。
 installTextPatch();
 // 全局键盘补丁：阻止低帧率多 update step 重放同一原生按键事件。
 installKeyboardPatch();
+// Canvas 外层提供稳定的语义、焦点和屏幕阅读器状态出口。
+initAccessibility();
 
 const forceWebglInAutomation = new URLSearchParams(window.location.search).get('renderer') === 'webgl';
 const useAutomationCanvas = navigator.webdriver && !forceWebglInAutomation;

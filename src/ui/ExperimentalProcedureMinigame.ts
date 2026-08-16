@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import type { MinigameResult } from './minigameTypes';
 import { sound } from '../audio/sound';
+import { announceAccessibility } from './accessibility';
 
 // 硕博实验操作：按正确顺序完成无菌、移液、记录三步。
 // 错一步仍可继续，最终按正确数结算，避免卡死在单次误触上。
@@ -50,7 +51,7 @@ export class ExperimentalProcedureMinigame {
       const y = 218 + i * 58;
       const text = scene.add.text(170, y, step.label, {
         fontFamily: '"Courier New", monospace', fontSize: '15px', color: '#f0f0f0',
-        backgroundColor: '#20343a', padding: { x: 12, y: 7 },
+        backgroundColor: '#20343a', padding: { x: 14, y: 14 },
       }).setInteractive({ useHandCursor: true });
       text.setData('index', i);
       text.on('pointerover', () => { if (!this.closed) text.setColor('#69f0ae'); });
@@ -84,6 +85,7 @@ export class ExperimentalProcedureMinigame {
     if (this.closed) return;
     this.progress.setText(`步骤 ${this.stepIndex + 1} / ${STEPS.length} · 操作偏差 ${this.mistakes} / 3`);
     this.status.setText(`当前：${STEPS[this.stepIndex].label}。先做对，再做快。`).setColor('#ffccbc');
+    announceAccessibility(`实验操作：${STEPS[this.stepIndex].label}。${STEPS[this.stepIndex].detail}。`);
     this.buttons.forEach((b, i) => b.setColor(i === this.stepIndex ? '#69f0ae' : '#f0f0f0'));
   }
 
@@ -103,6 +105,7 @@ export class ExperimentalProcedureMinigame {
       else {
         this.progress.setText(`步骤 ${this.stepIndex + 1} / ${STEPS.length} · 操作偏差 ${this.mistakes} / 3`);
         this.status.setText('顺序不对：先按高亮步骤操作。').setColor('#ff8a80');
+        announceAccessibility(`顺序不对：请先完成${STEPS[this.stepIndex].label}。`);
       }
     }
   }
@@ -133,6 +136,7 @@ export class ExperimentalProcedureMinigame {
             consequence: '操作顺序乱了，样本报废。你把废液处理完，重新读了一遍 SOP。',
           };
     this.onDone?.(result);
+    announceAccessibility(`实验操作结束：${result.grade === 'perfect' ? '完美' : result.grade === 'good' ? '通过' : '未通过'}。${result.consequence}`);
     this.destroy();
   }
 

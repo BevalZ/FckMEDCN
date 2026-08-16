@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { announceAccessibility } from './accessibility';
 
 // 操作帮助面板：H 键切换。给"第一次玩"的高中生一个按键/玩法速查。
 // 不占用额外存档字段，纯展示层。
@@ -22,6 +23,7 @@ export class HelpPanel {
     if (this.container) {
       this.container.destroy();
       this.container = null;
+      announceAccessibility('已关闭操作帮助。');
       return;
     }
     if (this.isBusy()) return;
@@ -58,6 +60,7 @@ export class HelpPanel {
     c.add(tip);
 
     this.container = c;
+    announceAccessibility(`操作帮助：${this.lines.join('；')}。按 H 或点击标题关闭。`);
   }
 
   destroy() {
