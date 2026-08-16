@@ -255,8 +255,8 @@ headless WebGL；真实用户仍使用 `Phaser.AUTO`。`?renderer=webgl` 保留�
 `tests/renderer.spec.ts` 与 `tests/production-subpath.spec.ts` 分别锁定显式 WebGL 和生产 Canvas 路径。
 配置中的 `retries:1` 仅保留为普通执行的环境噪声兜底；最终基线显式使用 `--retries=0`，
 不靠重试掩盖 framebuffer 或输入竞态。
-另：`reuseExistingServer:true` 会复用 5173 上残留的旧 dev server——
-若行为异常先查端口占用（曾发现 3 天前的 vite 还在跑）。
+另：`reuseExistingServer:true` 会复用 5173 上已有的服务。`tests/globalSetup.ts` 现会在测试前校验
+页面标题；若端口被其他项目占用，会立即报告检测到的标题和处理建议，不再让各用例等待 `__mod` 超时。
 
 ---
 

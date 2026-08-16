@@ -28,6 +28,13 @@
   明确显示现金、资产、房贷估算余额和季度还款；购房建立首付 4 倍本金估算，提前还贷同步降低余额。
 - 季度财务快照现于诚信处罚和患者安全赔付之后落账，`finance.cash` 与季度末真实现金一致；重大患者安全事故
   的 ¥15,000 赔付已有回归验证，副业固定随机序列也不再制造伪失败。
+- 2026-08-16 经济账本续开发已落地：`getQuarterEconomy()` 现在返回确定性的收入/支出 breakdown，助学贷款与
+  房贷按本金余额结算，融资现金流不再冒充 lifetime earnings/expenses；`studentLoanBalance`、净资产和房产值已
+  接入 HUD、季度账单、结局卡及旧存档迁移。`tests/economy-rebuild.spec.ts` 覆盖对账、债务清零、授信上限与购房
+  守恒；`tests/minigame-experiment.spec.ts` 覆盖硕博实验操作小游戏三档结算和事件池接入。
+- 本轮专项 33 项 Playwright、`tsc`/测试类型检查、生产构建、`release:schema` 与 preview 发布门禁均通过；全量
+  Playwright 曾受 `reuseExistingServer` 复用外部 5173 Vite 进程影响超时；`tests/globalSetup.ts` 现会在测试前校验
+  页面身份，错误服务将快速失败并报告其标题。停止端口占用后仍需补跑全量门禁。
 - M9 资产/属性/财务与 M10 诊断/用药安全/临床工作流专项均通过。2026-08-09 最终门禁为
   `npx tsc --noEmit`、`npm run build` 通过，Playwright 显式 `--retries=0` 全量 **201 passed**（约 10.2 分钟），
   无 failed、flaky 或 retry。开发自动化默认 Canvas 后，首次 headless WebGL framebuffer 冷启动失败不再污染主回归；

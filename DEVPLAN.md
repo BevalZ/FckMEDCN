@@ -357,6 +357,14 @@ export const NEWS_TICKER: NewsTickerItem[] = [
 验收：新增经济矩阵、资产操作和结局财务卡回归；地区收入顺序保持三甲 > 市级/私立 > 基层，资产操作前后
 总财富守恒（扣除明确手续费）；`npx tsc --noEmit`、`npm run build`、相关 Playwright 全部通过。
 
+2026-08-16 续开发补齐经济账本与研究生实验交互：季度预算改为确定性的结构化 breakdown，助学贷款和房贷
+按余额放款/偿还并受上限约束，融资现金流与经营收支在 `finance` 累计中分离；旧存档缺本金字段时安全迁移，
+不会仅凭历史资格 flag 重新生成债务。HUD、季度账单和结局卡同步显示负债、房产与净资产。硕士/博士事件池新增
+实验操作小游戏（无菌准备→精准移液→如实记录），支持 perfect/good/miss 三档结算及后果 flag。
+专项回归为 `tests/economy-rebuild.spec.ts`、`tests/minigame-experiment.spec.ts`；tsc、测试类型检查、生产构建、
+`release:check:preview` 和 `release:schema` 已通过。全量 Playwright 本轮因 5173 被外部临时 Vite 进程占用且
+配置复用旧服务器而超时，未将该环境结果记为通过。
+
 ### M10 · 医疗真实性与医学事实审计（进行中，P0/P1）
 
 目标：补齐“医生每天如何诊断和管理治疗”的教育缺口，同时控制医学表述风险。
@@ -405,7 +413,8 @@ export const NEWS_TICKER: NewsTickerItem[] = [
 目标：降低新手理解成本和回归环境噪声，完成发布前验收。
 
 1. ✅ 资产/HUD 闪色、理财 toast、季度结构化账单；H 帮助列明 ESC 语义；行走场景首次 Q/E 引导。
-2. ⏳ Playwright 冷启动 flaky：沿用既有 `?renderer` / 冷启动容忍策略；全量连续回归仍建议发版前手跑。
+2. ⏳ Playwright 冷启动 flaky：沿用既有 `?renderer` / 冷启动容忍策略；`tests/globalSetup.ts` 已增加
+   5173 页面身份预检，避免 `reuseExistingServer` 静默复用其他项目；全量连续回归仍建议发版前手跑。
 3. ✅ 更新 HANDOFF；删除空 `src/systems`、`src/platform` 与示例 `.cnb.yml`。
 
 人工医学终审与 `release-acceptance` 真机项仍阻塞 **full** 发布；**preview** 轨道可用。
