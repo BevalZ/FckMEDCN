@@ -193,6 +193,8 @@ export class HUD {
     const loanMark = s.flags.has('student_loan') ? '贷' : '';
     const assetStr = (s.assets ?? 0) > 0 ? ` · 资产¥${(s.assets ?? 0).toLocaleString()}` : '';
     const pensionStr = (s.pension ?? 0) > 0 ? ` · 养老¥${(s.pension ?? 0).toLocaleString()}` : '';
+    const debtTotal = (s.mortgageBalance ?? 0) + (s.studentLoanBalance ?? 0);
+    const debtStr = debtTotal > 0 ? ` · 负债¥${debtTotal.toLocaleString()}` : '';
     // 职业：科室 + 医院/地区档位（经济系数已算，必须可见）
     let careerContext = '';
     if (stage === 'career' || stage === 'pinnacle') {
@@ -230,9 +232,9 @@ export class HUD {
       : '';
     const lateStage = ['career', 'pinnacle', 'retirement', 'eternity'].includes(stage);
     const lifeSystems = this.compactLifeSystems();
-    const earlyLine = `家境${a.family}/${wealthWord} 成绩${a.academic} 运气${a.luck} 外貌${a.looks}${loanMark ? ` 助学${loanMark}` : ''}${assetStr}${pensionStr} 理财:${finWord}${mentorHud}${era3Label}`;
+    const earlyLine = `家境${a.family}/${wealthWord} 成绩${a.academic} 运气${a.luck} 外貌${a.looks}${loanMark ? ` 助学${loanMark}` : ''}${assetStr}${pensionStr}${debtStr} 理财:${finWord}${mentorHud}${era3Label}`;
     this.attrsLabel.setText(lateStage
-      ? `${careerContext}${systems}${assetStr}${pensionStr} 理财:${finWord} ｜ ${lifeSystems}`
+      ? `${careerContext}${systems}${assetStr}${pensionStr}${debtStr} 理财:${finWord} ｜ ${lifeSystems}`
       : `${earlyLine} ｜ ${lifeSystems}`,
     );
 

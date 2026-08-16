@@ -1,4 +1,5 @@
 import type { GameState } from './gameState';
+import { netWorth } from './economy';
 import type { EvidenceId } from './evidence';
 
 export interface Ending {
@@ -270,7 +271,6 @@ export const ENDING_HINTS: Record<string, string> = {
 export function determineEnding(state: GameState): Ending {
   const { stats, flags } = state;
   const age = stats.age;
-  const money = stats.money;
   const married = state.marital === 'married';
   const clinical = stats.clinical ?? 0;
   const research = stats.research ?? 0;
@@ -302,7 +302,7 @@ export function determineEnding(state: GameState): Ending {
 
   // 0.1 未上大学、直接工作的非医生线：按经济与心境收尾，不走任何医学结局。
   else if (flags.has('no_college')) {
-    if (money + (state.assets ?? 0) < -10000 || stats.sanity < 30) ending = ENDINGS_BY_ID['worker_struggle'];
+    if (netWorth(state) < -10000 || stats.sanity < 30) ending = ENDINGS_BY_ID['worker_struggle'];
     else ending = ENDINGS_BY_ID['worker_steady'];
   }
 
@@ -355,7 +355,7 @@ export function determineEnding(state: GameState): Ending {
   else if (age < 35 && (stats.sanity < 30 || (state.spirit?.meaning ?? 50) < 20)) ending = ENDINGS_BY_ID['burnout_early'];
 
   // 7. 深陷负债（实际经济后果：现金+资产 长期为负才算真破产）
-  else if (money + (state.assets ?? 0) < -30000) ending = ENDINGS_BY_ID['exhausted_attending'];
+  else if (netWorth(state) < -30000) ending = ENDINGS_BY_ID['exhausted_attending'];
 
   // 8. 稳定晋升路（成家者门槛略低，体现家庭支撑这一叙事变量）
   // 正高已评上：直接进主任医师结局—— exhausted_attending 的"主治编外"叙事与正高矛盾。

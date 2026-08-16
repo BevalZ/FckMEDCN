@@ -90,6 +90,16 @@ test('全生命周期：造假流 vs 诚实流的长期后果', async ({ page })
           const e = tf.drawStorylet(stage, fired);
           if (e) {
             if (e.once) fired.add(e.id);
+            // 小游戏事件由场景结算，不携带普通选项；生命周期模拟只推进季度。
+            if (e.minigame || !e.choices?.length) {
+              const r = tf.advanceQuarter(stage);
+              peakRisk = Math.max(peakRisk, gs.getState().stats.fakeRisk);
+              if (r.integrity.level !== 'none') {
+                exposures.push(`${stage}@${t}:${r.integrity.level}`);
+              }
+              if (gs.getState().stats.sanity <= 0) gs.updateStats({ sanity: 12 });
+              continue;
+            }
             const idx = pick(e.choices, cheat);
             const c = e.choices[idx];
             if (c.effect?.kind === 'fake') fakeCount++;

@@ -116,6 +116,8 @@ test('助学贷款覆盖完整在读阶段，并在工作后进入偿还期', as
       gs.resetGame();
       const withoutLoan = ec.getQuarterEconomy(stage).net;
       gs.setFlag('student_loan');
+      // 工作期只按实际本金还款；模拟此前五个在读阶段各放款一季。
+      if (stage === 'career') gs.patchState({ studentLoanBalance: 5 * 1500 });
       const withLoan = ec.getQuarterEconomy(stage).net;
       rows[stage] = withLoan - withoutLoan;
     }

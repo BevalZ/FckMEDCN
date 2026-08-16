@@ -649,7 +649,7 @@ export class GuipeiWalkScene extends Phaser.Scene {
     this.floatNotice(`关系网络：${affinity.messages.join('、')}${deltaText ? ` · ${deltaText}` : ''}`, '#c5cae9', y, 120, 11);
   }
 
-  private showQuarterBill(e: { income: number; cost: number; net: number; financeNote?: string }) {
+  private showQuarterBill(e: Parameters<typeof formatQuarterBill>[0]) {
     const text = formatQuarterBill(e);
     if (!text) return;
     const color = e.net >= 0 ? '#69f0ae' : '#ff8a80';

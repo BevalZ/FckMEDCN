@@ -14,6 +14,8 @@ import { policyPerformanceMultiplier } from './policy';
 interface StageEconSpec {
   income: number;
   cost: number;
+  incomeKind: 'family' | 'training' | 'research' | 'salary' | 'pension';
+  familyShare?: number;
   entryCost?: number;
   entryIncome?: number;
   label: string;
@@ -22,21 +24,23 @@ interface StageEconSpec {
 export const STAGE_ECON: Record<string, StageEconSpec> = {
   // 上学阶段：父母补贴（income）应覆盖学费房租伙食（cost），不再恒亏——
   // 此前 income<cost 恒成立，本科生每季净亏、容易触发负债结局，不符合"父母供读书"的现实。
-  undergrad: { income: 4500, cost: 3500, entryCost: 4000, label: '本科' },
-  internship: { income: 3400, cost: 2400, label: '临床实习' },
-  guipei: { income: 4200, cost: 3200, entryCost: 2000, label: '规培' },
-  master: { income: 3600, cost: 2800, entryCost: 1500, label: '学硕' },
-  phd: { income: 4600, cost: 3000, entryCost: 1500, label: '直博' },
+  undergrad: { income: 4500, cost: 3500, entryCost: 4000, label: '本科', incomeKind: 'family', familyShare: 1 },
+  internship: { income: 3400, cost: 2400, label: '临床实习', incomeKind: 'training', familyShare: 0.6 },
+  guipei: { income: 4200, cost: 3200, entryCost: 2000, label: '规培', incomeKind: 'training', familyShare: 0.4 },
+  master: { income: 3600, cost: 2800, entryCost: 1500, label: '学硕', incomeKind: 'research' },
+  phd: { income: 4600, cost: 3000, entryCost: 1500, label: '直博', incomeKind: 'research' },
   // 求职待业：父母仍给基本生活费（income），支出压到与之持平，不再每季 -3000。
-  jobhunt: { income: 2000, cost: 2000, label: '求职待业' },
-  career: { income: 30000, cost: 16000, entryIncome: 6000, label: '主治医师' },
-  pinnacle: { income: 42000, cost: 22000, label: '职业巅峰' },
-  retirement: { income: 12000, cost: 10000, label: '退休生活' },
-  eternity: { income: 9000, cost: 12000, label: '归途' },
+  jobhunt: { income: 2000, cost: 2000, label: '求职待业', incomeKind: 'family', familyShare: 1 },
+  career: { income: 30000, cost: 16000, entryIncome: 6000, label: '职业阶段', incomeKind: 'salary' },
+  pinnacle: { income: 42000, cost: 22000, label: '职业巅峰', incomeKind: 'salary' },
+  retirement: { income: 12000, cost: 10000, label: '退休生活', incomeKind: 'pension' },
+  eternity: { income: 9000, cost: 12000, label: '归途', incomeKind: 'pension' },
 };
 
 // 上学阶段：收入来自父母补贴，随随机家庭条件浮动
 const SCHOOL_STAGES = new Set(['undergrad', 'internship', 'guipei', 'master', 'phd']);
+// 本科、实习、规培和求职仍可能由家庭兜底；研究生补助和职业工资不受家境直接改写。
+const FAMILY_SUPPORTED_STAGES = new Set(['undergrad', 'internship', 'guipei', 'jobhunt']);
 
 // 硕博阶段：研究生补助/绩效按带组导师的分配风格浮动（随机），并带小幅随机波动
 const RESEARCH_STAGES = new Set(['master', 'phd']);
@@ -65,8 +69,69 @@ export interface QuarterEconomy {
   net: number;
   cityPremiumPct: number;
   financeNote: string;
+  cashChange: number;
+  assetChange: number;
+  pensionChange: number;
+  debtChange: number;
+  breakdown: EconomyBreakdown;
   assets?: number;
   pension?: number;
+}
+
+export interface EconomyBreakdown {
+  income: {
+    familySupport: number;
+    trainingAllowance: number;
+    researchStipend: number;
+    salary: number;
+    spouseContribution: number;
+    pensionPayout: number;
+    studentLoan: number;
+    sideBusiness: number;
+  };
+  expense: {
+    living: number;
+    cityPremium: number;
+    housingFund: number;
+    pensionContribution: number;
+    mortgage: number;
+    childcare: number;
+    healthcare: number;
+    studentLoanRepayment: number;
+    thriftDiscount: number;
+  };
+}
+
+const emptyBreakdown = (): EconomyBreakdown => ({
+  income: { familySupport: 0, trainingAllowance: 0, researchStipend: 0, salary: 0, spouseContribution: 0, pensionPayout: 0, studentLoan: 0, sideBusiness: 0 },
+  expense: { living: 0, cityPremium: 0, housingFund: 0, pensionContribution: 0, mortgage: 0, childcare: 0, healthcare: 0, studentLoanRepayment: 0, thriftDiscount: 0 },
+});
+
+export const STUDENT_LOAN_DISBURSEMENT = 1500;
+export const STUDENT_LOAN_REPAYMENT = 1500;
+export const STUDENT_LOAN_LIMIT = 30000;
+
+export function totalDebt(state = getState()): number {
+  return Math.max(0, state.studentLoanBalance ?? 0) + Math.max(0, state.mortgageBalance ?? 0);
+}
+
+function regionTierFromFlags(flags: Set<string>): RegionTier {
+  if (flags.has('took_private')) return 'private';
+  if (flags.has('offer_sanjia') || flags.has('took_hospital_a') || flags.has('took_hospital_b')) {
+    return flags.has('took_hospital_b') ? 'county' : 'top';
+  }
+  if (flags.has('offer_grass') || flags.has('base_home') || flags.has('city_home')) return 'county';
+  if (flags.has('city_tier1')) return 'top';
+  return 'city';
+}
+
+export function propertyValue(state = getState(), tier = regionTierFromFlags(state.flags)): number {
+  return state.flags.has('bought_house') ? REGION_HOUSE[tier].down * 5 : 0;
+}
+
+export function netWorth(state = getState()): number {
+  return state.stats.money + Math.max(0, state.assets ?? 0) + Math.max(0, state.pension ?? 0)
+    + propertyValue(state) - totalDebt(state);
 }
 
 export interface AssetWithdrawal {
@@ -103,6 +168,9 @@ export interface CareerFinancialSnapshot {
   assets: number;
   pension: number;
   pensionPayout: number;
+  studentLoanBalance: number;
+  propertyValue: number;
+  netWorth: number;
 }
 
 const ASSET_LEDGER_LIMIT = 100;
@@ -185,10 +253,14 @@ export function fundChildEducation(): AssetExpense | null {
 
 /** 提前偿还三期地区房贷，后续季度房贷下降 40%。 */
 export function prepayMortgage(): AssetExpense | null {
-  if (!hasFlag('bought_house') || hasFlag('mortgage_prepaid')) return null;
-  const amount = REGION_HOUSE[currentRegionTier()].monthly * 3;
+  if (!hasFlag('bought_house') || hasFlag('mortgage_prepaid') || hasFlag('mortgage_paid_off')) return null;
+  const balance = Math.max(0, getState().mortgageBalance ?? 0);
+  if (balance === 0) return null;
+  const amount = Math.min(REGION_HOUSE[currentRegionTier()].monthly * 3, balance);
   const result = payAssetBackedExpense('mortgage', amount, `提前还贷 ¥${amount}`);
-  patchState({ mortgageBalance: Math.max(0, (getState().mortgageBalance || houseDownPayment() * 4) - amount) });
+  const balanceAfter = Math.max(0, balance - amount);
+  patchState({ mortgageBalance: balanceAfter });
+  if (balanceAfter === 0) setFlag('mortgage_paid_off');
   setFlag('mortgage_prepaid');
   return result;
 }
@@ -208,17 +280,7 @@ export type RegionTier = 'top' | 'city' | 'county' | 'private';
 
 /** 依据求职 flag 判定玩家当前医院/地区档位。 */
 export function currentRegionTier(): RegionTier {
-  const f = getState().flags;
-  if (f.has('took_private')) return 'private';
-  if (f.has('offer_sanjia') || f.has('took_hospital_a') || f.has('took_hospital_b')) {
-    // took_hospital_a 是"选A平台(三甲)"、took_hospital_b 是"选B编制"——按城市档计
-    return f.has('took_hospital_b') ? 'county' : 'top';
-  }
-  if (f.has('offer_grass') || f.has('base_home') || f.has('city_home')) return 'county';
-  if (f.has('city_tier1')) return 'top';
-  // 省属/华溪等 took_public：非一线顶尖，按市级档计（避免漏算掉回默认）
-  if (f.has('took_public')) return 'city';
-  return 'city'; // 默认市级
+  return regionTierFromFlags(getState().flags);
 }
 
 export const REGION_LABEL: Record<RegionTier, string> = {
@@ -246,6 +308,7 @@ export function houseDownPayment(tier: RegionTier = currentRegionTier()): number
 
 /** 职业期房贷月供（随地区档位），季度结算时消费。 */
 export function houseMonthly(tier: RegionTier = currentRegionTier()): number {
+  if (hasFlag('mortgage_paid_off')) return 0;
   const base = REGION_HOUSE[tier].monthly;
   return hasFlag('mortgage_prepaid') ? Math.round(base * 0.6) : base;
 }
@@ -315,18 +378,22 @@ export function careerFinancialSnapshot(regionTier?: RegionTier): CareerFinancia
   const title = state.flags.has('passed_zhenggao') ? '主任医师'
     : state.flags.has('passed_fugao') ? '副主任医师'
     : state.flags.has('passed_zhuzhi') ? '主治医师' : '住院医师';
-  const mortgageBalance = state.mortgageBalance || (state.flags.has('bought_house') ? houseDownPayment(tier) * 4 : 0);
+  const mortgageBalance = Math.max(0, state.mortgageBalance ?? 0);
   return {
     region: REGION_LABEL[tier], title,
     quarterlyIncome: economy.income,
     quarterlyCost: economy.cost,
     disposable: economy.net,
-    housePayment: state.flags.has('bought_house') ? houseMonthly(tier) : 0,
+    housePayment: mortgageBalance > 0 ? Math.min(houseMonthly(tier), mortgageBalance) : 0,
     mortgageBalance,
     cash: state.stats.money,
     assets: state.assets ?? 0,
     pension: state.pension ?? 0,
     pensionPayout: pensionQuarterlyPayout(state.pension ?? 0),
+    studentLoanBalance: state.studentLoanBalance ?? 0,
+    propertyValue: propertyValue(state, tier),
+    netWorth: state.stats.money + Math.max(0, state.assets ?? 0) + Math.max(0, state.pension ?? 0)
+      + propertyValue(state, tier) - totalDebt(state),
   };
 }
 
@@ -361,94 +428,148 @@ export function regionDisposableCompare(): RegionDisposableCompare {
   };
 }
 
-export function getQuarterEconomy(stage: string, regionTier?: RegionTier): QuarterEconomy {
+export function getQuarterEconomy(stage: string, regionTier?: RegionTier, sideIncome = 0): QuarterEconomy {
   const tier = regionTier ?? currentRegionTier();
-  const spec = STAGE_ECON[stage] ?? { income: 0, cost: 0, label: stage };
-  // 城市生活成本溢价只作用于上学/规培阶段（职业阶段由地区档位单独体现，见 currentRegionTier）
+  const spec = STAGE_ECON[stage] ?? { income: 0, cost: 0, label: stage, incomeKind: 'family' as const };
+  const st = getState();
+  const breakdown = emptyBreakdown();
+  // 城市生活成本溢价只作用于上学/规培/求职阶段；职业阶段由地区档位单独体现。
   const prem = SCHOOL_STAGES.has(stage) || stage === 'jobhunt' ? cityPremiumPct() : 0;
-  let cost = Math.round(spec.cost * (1 + prem));
+  breakdown.expense.living = spec.cost;
+  breakdown.expense.cityPremium = Math.round(spec.cost * prem);
   let income = spec.income;
 
-  // —— 家庭条件：上学期间的父母补贴/生活费随家境浮动 ——
-  if (SCHOOL_STAGES.has(stage)) {
-    const factor = FAMILY_FACTOR[getState().familyWealth] ?? 1.0;
-    income = Math.round(income * factor);
+  // 家庭条件只改变阶段收入中的家庭支持份额，不放大单位补贴、研究生补助或工资。
+  let familySupport = 0;
+  if (FAMILY_SUPPORTED_STAGES.has(stage)) {
+    const factor = FAMILY_FACTOR[st.familyWealth] ?? 1.0;
+    const familyBase = Math.round(income * (spec.familyShare ?? 0));
+    familySupport = Math.round(familyBase * factor);
+    income = income - familyBase + familySupport;
   }
 
-  // —— 硕博：研究生补助/绩效按带组导师分配风格浮动，带小幅随机波动 ——
+  // 导师风格本身已经是存档内的随机结果；预算查询必须确定，不再每次额外掷骰。
   if (RESEARCH_STAGES.has(stage)) {
-    const mf = MENTOR_FACTOR[getState().mentorStyle] ?? 1.0;
-    income = Math.round(income * mf * (0.9 + Math.random() * 0.2));
+    const mf = MENTOR_FACTOR[st.mentorStyle] ?? 1.0;
+    income = Math.round(income * mf);
   }
 
-  // —— 助学贷款（属性分配阶段可选）：完整在读阶段 +1500/季，工作后 -1500/季还贷 ——
-  if (getState().flags.has('student_loan')) {
-    if (SCHOOL_STAGES.has(stage)) income += 1500;
-    if (stage === 'career') cost += 1500;
+  if (spec.incomeKind === 'family') breakdown.income.familySupport = income;
+  else if (spec.incomeKind === 'training') {
+    breakdown.income.familySupport = familySupport;
+    breakdown.income.trainingAllowance = income - familySupport;
+  }
+  else if (spec.incomeKind === 'research') breakdown.income.researchStipend = income;
+  else if (spec.incomeKind === 'salary') breakdown.income.salary = income;
+  else breakdown.income.pensionPayout = income;
+
+  // 助学贷款是债务融资而非收入奖励：在读放款形成本金，工作后按余额偿还。
+  if (st.flags.has('student_loan')) {
+    if (SCHOOL_STAGES.has(stage)) {
+      breakdown.income.studentLoan = Math.min(
+        STUDENT_LOAN_DISBURSEMENT,
+        Math.max(0, STUDENT_LOAN_LIMIT - (st.studentLoanBalance ?? 0)),
+      );
+    }
+    if (stage === 'career' || stage === 'pinnacle') {
+      breakdown.expense.studentLoanRepayment = Math.min(
+        STUDENT_LOAN_REPAYMENT,
+        Math.max(0, st.studentLoanBalance ?? 0),
+      );
+    }
   }
 
-  // —— 职业阶段：底薪 + 职称档差 + 绩效（声望），支出含房贷/育儿 ——
+  // 职业阶段：底薪 + 职称档差 + 绩效，并明确列示社保、公积金和房贷。
   if (stage === 'career' || stage === 'pinnacle') {
-    const s = getState();
-    if (s.flags.has('passed_zhenggao')) income += 12000;
-    else if (s.flags.has('passed_fugao')) income += 8000;
-    else if (s.flags.has('passed_zhuzhi')) income += 5000;
-    income += Math.round((s.stats.reputation ?? 0) / 10) * 500; // 绩效随声望
+    if (st.flags.has('passed_zhenggao')) income += 12000;
+    else if (st.flags.has('passed_fugao')) income += 8000;
+    else if (st.flags.has('passed_zhuzhi')) income += 5000;
+    income += Math.round((st.stats.reputation ?? 0) / 10) * 500;
     const fixedIncome = Math.round(income * 0.45);
     const performanceIncome = income - fixedIncome;
-    income = fixedIncome + Math.round(performanceIncome * policyPerformanceMultiplier(s.policy, stage));
-    // 医院/地区系数：三甲/私立上浮、基层/县城下调（求职选择真正影响收入）
+    income = fixedIncome + Math.round(performanceIncome * policyPerformanceMultiplier(st.policy, stage));
     income = Math.round(income * REGION_INCOME[tier]);
-    // 合同制现金略高、编制略低：差异主要体现在公积金对等缴存（见下方）
-    if (s.flags.has('contract') || s.flags.has('jh_bianzhi_out')) {
+    if (st.flags.has('contract') || st.flags.has('jh_bianzhi_out')) {
       income = Math.round(income * 1.04);
-    } else if (s.flags.has('jh_bianzhi_in')) {
+    } else if (st.flags.has('jh_bianzhi_in')) {
       income = Math.round(income * 0.98);
     }
+    breakdown.income.salary = income;
     const fund = housingFundForIncome(income);
-    cost += fund.employee;
+    breakdown.expense.housingFund = fund.employee;
     const pen = pensionForIncome(income);
-    cost += pen.employee;
-    if (s.flags.has('bought_house')) cost += houseMonthly(tier);      // 房贷月供按地区档位
+    breakdown.expense.pensionContribution = pen.employee;
+    if (st.flags.has('bought_house') && !st.flags.has('mortgage_paid_off')) {
+      breakdown.expense.mortgage = Math.min(
+        houseMonthly(tier),
+        Math.max(0, st.mortgageBalance ?? 0),
+      );
+    }
   }
 
-  // —— 退休/归途：按养老金账户余额增发季度领取 ——
   if (stage === 'retirement' || stage === 'eternity') {
-    income += pensionQuarterlyPayout();
+    breakdown.income.pensionPayout += pensionQuarterlyPayout();
   }
 
-  // —— 人生状态对收支的持续影响 ——
-  const st = getState();
-  if (st.marital === 'married') income += 1500; // 双职工 / 配偶补贴
-  if (st.hasChild) cost += childQuarterCost(); // 育儿 / 托育；教育基金建成后下降
-  cost += Math.max(0, st.health?.treatmentCost ?? 0);
+  if (st.marital === 'married') breakdown.income.spouseContribution = 1500;
+  if (st.hasChild) breakdown.expense.childcare = childQuarterCost();
+  breakdown.expense.healthcare = Math.max(0, st.health?.treatmentCost ?? 0);
+  breakdown.income.sideBusiness = Math.max(0, Math.round(sideIncome));
 
-  // —— 理财策略：节流储蓄把支出压一成，且真实改写 cost（账单/简报可见）——
-  if (st.financeStrategy === 'thrifty') cost = Math.round(cost * 0.9);
+  if (st.financeStrategy === 'thrifty') {
+    breakdown.expense.thriftDiscount = Math.round(breakdown.expense.living * 0.1);
+  }
 
-  return { income, cost, net: income - cost, cityPremiumPct: prem, financeNote: '' };
+  const totalIncome = Object.values(breakdown.income).reduce((sum, value) => sum + value, 0);
+  const cost = Object.entries(breakdown.expense).reduce(
+    (sum, [key, value]) => sum + (key === 'thriftDiscount' ? -value : value), 0,
+  );
+  const net = totalIncome - cost;
+  const loanDebt = breakdown.income.studentLoan;
+  const repaidDebt = breakdown.expense.studentLoanRepayment + breakdown.expense.mortgage;
+  return {
+    income: totalIncome, cost, net, cityPremiumPct: prem, financeNote: '',
+    cashChange: net, assetChange: 0, pensionChange: 0, debtChange: loanDebt - repaidDebt, breakdown,
+  };
 }
 
 // 每个季度固定结算一次（无论该回合是否有事件触发），并按理财策略分配结余。
 // 资产账户：节流把正结余的 30% 转入储蓄并计息；投资把正结余的 50% 投入资产并随季波动。
-export function applyStageEconomy(stage: string): QuarterEconomy {
-  const e = getQuarterEconomy(stage);
+export function applyStageEconomy(stage: string, sideIncome = 0): QuarterEconomy {
+  const e = getQuarterEconomy(stage, undefined, sideIncome);
   const st = getState();
-  let net = e.net;
+  const assetsBefore = st.assets ?? 0;
+  const pensionBefore = st.pension ?? 0;
+  let cashChange = e.net;
   let financeNote = '';
   let assets = st.assets ?? 0;
+
+  // 债务余额与本季预算同源更新。
+  let loanBalance = st.studentLoanBalance ?? 0;
+  if (e.breakdown.income.studentLoan > 0) loanBalance += e.breakdown.income.studentLoan;
+  if (e.breakdown.expense.studentLoanRepayment > 0) {
+    loanBalance = Math.max(0, loanBalance - e.breakdown.expense.studentLoanRepayment);
+    if (loanBalance === 0) setFlag('student_loan_repaid');
+  }
+  let mortgageBalance = st.mortgageBalance ?? 0;
+  if (e.breakdown.expense.mortgage > 0) {
+    mortgageBalance = Math.max(0, mortgageBalance - e.breakdown.expense.mortgage);
+    if (mortgageBalance === 0) setFlag('mortgage_paid_off');
+  }
+  patchState({ studentLoanBalance: loanBalance, mortgageBalance });
 
   // 职业期公积金：个人部分已计入 getQuarterEconomy.cost；单位+个人合计入资产（不重复扣现金）
   let housingFundDeposit = 0;
   // 职业期养老金：个人部分已计入 cost；单位+个人合计入独立 pension 账户（不进资产、不可提现）
   let pensionDeposit = 0;
   if (stage === 'career' || stage === 'pinnacle') {
-    housingFundDeposit = housingFundForIncome(e.income).deposit;
+    const salaryIncome = e.breakdown.income.salary;
+    housingFundDeposit = housingFundForIncome(salaryIncome).deposit;
     if (housingFundDeposit > 0) {
       applyAssetTransaction('deposit', housingFundDeposit, 0, `公积金入账 ¥${housingFundDeposit}`);
       assets = getState().assets;
     }
-    pensionDeposit = pensionForIncome(e.income).deposit;
+    pensionDeposit = pensionForIncome(salaryIncome).deposit;
     if (pensionDeposit > 0) {
       applyPensionDeposit(pensionDeposit);
     }
@@ -462,28 +583,28 @@ export function applyStageEconomy(stage: string): QuarterEconomy {
   if (st.financeStrategy === 'thrifty') {
     // 节流：支出已通过 getQuarterEconomy 压一成；此处把正结余的 30% 转储蓄，储蓄每季 0.5% 计息
     let deposit = 0;
-    const cashBeforeTransfer = net;
+    const cashBeforeTransfer = e.net;
     if (cashBeforeTransfer !== 0) updateStats({ money: cashBeforeTransfer } as StatDelta);
-    if (net > 0) {
-      deposit = Math.round(net * 0.3);
-      net -= deposit;
+    if (e.net > 0) {
+      deposit = Math.round(e.net * 0.3);
+      cashChange -= deposit;
       applyAssetTransaction('deposit', deposit, -deposit, `节流转储蓄 ¥${deposit}`);
     }
     assets = getState().assets;
     const interest = Math.max(0, Math.round(assets * 0.005));
     if (interest > 0) applyAssetTransaction('interest', interest, 0, `季度利息 ¥${interest}`);
     assets = getState().assets;
-    financeNote = `（节流省 ${Math.round(e.cost * 0.1)}，转储蓄 ${deposit}，利息 +${interest}`
+    financeNote = `（节流省 ${e.breakdown.expense.thriftDiscount}，转储蓄 ${deposit}，利息 +${interest}`
       + (fundNote ? `，${fundNote}` : '')
       + '）';
   } else if (st.financeStrategy === 'invest') {
     // 投资：正结余的 50% 投入资产；资产每季 ±8% 波动
     let invested = 0;
-    const cashBeforeTransfer = net;
+    const cashBeforeTransfer = e.net;
     if (cashBeforeTransfer !== 0) updateStats({ money: cashBeforeTransfer } as StatDelta);
-    if (net > 0) {
-      invested = Math.round(net * 0.5);
-      net -= invested;
+    if (e.net > 0) {
+      invested = Math.round(e.net * 0.5);
+      cashChange -= invested;
       applyAssetTransaction('investment', invested, -invested, `投入市场 ¥${invested}`);
     }
     assets = getState().assets;
@@ -494,11 +615,19 @@ export function applyStageEconomy(stage: string): QuarterEconomy {
       + (fundNote ? `，${fundNote}` : '')
       + '）';
   } else {
-    if (net !== 0) updateStats({ money: net } as StatDelta);
+    if (e.net !== 0) updateStats({ money: e.net } as StatDelta);
     if (fundNote) financeNote = `（${fundNote}）`;
   }
 
-  return { ...e, net, financeNote, assets, pension: getState().pension ?? 0 };
+  return {
+    ...e,
+    financeNote,
+    cashChange,
+    assetChange: (getState().assets ?? 0) - assetsBefore,
+    pensionChange: (getState().pension ?? 0) - pensionBefore,
+    assets,
+    pension: getState().pension ?? 0,
+  };
 }
 
 // 进入阶段时的一次性收支（如学费押金 / 安家费）。用 flag 守护，避免读档重入重复扣费。
@@ -530,8 +659,8 @@ export function describeStageEconomy(stage: string): string | null {
   if (!spec) return null;
   const e = getQuarterEconomy(stage);
   const s = getState();
-  const familyLine = SCHOOL_STAGES.has(stage)
-    ? `\n家庭条件：${FAMILY_LABEL[s.familyWealth] ?? '家境普通'}（父母每季补贴 ¥${e.income}）`
+  const familyLine = FAMILY_SUPPORTED_STAGES.has(stage)
+    ? `家庭条件：${FAMILY_LABEL[s.familyWealth] ?? '家境普通'}（家庭支持 ¥${e.breakdown.income.familySupport}/季）`
     : '';
   const mentorLine = RESEARCH_STAGES.has(stage)
     ? `\n带组导师绩效风格：${MENTOR_LABEL[s.mentorStyle] ?? '按人头平均'}`
@@ -545,10 +674,11 @@ export function describeStageEconomy(stage: string): string | null {
   ];
   if (stage === 'career' || stage === 'pinnacle') {
     lines.splice(1, 0, `工作单位：${REGION_LABEL[currentRegionTier()]}`);
-    const fund = housingFundForIncome(e.income);
+    const salaryIncome = e.breakdown.income.salary;
+    const fund = housingFundForIncome(salaryIncome);
     const rates = housingFundRates();
     lines.push(`住房公积金：个人 ¥${fund.employee}/季（${Math.round(rates.employeeRate * 100)}%），合计入账资产 ¥${fund.deposit}`);
-    const pen = pensionForIncome(e.income);
+    const pen = pensionForIncome(salaryIncome);
     const penRates = pensionRates();
     lines.push(`养老保险：个人 ¥${pen.employee}/季（${Math.round(penRates.employeeRate * 100)}%），合计入账养老金账户 ¥${pen.deposit}`);
   }
@@ -557,6 +687,8 @@ export function describeStageEconomy(stage: string): string | null {
     const payout = pensionQuarterlyPayout(bal);
     lines.push(`养老金账户：余额 ¥${bal.toLocaleString()}，本季领取约 ¥${payout.toLocaleString()}`);
   }
+  if (e.breakdown.income.studentLoan > 0) lines.push(`助学贷款：本季放款 ¥${e.breakdown.income.studentLoan}，余额上限 ¥${STUDENT_LOAN_LIMIT.toLocaleString()}`);
+  if (e.breakdown.expense.studentLoanRepayment > 0) lines.push(`助学贷款偿还：¥${e.breakdown.expense.studentLoanRepayment}/季，当前余额 ¥${s.studentLoanBalance.toLocaleString()}`);
   if (familyLine) lines.splice(2, 0, familyLine);
   if (mentorLine) lines.splice(2, 0, mentorLine);
   if (spec.entryCost) lines.push(`入学 / 入职一次性支出：¥${spec.entryCost}`);

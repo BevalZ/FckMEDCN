@@ -67,7 +67,11 @@ test('职业阶段收入含职称档差与绩效、支出含房贷', async ({ pa
       return ec.getQuarterEconomy('career').net;
     };
     const base = netOf(() => {});
-    const fugao = netOf(() => { gs.setFlag('passed_fugao'); gs.setFlag('bought_house'); });
+    const fugao = netOf(() => {
+      gs.setFlag('passed_fugao');
+      gs.setFlag('bought_house');
+      gs.patchState({ mortgageBalance: 40000 });
+    });
     return { base, fugao };
   });
   console.log('  职业净结余(底薪/副高+房贷):', JSON.stringify(r));
@@ -186,6 +190,7 @@ test('助学贷款：上学补贴、工作后还贷', async ({ page }) => {
       gs.resetGame();
       gs.patchState({
         familyWealth, financeStrategy: 'stable',
+        studentLoanBalance: loan && stage === 'career' ? 6000 : 0,
         flags: loan ? new Set(['student_loan']) : new Set(),
       });
       const m = gs.getState().stats.money;
@@ -283,7 +288,7 @@ test('资产用途：教育基金和提前还贷产生后续季度收益', async
     const { gs, ec } = (window as any).__mod;
     gs.resetGame();
     gs.patchState({
-      stage: 'career', assets: 20000, assetLedger: [], hasChild: true,
+      stage: 'career', assets: 20000, assetLedger: [], hasChild: true, mortgageBalance: 64000,
       stats: { ...gs.getState().stats, money: 20000 },
       flags: new Set(['offer_sanjia', 'bought_house']),
     });

@@ -45,6 +45,7 @@ import { npcHiddenEventFor } from '../data/npcHiddenEvents';
 import { sound } from '../audio/sound';
 import { saveGame, consumePendingFired } from '../data/save';
 import { showQuarterAdvancePrompt } from './quarterAdvancePrompt';
+import { formatQuarterBill } from './quarterBill';
 
 // 可行走阶段场景的共用基类（从 CampusScene 抽出的行走 / 地点 / 行动点 / 睡觉 / NPC 机器）。
 // 本科 / 实习 / 规培三个既有场景仍保持原样（避免回归）；本基类供规培后的
@@ -829,11 +830,11 @@ export abstract class WalkStageScene extends Phaser.Scene {
     });
   }
 
-  private showQuarterBill(e: { income: number; cost: number; net: number; financeNote?: string }) {
-    if (e.income === 0 && e.cost === 0) return;
-    const netStr = `${e.net >= 0 ? '+' : ''}¥${e.net}`;
+  private showQuarterBill(e: Parameters<typeof formatQuarterBill>[0]) {
+    const text = formatQuarterBill(e);
+    if (!text) return;
     this.floatMessage(
-      `季度结算 ▸ 收¥${e.income} 支¥${e.cost} = 净 ${netStr}${e.financeNote ?? ""}`,
+      text,
       e.net >= 0 ? '#69f0ae' : '#ff8a80', 110, 13,
     );
   }

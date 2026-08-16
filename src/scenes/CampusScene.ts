@@ -831,7 +831,7 @@ export class CampusScene extends Phaser.Scene {
     });
   }
 
-  private showQuarterBill(e: { income: number; cost: number; net: number; financeNote?: string }) {
+  private showQuarterBill(e: Parameters<typeof formatQuarterBill>[0]) {
     const text = formatQuarterBill(e);
     if (!text) return;
     const color = e.net >= 0 ? '#69f0ae' : '#ff8a80';

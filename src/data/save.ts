@@ -153,7 +153,7 @@ const SAVE_STATE_SHAPE: SaveFieldShape = {
     social: { circles: 'recordArray', opportunities: 'stringArray' }, leisureHistory: 'recordArray',
   },
   undergrad: 'record', familyWealth: 'string', financeStrategy: 'string',
-  assets: 'finiteNumber', assetLedger: 'recordArray', pension: 'finiteNumber', mortgageBalance: 'finiteNumber', mentorStyle: 'string',
+  assets: 'finiteNumber', assetLedger: 'recordArray', pension: 'finiteNumber', studentLoanBalance: 'finiteNumber', mortgageBalance: 'finiteNumber', mentorStyle: 'string',
   marital: 'string', spouse: { nullable: 'string' }, hasChild: 'boolean', familyAlive: 'finiteNumber',
   affinity: 'numberRecord', npcNames: 'stringRecord', pandemic: 'record', counters: 'numberRecord',
   signedUnitId: { nullable: 'string' }, jobOffers: 'stringArray',
@@ -222,6 +222,10 @@ export function applySave(blob: SaveBlob): string {
   // 兼容旧存档：剔除已删除的 comparisons 字段
   const { comparisons: _legacy, ...rest } = blob.state as Omit<GameState, 'flags'> & { flags: string[]; comparisons?: unknown };
   const flags = new Set(blob.state.flags);
+  // 旧版购房没有本金字段，不能在每季结算时凭 flag 猜出一笔新债；按旧制已结清迁移。
+  if ((rest as { mortgageBalance?: number }).mortgageBalance === undefined && flags.has('bought_house')) {
+    flags.add('mortgage_paid_off');
+  }
   const stateForMigration = { ...rest, flags } as unknown as GameState;
   setState({
     ...rest,
@@ -258,7 +262,10 @@ export function applySave(blob: SaveBlob): string {
     assets: (rest as { assets?: number }).assets ?? 0,
     assetLedger: (rest as { assetLedger?: GameState['assetLedger'] }).assetLedger ?? [],
     pension: (rest as { pension?: number }).pension ?? 0,
-    mortgageBalance: (rest as { mortgageBalance?: number }).mortgageBalance ?? 0,
+    // 旧档只有 student_loan flag，没有本金。按已完成的在读季度保守迁移，避免凭空免债。
+    studentLoanBalance: Math.max(0, (rest as { studentLoanBalance?: number }).studentLoanBalance
+      ?? (flags.has('student_loan') ? Math.max(6000, Math.min(30000, (rest.turnsInStage ?? 4) * 1500)) : 0)),
+    mortgageBalance: Math.max(0, (rest as { mortgageBalance?: number }).mortgageBalance ?? 0),
     mentorStyle: (rest as { mentorStyle?: string }).mentorStyle ?? 'equal',
     counters: (rest as { counters?: Record<string, number> }).counters ?? {},
   } as GameState);

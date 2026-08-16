@@ -270,8 +270,9 @@ export const UNDERGRAD_EVENTS: GameEvent[] = [
     title: '学费与助学贷款',
     body: '医学院学制长、花费大。家里的积蓄经不起五年，助学贷款的说明摆在你面前。',
     category: 'financial', weight: 55, minTurn: 1,
+    once: true, excludeFlag: 'student_loan',
     choices: [
-      { text: '申请助学贷款，安心读书', delta: { sanity: 2 }, consequence: '你想：毕业了慢慢还。上学期间每季多一笔生活费，工作后再慢慢还。' },
+      { text: '申请助学贷款，安心读书', delta: { sanity: 2 }, flagSet: 'student_loan', consequence: '贷款按季度到账，也逐笔记入债务余额；毕业工作后再按余额偿还。' },
       { text: '课余兼职赚生活费', delta: { money: 800, stamina: -10, knowledge: -2 }, consequence: '你周末发传单，少睡了几天。' },
     ],
   },

@@ -134,6 +134,47 @@ test('B4 旧档 sceneKey=GuipeiScene：读档进卡片规培场景不白屏', as
   expect(errors, `运行时报错：\n${errors.join('\n')}`).toEqual([]);
 });
 
+test('旧经济存档迁移：助学贷款补本金，旧购房不凭空生成房贷', async ({ page }) => {
+  await page.goto(BASE, { waitUntil: 'load' });
+  await page.evaluate(() => localStorage.clear());
+  await waitForScene(page, 'TitleScene');
+  await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 20000 });
+
+  await page.evaluate(() => {
+    const state = (window as any).__state();
+    const legacyState: any = {
+      ...state,
+      stage: 'master', turnsInStage: 6,
+      flags: ['student_loan', 'bought_house'],
+    };
+    delete legacyState.studentLoanBalance;
+    delete legacyState.mortgageBalance;
+    localStorage.setItem('fckmedcn_save_v1', JSON.stringify({
+      version: 1,
+      sceneKey: 'MasterScene',
+      savedAt: Date.now(),
+      state: legacyState,
+      firedEvents: [],
+      firedNews: [],
+    }));
+  });
+
+  await page.reload({ waitUntil: 'load' });
+  await page.waitForFunction(() => document.getElementById('title-overlay')?.dataset.ready === 'true');
+  await expect(page.locator('#title-continue')).toHaveClass(/show/);
+  await page.locator('#title-continue').click();
+  await waitForScene(page, 'MasterScene', 15000);
+  const migrated = await page.evaluate(() => {
+    const s = (window as any).__state();
+    return {
+      loan: s.studentLoanBalance,
+      mortgage: s.mortgageBalance,
+      mortgagePaid: s.flags.has('mortgage_paid_off'),
+    };
+  });
+  expect(migrated).toEqual({ loan: 9000, mortgage: 0, mortgagePaid: true });
+});
+
 test('B4 旧档 sceneKey 已删除：安全降级到该阶段现行场景', async ({ page }) => {
   const errors: string[] = [];
   const isEnvNoise = (s: string) => /AudioContext|audio device|WebAudio|Framebuffer/i.test(s);

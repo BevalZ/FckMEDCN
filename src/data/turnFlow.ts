@@ -384,11 +384,10 @@ export function advanceQuarter(stageName: string): {
     updateStats({ sanity: immunity >= 65 ? -2 : -6, stamina: immunity >= 65 ? -1 : -3 });
   } else if (spirit.resilience >= 70 && leisure.workLifeBalance >= 50) updateStats({ sanity: 2 });
 
-  const baseEcon = applyStageEconomy(stageName);
   const sideIncome = leisure.sideBusiness.active ? Math.max(0, leisure.sideBusiness.quarterlyIncome) : 0;
-  if (sideIncome > 0) updateStats({ money: sideIncome });
+  const baseEcon = applyStageEconomy(stageName, sideIncome);
   const econ: QuarterEconomy = sideIncome > 0
-    ? { ...baseEcon, income: baseEcon.income + sideIncome, net: baseEcon.net + sideIncome, financeNote: `${baseEcon.financeNote}（副业 +¥${sideIncome.toLocaleString()}）` }
+    ? { ...baseEcon, financeNote: `${baseEcon.financeNote}（副业 +¥${sideIncome.toLocaleString()}）` }
     : baseEcon;
   // 职业期亚专科被动消耗 + 日常回血（深挖第五部分 R28 落地）。
   // 放在共享季度结算层，保证真实游戏（场景调用）与纯模拟（直接调 advanceQuarter）行为一致。
@@ -450,11 +449,10 @@ export function advanceQuarter(stageName: string): {
   const settled = getState();
   const finance = recordQuarterFinance(settled.finance, {
     cash: settled.stats.money,
-    income: econ.income,
-    expense: econ.cost,
+    assets: settled.assets,
+    economy: econ,
     mortgage: settled.mortgageBalance,
-    healthCost: settled.health?.treatmentCost ?? 0,
-    hasChild: settled.hasChild,
+    studentLoanBalance: settled.studentLoanBalance,
   });
   patchState({ finance });
   if (finance.financialAnxiety) updateStats({ sanity: -2 });

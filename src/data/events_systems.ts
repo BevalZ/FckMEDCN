@@ -79,7 +79,7 @@ export const FINANCE_POLICY_EVENTS: GameEvent[] = [
     body: '学费、住宿费和生活费写在同一张纸上。家里没有把压力说出口，但你看见父母在客厅里重新算了一遍。',
     category: 'financial', weight: 90, minTurn: 0, maxTurn: 2, once: true,
     choices: [
-      { text: '申请助学贷款', delta: { money: 32000, sanity: -2 }, flagSet: 'student_loan', effect: { kind: 'changeFinance', field: 'corruption', amount: 0, purchase: '助学贷款' }, consequence: '你先把学业接住，也把一笔长期责任写进未来。' },
+      { text: '申请助学贷款', delta: { sanity: -2 }, flagSet: 'student_loan', flagExclude: 'student_loan', effect: { kind: 'changeFinance', field: 'corruption', amount: 0, purchase: '助学贷款' }, consequence: '贷款将按季度发放到现金账户，本金同步记入债务，工作后按余额偿还。' },
       { text: '接受家里的支持', delta: { relations: 4, sanity: -2 }, flagSet: 'family_paid_tuition', consequence: '这笔钱没有利息，却有分量。' },
       { text: '申请定向培养', delta: { money: 8000, sanity: 2 }, flagSet: 'directed_medical_track', consequence: '学费压力减轻，毕业后的履约去向也被提前写下。' },
     ],

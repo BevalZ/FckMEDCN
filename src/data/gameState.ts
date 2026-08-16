@@ -124,6 +124,8 @@ export interface GameState {
   assetLedger: AssetTransaction[];
   // —— 养老金个人账户（职业期缴存；不可提现购房，退休期按余额领取）——
   pension: number;
+  // —— 助学贷款本金：在读期间按季放款形成，工作后按季偿还 ——
+  studentLoanBalance: number;
   // —— 房贷剩余本金（购房时按首付的 4 倍建立估算，旧档缺省为 0）——
   mortgageBalance: number;
   // —— 硕博带组导师绩效分配风格（随机）——
@@ -210,6 +212,7 @@ export function createInitialState(): GameState {
     assets: 0,
     assetLedger: [],
     pension: 0,
+    studentLoanBalance: 0,
     mortgageBalance: 0,
     mentorStyle: rollMentorStyle(),
     marital: 'single', spouse: null, hasChild: false, familyAlive: 4,

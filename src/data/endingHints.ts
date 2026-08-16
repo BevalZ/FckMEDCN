@@ -27,7 +27,7 @@ export const ENDING_HINT_FOG: Record<string, string> = {
   era0_fell_short: '分数线会挡住一些门。',
   era0_escape_white_tower: '放榜之后，也可以拒绝继续谈学医。',
   disgraced: '职称捷径或挂名风暴，可能把名字写进通报。',
-  lucky_fraud: '灰色论文过了关，职称也批了——门却一直没敲。',
+  lucky_fraud: '造假或灰色论文过了关，职称也批了——门却一直没敲。',
   master_clinician: '临床很强、论文很少，病人仍认你。',
   worker_steady: '不升学，也能把日子过成一条稳线。',
   worker_struggle: '没有学历兜底时，起伏会更大。',
