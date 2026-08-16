@@ -8,7 +8,7 @@ async function boot(page: Page) {
   await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 30000 });
 }
 
-test('四类小游戏均可构造并给出 grade', async ({ page }) => {
+test('五类小游戏均可构造并给出 grade', async ({ page }) => {
   await boot(page);
   const out = await page.evaluate(async () => {
     const scene = (window as any).game.scene.getScenes(true)[0];
@@ -58,12 +58,21 @@ test('四类小游戏均可构造并给出 grade', async ({ page }) => {
     (night as any).finish();
     const nRes = await np;
 
+    // experiment：按规范顺序完成三步
+    const experiment = launchMinigame(scene, 'experiment', 'test-experiment');
+    const xp = experiment.play();
+    (experiment as any).choose(0);
+    (experiment as any).choose(1);
+    (experiment as any).choose(2);
+    const xRes = await xp;
+
     const events = (window as any).__mod.ev.ALL_EVENTS;
     const wired = {
       suture: events.find((e: any) => e.id === 'clinical_skills_lab')?.minigame,
       cpr: events.find((e: any) => e.id === 'first_cpr')?.minigame,
       exam: events.find((e: any) => e.id === 'licensure_exam')?.minigame,
       night: events.find((e: any) => e.id === 'first_night_shift')?.minigame,
+      experiment: events.find((e: any) => e.id === 'master_experiment_protocol')?.minigame,
       guipeiCpr: events.find((e: any) => e.id === 'guipei_code_blue')?.minigame,
     };
 
@@ -72,6 +81,7 @@ test('四类小游戏均可构造并给出 grade', async ({ page }) => {
       cRes: { grade: cRes.grade, flag: cRes.flagSet },
       eRes: { grade: eRes.grade, flag: eRes.flagSet },
       nRes: { grade: nRes.grade, flag: nRes.flagSet },
+      xRes: { grade: xRes.grade, flag: xRes.flagSet },
       wired,
       footstep: typeof (await import('/src/audio/sound.ts')).sound.footstep === 'function',
     };
@@ -82,11 +92,13 @@ test('四类小游戏均可构造并给出 grade', async ({ page }) => {
   expect(out.wired.cpr).toBe('cpr');
   expect(out.wired.exam).toBe('exam');
   expect(out.wired.night).toBe('nightshift');
+  expect(out.wired.experiment).toBe('experiment');
   expect(out.wired.guipeiCpr).toBe('cpr');
   expect(['perfect', 'good']).toContain(out.sRes.grade);
   expect(out.cRes.grade).toBe('perfect');
   expect(out.cRes.flag).toBe('cpr_saved');
   expect(out.nRes.grade).toBe('perfect');
+  expect(out.xRes).toEqual({ grade: 'perfect', flag: 'experiment_protocol_mastered' });
   expect(out.footstep).toBe(true);
 });
 

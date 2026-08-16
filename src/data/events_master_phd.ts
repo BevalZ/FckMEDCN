@@ -4,6 +4,30 @@ import type { GameEvent } from './events';
 // 选导师、硕士毕业抉择等里程碑事件限定在 'master'，避免博士阶段重复触发。
 export const MASTER_PHD_EVENTS: GameEvent[] = [
   {
+    id: 'master_experiment_protocol',
+    stage: 'master',
+    title: '第一次独立跑实验',
+    body: '导师把一批关键样本交给你：先做无菌准备，再精准移液，最后把每个批次和偏差如实记录。顺序错了，整批样本都要重来。',
+    category: 'study',
+    weight: 75,
+    minTurn: 2,
+    once: true,
+    minigame: 'experiment',
+    choices: [],
+  },
+  {
+    id: 'phd_experiment_protocol',
+    stage: 'phd',
+    title: '关键实验的最后一轮',
+    body: '答辩前的最后一轮验证开始了。实验室没人替你盯每一步，规范操作和可追溯记录决定这批数据能不能写进论文。',
+    category: 'study',
+    weight: 70,
+    minTurn: 3,
+    once: true,
+    minigame: 'experiment',
+    choices: [],
+  },
+  {
     id: 'advisor_relationship',
     stage: 'master',
     title: '你的导师是哪种人',

@@ -4,6 +4,7 @@ import { TimingBarMinigame } from './TimingBarMinigame';
 import { CprRhythmMinigame } from './CprRhythmMinigame';
 import { ExamQuizMinigame } from './ExamQuizMinigame';
 import { NightShiftMinigame } from './NightShiftMinigame';
+import { ExperimentalProcedureMinigame } from './ExperimentalProcedureMinigame';
 
 /** 统一小游戏句柄：场景只需 update + play */
 export interface ActiveMinigame {
@@ -26,5 +27,7 @@ export function launchMinigame(
       return new ExamQuizMinigame(scene, { title: title ? `${title} · 限时答题` : undefined });
     case 'nightshift':
       return new NightShiftMinigame(scene, { title: title ? `${title} · 呼叫铃` : undefined });
+    case 'experiment':
+      return new ExperimentalProcedureMinigame(scene, { title: title ? `${title} · 实验操作` : undefined });
   }
 }

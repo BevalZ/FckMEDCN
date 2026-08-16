@@ -178,7 +178,7 @@ export interface GameEvent {
   manualOnly?: boolean;
   choices: EventChoice[]; newsTickerAfter?: string;
   /** M4：若设置，打开事件前先跑对应小游戏，用其结果替换默认选项结算 */
-  minigame?: 'suture' | 'cpr' | 'exam' | 'nightshift';
+  minigame?: 'suture' | 'cpr' | 'exam' | 'nightshift' | 'experiment';
   /** 职业赔付/扣罚事件：金钱损失按职级差异化（住院医轻、主任重） */
   rankScaled?: boolean;
 }

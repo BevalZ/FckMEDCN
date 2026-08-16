@@ -8,4 +8,4 @@ export type MinigameResult = {
   consequence: string;
 };
 
-export type MinigameKind = 'suture' | 'cpr' | 'exam' | 'nightshift';
+export type MinigameKind = 'suture' | 'cpr' | 'exam' | 'nightshift' | 'experiment';

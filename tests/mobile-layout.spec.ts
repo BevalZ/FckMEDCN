@@ -39,7 +39,7 @@ test('手机竖屏标题层跟随画布缩放且开始按钮可点击', async ({
   await expect(page.locator('#title-overlay')).not.toHaveClass(/show/);
 });
 
-test('触屏设备的缝合、CPR 与夜班小游戏都有可点击操作', async ({ page }) => {
+test('触屏设备的缝合、CPR、夜班与实验小游戏都有可点击操作', async ({ page }) => {
   await page.goto('/', { waitUntil: 'load' });
   await page.waitForFunction(() => !!(window as any).__mod, null, { timeout: 60000 });
   await page.waitForFunction(() => (window as any).game.scene.getScenes(true)
@@ -65,10 +65,21 @@ test('触屏设备的缝合、CPR 与夜班小游戏都有可点击操作', asyn
     ).length;
     night.destroy();
 
-    return { sutureClickable, cprClickable, clickableBeds };
+    const experiment = launchMinigame(scene, 'experiment', '触屏测试') as any;
+    const clickableExperimentSteps = experiment.root.list.filter((item: any) =>
+      item.type === 'Text' && /^[123]\s/.test(String(item.text)) && item.input?.enabled === true,
+    ).length;
+    experiment.destroy();
+
+    return { sutureClickable, cprClickable, clickableBeds, clickableExperimentSteps };
   });
 
-  expect(controls).toEqual({ sutureClickable: true, cprClickable: true, clickableBeds: 5 });
+  expect(controls).toEqual({
+    sutureClickable: true,
+    cprClickable: true,
+    clickableBeds: 5,
+    clickableExperimentSteps: 3,
+  });
 });
 
 test('触屏确认弹窗的取消与确认入口独立可点', async ({ page }) => {
